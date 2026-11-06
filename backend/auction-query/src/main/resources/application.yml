@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: auction-query
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/leilao}
+    username: ${DB_QUERY_USER:query_svc}
+    password: ${DB_QUERY_PASSWORD:query_svc}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+server:
+  port: 8082
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
