@@ -1,5 +1,7 @@
 # Divisão do trabalho — 4 pessoas
 
+> O detalhamento de cada parte (o que é, passo a passo, critérios de pronto e acordos entre as partes) está em [PLANO.md](PLANO.md).
+
 Prazo de entrega: **19/11**. Sistema pronto e integrado em **16/11**, com 17 e 18/11 para ensaiar a demo.
 
 Um único repositório (monorepo):

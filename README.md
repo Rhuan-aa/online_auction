@@ -2,7 +2,9 @@
 
 Plataforma de leilão online com lances em tempo real. Os comandos geram eventos imutáveis em um event store (PostgreSQL) e são publicados no Kafka via outbox. As projeções (Redis e PostgreSQL) atendem as consultas.
 
-A divisão do trabalho está em [docs/DIVISAO.md](docs/DIVISAO.md), e o padrão de commits em [docs/COMMITS.md](docs/COMMITS.md).
+- [docs/PLANO.md](docs/PLANO.md): plano de desenvolvimento (o que cada parte faz, os acordos entre elas e os marcos)
+- [docs/DIVISAO.md](docs/DIVISAO.md): quem faz o quê e quando
+- [docs/COMMITS.md](docs/COMMITS.md): padrão de commits
 
 ```
 backend/    Java 21 + Spring Boot 4, Maven multi-módulo  → backend/README.md
