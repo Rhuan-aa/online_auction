@@ -1,6 +1,6 @@
 # Leilão — Event Sourcing + CQRS + EDA com Kafka
 
-Plataforma de leilão online com lances em tempo real. Os comandos geram eventos imutáveis em um event store (PostgreSQL) e são publicados no Kafka via outbox. As projeções (Redis e PostgreSQL) atendem as consultas.
+Plataforma de leilão online com lances em tempo real. Os comandos geram eventos imutáveis em um event store (PostgreSQL) e são publicados no Kafka via outbox. As projeções (PostgreSQL) atendem as consultas.
 
 - [docs/PLANO.md](docs/PLANO.md): plano de desenvolvimento (o que cada parte faz, os acordos entre elas e os marcos)
 - [docs/DIVISAO.md](docs/DIVISAO.md): quem faz o quê e quando
@@ -9,7 +9,7 @@ Plataforma de leilão online com lances em tempo real. Os comandos geram eventos
 ```
 backend/    Java 21 + Spring Boot 4, Maven multi-módulo  → backend/README.md
 frontend/   Vite + React + TypeScript                     → frontend/README.md
-infra/      docker-compose (Postgres, Redis, Kafka, Kafka UI) + SQL
+infra/      docker-compose (Postgres, Kafka, Kafka UI) + SQL
 docs/       divisão, C4, ADRs
 .github/    CI (backend, frontend e infra em jobs separados)
 ```
@@ -30,7 +30,6 @@ cd frontend && npm install && npm run dev          # front em http://localhost:5
 | leilao-leitura | http://localhost:8082 | API de consulta (REST + SSE) e projeções / notificações |
 | agendador-leilao | http://localhost:8084 | Worker agendador de abertura e encerramento |
 | PostgreSQL | `localhost:5432`, banco `leilao` (usuários em `backend/.env.example`) |
-| Redis | `localhost:6379` |
 | Kafka | `localhost:9092` (tópicos `auction.events` e `auction.commands.timer`) |
 | Kafka UI | http://localhost:8080 |
 

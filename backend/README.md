@@ -17,7 +17,7 @@ Todo serviço expõe `/actuator/health`.
 ```
 contratos/         eventos, comandos e tópicos (o contrato entre escrita e leitura)
 leilao-escrita/    escrita: domain / application / infrastructure (event store + outbox) / api (8081)
-leilao-leitura/    leitura: consultas (GET + SSE) + projecoes (Kafka → Postgres/Redis) + notificacoes (8082)
+leilao-leitura/    leitura: consultas (GET + SSE) + projecoes (Kafka → Postgres) + notificacoes (8082)
 agendador-leilao/  worker que monitora prazos e emite comandos de abertura/fechamento (8084)
 ferramentas/       utilitários CLI: simulador de lances concorrentes e reprocessador de projeções
 ```

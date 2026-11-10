@@ -13,11 +13,11 @@ Um leilão é uma sequência de fatos: "leilão criado", "lance de R$ 120 do lic
  ┌──────────────────────────────┐        ┌────────────────────────────┐
  │ POST /auctions/{id}/bids     │        │ leilao-leitura             │
  │   → carrega eventos          │        │   consome auction.events   │
- │   → Auction decide           │ Kafka  │   → Redis (ao vivo)        │     GET /auctions…
- │   → grava BidPlaced (+outbox)│───────►│   → Postgres read_model    │◄──── SSE /stream ──► React
- │   → relay publica no Kafka   │ auction│   → GET + SSE              │
- └──────────────────────────────┘ .events│   → Notificações (log)     │
-          ▲                              └────────────────────────────┘
+ │   → Auction decide           │ Kafka  │   → Postgres read_model    │     GET /auctions…
+ │   → grava BidPlaced (+outbox)│───────►│   → GET + SSE              │◄──── SSE /stream ──► React
+ │   → relay publica no Kafka   │ auction│   → Notificações (log)     │
+ └──────────────────────────────┘ .events└────────────────────────────┘
+          ▲
           │ StartAuction / CloseAuction
      agendador-leilao (B)
 ```
@@ -96,19 +96,14 @@ Formato de erro: `{"error": "BID_TOO_LOW", "message": "Lance mínimo é 13000"}`
 | Rota | Fonte | Resposta |
 |---|---|---|
 | `GET /auctions?status=OPEN` | Postgres `catalogo_leiloes` | lista de `{auctionId, title, status, currentPrice, endsAt}` |
-| `GET /auctions/{id}` | Redis (ao vivo) + catálogo | `{auctionId, title, status, currentPrice, leaderId, endsAt, version}` |
+| `GET /auctions/{id}` | Postgres `catalogo_leiloes` | `{auctionId, title, status, currentPrice, leaderId, endsAt, version}` |
 | `GET /auctions/{id}/bids` | `historico_lances` | `[{version, bidderId, amount, placedAt}]` |
 | `GET /bidders/{id}/bids` | `atividade_licitantes` | `[{auctionId, lastBidAmount, lastBidAt}]` |
-| `GET /auctions/{id}/stream` | Redis Pub/Sub | SSE: evento `update` com o mesmo JSON de `GET /auctions/{id}` |
+| `GET /auctions/{id}/stream` | SSE (SseEmitter em memória) | SSE: evento `update` com o mesmo JSON de `GET /auctions/{id}` |
 
 Os status no read model são `CREATED`, `OPEN`, `CLOSED` e `CANCELLED`.
 
-### 2.6 Redis (combinado entre C e D)
-
-- Hash `auction:{id}` com `status, currentPrice, leaderId, endsAt, version`.
-- Canal Pub/Sub `auction:{id}:updates`: as projeções de `leilao-leitura` publicam depois de atualizar o hash, e os endpoints repassam para os clientes SSE. Assim o push sai da leitura, sem tocar a escrita.
-
-### 2.7 Usuários fixos (sem login)
+### 2.6 Usuários fixos (sem login)
 
 O vendedor é `vendedor-1` e os licitantes são `licitante-1`, `licitante-2` e `licitante-3`. O front tem um seletor "Estou como: …".
 
@@ -155,7 +150,7 @@ Cada parte tem: **o que é**, **o que entender antes**, **passo a passo** (cada 
 
 ### Pessoa C — Leitura: projeções, consultas e reprocessador
 
-**O que é.** O lado CQRS de leitura (módulo `leilao-leitura`). Ele transforma o fluxo de eventos em **visões prontas para as telas**: o leilão ao vivo no Redis e a listagem, o histórico e "meus lances" no Postgres. Ele também prova a característica mais impressionante do Event Sourcing: **apagar uma projeção e reconstruí-la idêntica a partir do log**.
+**O que é.** O lado CQRS de leitura (módulo `leilao-leitura`). Ele transforma o fluxo de eventos em **visões prontas para as telas**: a listagem, o histórico e "meus lances" no Postgres `read_model`. Ele também prova a característica mais impressionante do Event Sourcing: **apagar uma projeção e reconstruí-la idêntica a partir do log**.
 
 **Entender antes.** Consistência eventual (a tela pode atrasar milissegundos), idempotência (o mesmo evento pode chegar duas vezes) e consumer groups e offsets do Kafka.
 
@@ -165,13 +160,13 @@ Cada parte tem: **o que é**, **o que entender antes**, **passo a passo** (cada 
    - `Started`/`Closed`/`Cancelled`: atualizam o status.
    - `BidPlaced`: atualiza o preço no catálogo e insere em `historico_lances` e `atividade_licitantes`.
    - `Extended`: atualiza `ends_at`.
-   - Todo evento atualiza o hash Redis e publica em `auction:{id}:updates`.
+   - Todo evento notifica os clientes conectados via SSE (`SseEmitter`).
 2. `feat(leitura)`: **idempotência**. Ignore o evento se `version <= last_version` do leilão. `historico_lances` já tem PK `(leilao_id, versao)`, então use `ON CONFLICT DO NOTHING`.
-3. `feat(leitura)`: as rotas da seção 2.5 (subpacote `api`) com o usuário `projector_svc`/`query_svc`. O SSE usa `SseEmitter`, assinando o canal Redis do leilão. Libere CORS para o front.
+3. `feat(leitura)`: as rotas da seção 2.5 (subpacote `api`) com o usuário `projector_svc`/`query_svc`. O SSE usa `SseEmitter` mantido em memória no serviço de leitura. Libere CORS para o front.
 4. `feat(leitura)`: um `HealthIndicator` com o **lag** do consumidor (último offset do tópico menos o offset consumido), aparecendo em `/actuator/health`.
-5. `feat(ferramentas)`: `ReprocessadorProjecao` que apaga as chaves `auction:*` do Redis e faz `TRUNCATE` nas tabelas do `read_model`. Depois consome do offset 0 com um group novo, aplicando a mesma lógica de projeção.
+5. `feat(ferramentas)`: `ReprocessadorProjecao` que faz `TRUNCATE` nas tabelas do `read_model`. Depois consome do offset 0 com um group novo, aplicando a mesma lógica de projeção.
 
-**Pronto quando:** derrubar o leilao-leitura, dar lances e subi-lo de novo faz a tela alcançar o estado sozinha; e rodar o reprocessador produz um Redis e tabelas **idênticos** aos de antes.
+**Pronto quando:** derrubar o leilao-leitura, dar lances e subi-lo de novo faz a tela alcançar o estado sozinha; e rodar o reprocessador produz tabelas **idênticas** às de antes.
 
 ### Pessoa D — Contrato, front, notificação e entrega
 
@@ -217,7 +212,7 @@ Se um marco atrasar, avise no grupo **no mesmo dia**: os seguintes dependem dele
 | 3 | Mostrar a tabela `eventos` e o Kafka UI | Event Sourcing e broker | B |
 | 4 | `SimuladorLances` com 50 robôs | Concorrência otimista e um único vencedor | B |
 | 5 | Derrubar o leilao-leitura, dar lances, subir de novo | Desacoplamento e consistência eventual | C |
-| 6 | Apagar o Redis e rodar o reprocessador | Projeções descartáveis | C |
+| 6 | Fazer TRUNCATE na leitura e rodar o reprocessador | Projeções descartáveis | C |
 | 7 | Ver notificações no log sem mexer na escrita | Extensibilidade | D |
 | 8 | Violar uma regra de dependência e ver o build quebrar | Restrições verificáveis (ArchUnit) | A |
 
