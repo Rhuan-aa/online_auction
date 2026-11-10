@@ -2,14 +2,14 @@ package br.edu.ifsp.leilao.contratos;
 
 import java.time.Instant;
 
-/** Payloads dos eventos. Dinheiro em centavos (long); datas em Instant; ids de usuário String. */
-public sealed interface AuctionEventPayload {
-    record AuctionCreated(String sellerId, String title, long startingPrice, long minIncrement,
-                          Instant startsAt, Instant endsAt) implements AuctionEventPayload {}
-    record AuctionStarted(Instant endsAt) implements AuctionEventPayload {}
-    record BidPlaced(String bidderId, long amount) implements AuctionEventPayload {}
-    record AuctionExtended(Instant newEndsAt) implements AuctionEventPayload {}
-    /** winnerId e winningAmount nulos quando não houve lance. */
-    record AuctionClosed(String winnerId, Long winningAmount) implements AuctionEventPayload {}
-    record AuctionCancelled(String reason) implements AuctionEventPayload {}
+/** Dados de cada evento. Dinheiro em centavos (long); datas em Instant; ids de usuário em String. */
+public sealed interface EventoLeilao {
+    record LeilaoCriado(String vendedorId, String titulo, long precoInicial, long incrementoMinimo,
+                        Instant inicioEm, Instant fimEm) implements EventoLeilao {}
+    record LeilaoIniciado(Instant fimEm) implements EventoLeilao {}
+    record LanceRegistrado(String licitanteId, long valor) implements EventoLeilao {}
+    record LeilaoProrrogado(Instant novoFimEm) implements EventoLeilao {}
+    /** vencedorId e valorVencedor nulos quando não houve lance. */
+    record LeilaoEncerrado(String vencedorId, Long valorVencedor) implements EventoLeilao {}
+    record LeilaoCancelado(String motivo) implements EventoLeilao {}
 }
