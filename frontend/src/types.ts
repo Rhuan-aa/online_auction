@@ -1,28 +1,28 @@
 // espelho de backend/contratos — mudou lá, muda aqui
 // Dinheiro em centavos; datas em string ISO-8601.
 
-export const Topics = {
-  AUCTION_EVENTS: 'auction.events',
-  TIMER_COMMANDS: 'auction.commands.timer',
+export const Topicos = {
+  EVENTOS_LEILAO: 'leilao.eventos',
+  COMANDOS_AGENDADOR: 'leilao.comandos-agendador',
 } as const
 
-export const EventTypes = {
-  AUCTION_CREATED: 'AuctionCreated.v1',
-  AUCTION_STARTED: 'AuctionStarted.v1',
-  BID_PLACED: 'BidPlaced.v1',
-  AUCTION_EXTENDED: 'AuctionExtended.v1',
-  AUCTION_CLOSED: 'AuctionClosed.v1',
-  AUCTION_CANCELLED: 'AuctionCancelled.v1',
+export const TiposEvento = {
+  LEILAO_CRIADO: 'LeilaoCriado.v1',
+  LEILAO_INICIADO: 'LeilaoIniciado.v1',
+  LANCE_REGISTRADO: 'LanceRegistrado.v1',
+  LEILAO_PRORROGADO: 'LeilaoProrrogado.v1',
+  LEILAO_ENCERRADO: 'LeilaoEncerrado.v1',
+  LEILAO_CANCELADO: 'LeilaoCancelado.v1',
 } as const
 
-export interface AuctionCreated { sellerId: string; title: string; startingPrice: number; minIncrement: number; startsAt: string; endsAt: string }
-export interface AuctionStarted { endsAt: string }
-export interface BidPlaced { bidderId: string; amount: number }
-export interface AuctionExtended { newEndsAt: string }
-export interface AuctionClosed { winnerId: string | null; winningAmount: number | null }
-export interface AuctionCancelled { reason: string }
+export interface LeilaoCriado { vendedorId: string; titulo: string; precoInicial: number; incrementoMinimo: number; inicioEm: string; fimEm: string }
+export interface LeilaoIniciado { fimEm: string }
+export interface LanceRegistrado { licitanteId: string; valor: number }
+export interface LeilaoProrrogado { novoFimEm: string }
+export interface LeilaoEncerrado { vencedorId: string | null; valorVencedor: number | null }
+export interface LeilaoCancelado { motivo: string }
 
-export interface EventEnvelope<P> {
+export interface EnvelopeEvento<P> {
   id: number
   leilaoId: string
   versao: number // versão do leilão após o evento (1..n)
@@ -31,5 +31,5 @@ export interface EventEnvelope<P> {
   dados: P
 }
 
-export type CreateAuctionRequest = AuctionCreated
-export interface PlaceBidRequest { bidderId: string; amount: number }
+export type CriarLeilaoRequest = LeilaoCriado
+export interface DarLanceRequest { licitanteId: string; valor: number }
