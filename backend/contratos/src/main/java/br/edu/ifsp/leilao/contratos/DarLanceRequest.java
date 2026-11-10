@@ -1,3 +1,3 @@
 package br.edu.ifsp.leilao.contratos;
 
-public record PlaceBidRequest(String bidderId, long amount) {}
+public record DarLanceRequest(String licitanteId, long valor) {}
