@@ -27,15 +27,15 @@ Usamos [Conventional Commits](https://www.conventionalcommits.org/pt-br/v1.0.0/)
 
 ## Escopos
 
-Use o nome do módulo ou da pasta: `command`, `query`, `projector`, `timer`, `notification`, `replay`, `simulator`, `contracts`, `es-kit`, `frontend`, `infra`, `adr`, `c4`.
+Use o nome do módulo ou da pasta: `escrita`, `leitura`, `agendador`, `ferramentas`, `contratos`, `frontend`, `infra`, `adr`, `c4`.
 
 ## Exemplos
 
 ```
-feat(command): rejeita lance menor que o atual mais o incremento
-fix(projector): ignora evento repetido com versão já aplicada
-test(command): cobre a extensão do prazo por anti-sniping
-feat(contracts)!: renomeia amount para amountCents em BidPlaced.v1
+feat(escrita): rejeita lance menor que o atual mais o incremento
+fix(leitura): ignora evento repetido com versão já aplicada
+test(escrita): cobre a extensão do prazo por anti-sniping
+feat(contratos)!: renomeia amount para amountCents em BidPlaced.v1
 docs(adr): adiciona ADR-004 sobre Kafka x RabbitMQ
 build(infra): limita a memória do Kafka no compose
 ```

@@ -24,13 +24,11 @@ cd backend  && ./mvnw verify                       # build + testes do back
 cd frontend && npm install && npm run dev          # front em http://localhost:5173
 ```
 
-| Serviço | Endereço |
-|---|---|
-| auction-command | http://localhost:8081 |
-| auction-query | http://localhost:8082 |
-| projector | http://localhost:8083 |
-| auction-timer | http://localhost:8084 |
-| notification | http://localhost:8085 |
+| Serviço | Endereço | Descrição |
+|---|---|---|
+| leilao-escrita | http://localhost:8081 | API de escrita, agregado e Event Store / Outbox |
+| leilao-leitura | http://localhost:8082 | API de consulta (REST + SSE) e projeções / notificações |
+| agendador-leilao | http://localhost:8084 | Worker agendador de abertura e encerramento |
 | PostgreSQL | `localhost:5432`, banco `leilao` (usuários em `backend/.env.example`) |
 | Redis | `localhost:6379` |
 | Kafka | `localhost:9092` (tópicos `auction.events` e `auction.commands.timer`) |
@@ -39,9 +37,9 @@ cd frontend && npm install && npm run dev          # front em http://localhost:5
 Para zerar tudo, inclusive os dados: `docker compose -f infra/docker-compose.yml down -v`. O SQL em `infra/sql` só roda com o volume vazio.
 
 ## Regras de arquitetura
-- Só o `auction-command` escreve no event store, e `event_store.events` é append-only (protegido por trigger).
-- `auction-command/domain` é Java puro, verificado pelo `ArchitectureTest` (ArchUnit).
-- Módulos de leitura não dependem de `auction-command`: só conversam por eventos de `contracts`.
+- Só o `leilao-escrita` escreve no event store, e `event_store.events` é append-only (protegido por trigger).
+- `leilao-escrita/domain` é Java puro, verificado pelo `ArchitectureTest` (ArchUnit).
+- Módulos de leitura não dependem de `leilao-escrita`: só conversam por eventos de `contratos`.
 - Mensagens no Kafka usam key = `auctionId`, o que garante a ordem por leilão.
 - Os consumidores são idempotentes (guardam a última versão aplicada por leilão).
-- `frontend/src/types.ts` espelha `backend/contracts`: mudou um, muda o outro no mesmo PR.
+- `frontend/src/types.ts` espelha `backend/contratos`: mudou um, muda o outro no mesmo PR.

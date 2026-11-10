@@ -19,27 +19,18 @@
   </properties>
 
   <modules>
-    <module>contracts</module>
-    <module>es-kit</module>
-    <module>auction-command</module>
-    <module>auction-query</module>
-    <module>projector</module>
-    <module>auction-timer</module>
-    <module>notification</module>
-    <module>replay</module>
-    <module>bid-simulator</module>
+    <module>contratos</module>
+    <module>leilao-escrita</module>
+    <module>leilao-leitura</module>
+    <module>agendador-leilao</module>
+    <module>ferramentas</module>
   </modules>
 
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>br.edu.ifsp.leilao</groupId>
-        <artifactId>contracts</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>br.edu.ifsp.leilao</groupId>
-        <artifactId>es-kit</artifactId>
+        <artifactId>contratos</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

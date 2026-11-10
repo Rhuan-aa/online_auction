@@ -1,4 +1,4 @@
-// espelho de backend/contracts — mudou lá, muda aqui
+// espelho de backend/contratos — mudou lá, muda aqui
 // Dinheiro em centavos; datas em string ISO-8601.
 
 export const Topics = {

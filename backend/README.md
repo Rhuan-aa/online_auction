@@ -4,8 +4,10 @@ Java 21 + Spring Boot 4, Maven multi-módulo (o Maven vem pelo wrapper). A infra
 
 ```bash
 cp .env.example .env
-./mvnw verify                                      # build + testes (contracts e ArchUnit)
-./mvnw -pl auction-command -am spring-boot:run     # sobe um serviço
+./mvnw verify                                      # build + testes (contratos e ArchUnit)
+./mvnw -pl leilao-escrita -am spring-boot:run      # sobe serviço de escrita (8081)
+./mvnw -pl leilao-leitura -am spring-boot:run      # sobe serviço de leitura + projeções (8082)
+./mvnw -pl agendador-leilao -am spring-boot:run    # sobe o agendador de prazos (8084)
 ```
 
 Todo serviço expõe `/actuator/health`.
@@ -13,13 +15,9 @@ Todo serviço expõe `/actuator/health`.
 ## Módulos
 
 ```
-contracts/        eventos, comandos e tópicos (o contrato entre escrita e leitura)
-es-kit/           EventStore (append com expectedVersion) e OutboxRelay
-auction-command/  escrita: domain / application / infrastructure / api   (8081)
-auction-query/    leitura: GET + SSE                                       (8082)
-projector/        Kafka → Redis + Postgres (read_model)                     (8083)
-auction-timer/    emite StartAuction/CloseAuction no horário                (8084)
-notification/     avisa lance superado                                      (8085)
-replay/           reconstrói projeções
-bid-simulator/    robôs dando lances concorrentes
+contratos/         eventos, comandos e tópicos (o contrato entre escrita e leitura)
+leilao-escrita/    escrita: domain / application / infrastructure (event store + outbox) / api (8081)
+leilao-leitura/    leitura: consultas (GET + SSE) + projecoes (Kafka → Postgres/Redis) + notificacoes (8082)
+agendador-leilao/  worker que monitora prazos e emite comandos de abertura/fechamento (8084)
+ferramentas/       utilitários CLI: simulador de lances concorrentes e reprocessador de projeções
 ```

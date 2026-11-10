@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: leilao-escrita
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/leilao}
+    username: ${DB_COMMAND_USER:command_svc}
+    password: ${DB_COMMAND_PASSWORD:command_svc}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+server:
+  port: 8081
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

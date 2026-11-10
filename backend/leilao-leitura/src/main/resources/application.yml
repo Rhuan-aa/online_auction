@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: leilao-leitura
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/leilao}
+    username: ${DB_PROJECTOR_USER:projector_svc}
+    password: ${DB_PROJECTOR_PASSWORD:projector_svc}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+server:
+  port: 8082
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
