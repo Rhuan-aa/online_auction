@@ -1,9 +1,9 @@
 package br.edu.ifsp.leilao.contratos;
 
-/** Tópicos Kafka. Mensagem: key = auctionId, value = JSON do {@link EventEnvelope}. */
-public final class Topics {
-    public static final String AUCTION_EVENTS = "auction.events";
-    public static final String TIMER_COMMANDS = "auction.commands.timer";
+/** Tópicos Kafka. Mensagem: key = leilaoId, value = JSON do {@link EnvelopeEvento}. */
+public final class Topicos {
+    public static final String EVENTOS_LEILAO     = "leilao.eventos";
+    public static final String COMANDOS_AGENDADOR = "leilao.comandos-agendador";
 
-    private Topics() {}
+    private Topicos() {}
 }
