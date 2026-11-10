@@ -32,7 +32,7 @@ Módulos: `leilao-escrita` (infraestrutura de eventos), `agendador-leilao` (8084
 Módulos: `leilao-leitura` (8082), `ferramentas`
 
 - `leilao-leitura`:
-  - `projecoes`: consome `auction.events` e atualiza `LiveAuctionView` (Redis) e `auction_catalog`, `bid_history` e `bidder_activity` (Postgres `read_model`). É **idempotente**: ignora eventos com versão ≤ `last_version`.
+  - `projecoes`: consome `auction.events` e atualiza `LiveAuctionView` (Redis) e `catalogo_leiloes`, `historico_lances` e `atividade_licitantes` (Postgres `read_model`). É **idempotente**: ignora eventos com versão ≤ `last_version`.
   - `api`: `GET /auctions`, `GET /auctions/{id}`, `GET /auctions/{id}/bids`, `GET /bidders/{id}/bids` e `GET /auctions/{id}/stream` (SSE com `SseEmitter`). Liberar CORS para o front.
   - Lag do consumidor exposto no `/actuator/health` (um `HealthIndicator` customizado).
 - `ferramentas`: `ReprocessadorProjecao`, que apaga a projeção e reprocessa (novo consumer group a partir do offset 0, ou lendo de `event_store.events`).

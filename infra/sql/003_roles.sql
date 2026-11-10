@@ -9,13 +9,13 @@ GRANT CONNECT ON DATABASE leilao TO command_svc, projector_svc, query_svc;
 
 -- command_svc: só event_store
 GRANT USAGE ON SCHEMA event_store TO command_svc;
-GRANT SELECT, INSERT ON event_store.events, event_store.outbox TO command_svc;
+GRANT SELECT, INSERT ON event_store.eventos, event_store.outbox TO command_svc;
 GRANT UPDATE ON event_store.outbox TO command_svc;
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA event_store TO command_svc;
 
--- projector_svc: read_model completo + SELECT em events (replay)
+-- projector_svc: read_model completo + SELECT em eventos (replay)
 GRANT USAGE ON SCHEMA event_store, read_model TO projector_svc;
-GRANT SELECT ON event_store.events TO projector_svc;
+GRANT SELECT ON event_store.eventos TO projector_svc;
 GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON ALL TABLES IN SCHEMA read_model TO projector_svc;
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA read_model TO projector_svc;
 

@@ -37,7 +37,7 @@ cd frontend && npm install && npm run dev          # front em http://localhost:5
 Para zerar tudo, inclusive os dados: `docker compose -f infra/docker-compose.yml down -v`. O SQL em `infra/sql` só roda com o volume vazio.
 
 ## Regras de arquitetura
-- Só o `leilao-escrita` escreve no event store, e `event_store.events` é append-only (protegido por trigger).
+- Só o `leilao-escrita` escreve no event store, e `event_store.eventos` é append-only (protegido por trigger).
 - `leilao-escrita/domain` é Java puro, verificado pelo `ArchitectureTest` (ArchUnit).
 - Módulos de leitura não dependem de `leilao-escrita`: só conversam por eventos de `contratos`.
 - Mensagens no Kafka usam key = `auctionId`, o que garante a ordem por leilão.

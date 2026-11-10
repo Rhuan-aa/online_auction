@@ -1,33 +1,33 @@
-CREATE SCHEMA read_model;
+CREATE SCHEMA IF NOT EXISTS read_model;
 
 -- valores monetários em centavos (BIGINT)
-CREATE TABLE read_model.auction_catalog (
-  auction_id     UUID PRIMARY KEY,
-  seller_id      TEXT        NOT NULL,
-  title          TEXT        NOT NULL,
-  status         TEXT        NOT NULL,
-  starting_price BIGINT      NOT NULL,
-  current_price  BIGINT,
-  starts_at      TIMESTAMPTZ NOT NULL,
-  ends_at        TIMESTAMPTZ NOT NULL,
-  winner_id      TEXT,
-  last_version   INT         NOT NULL
+CREATE TABLE read_model.catalogo_leiloes (
+  leilao_id         UUID PRIMARY KEY,
+  vendedor_id       TEXT        NOT NULL,
+  titulo            TEXT        NOT NULL,
+  status            TEXT        NOT NULL,
+  preco_inicial     BIGINT      NOT NULL,
+  preco_atual       BIGINT,
+  inicio_em         TIMESTAMPTZ NOT NULL,
+  fim_em            TIMESTAMPTZ NOT NULL,
+  vencedor_id       TEXT,
+  ultima_versao     INT         NOT NULL
 );
-CREATE INDEX auction_catalog_status_ends_at ON read_model.auction_catalog (status, ends_at);
+CREATE INDEX catalogo_leiloes_status_fim_em ON read_model.catalogo_leiloes (status, fim_em);
 
-CREATE TABLE read_model.bid_history (
-  auction_id UUID,
-  version    INT         NOT NULL,
-  bidder_id  TEXT        NOT NULL,
-  amount     BIGINT      NOT NULL,
-  placed_at  TIMESTAMPTZ NOT NULL,
-  PRIMARY KEY (auction_id, version)
+CREATE TABLE read_model.historico_lances (
+  leilao_id  UUID,
+  versao     INT         NOT NULL,
+  licitante_id TEXT      NOT NULL,
+  valor      BIGINT      NOT NULL,
+  criado_em  TIMESTAMPTZ NOT NULL,
+  PRIMARY KEY (leilao_id, versao)
 );
 
-CREATE TABLE read_model.bidder_activity (
-  bidder_id       TEXT,
-  auction_id      UUID,
-  last_bid_amount BIGINT      NOT NULL,
-  last_bid_at     TIMESTAMPTZ NOT NULL,
-  PRIMARY KEY (bidder_id, auction_id)
+CREATE TABLE read_model.atividade_licitantes (
+  licitante_id      TEXT,
+  leilao_id         UUID,
+  ultimo_valor      BIGINT      NOT NULL,
+  ultimo_lance_em   TIMESTAMPTZ NOT NULL,
+  PRIMARY KEY (licitante_id, leilao_id)
 );

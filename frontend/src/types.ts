@@ -22,16 +22,13 @@ export interface AuctionExtended { newEndsAt: string }
 export interface AuctionClosed { winnerId: string | null; winningAmount: number | null }
 export interface AuctionCancelled { reason: string }
 
-export interface EventMetadata { correlationId: string; causationId: string; userId: string }
-
 export interface EventEnvelope<P> {
-  globalSeq: number
-  aggregateId: string
-  version: number // versão do agregado após o evento (1..n)
-  type: string
-  occurredAt: string
-  payload: P
-  metadata: EventMetadata
+  id: number
+  leilaoId: string
+  versao: number // versão do leilão após o evento (1..n)
+  tipo: string
+  criadoEm: string
+  dados: P
 }
 
 export type CreateAuctionRequest = AuctionCreated

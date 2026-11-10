@@ -1,30 +1,29 @@
-CREATE SCHEMA event_store;
+CREATE SCHEMA IF NOT EXISTS event_store;
 
-CREATE TABLE event_store.events (
-  global_seq   BIGSERIAL PRIMARY KEY,
-  aggregate_id UUID        NOT NULL,
-  version      INT         NOT NULL,
-  type         TEXT        NOT NULL,
-  payload      JSONB       NOT NULL,
-  metadata     JSONB       NOT NULL, -- correlationId, causationId, userId
-  occurred_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (aggregate_id, version)
+CREATE TABLE event_store.eventos (
+  id            BIGSERIAL PRIMARY KEY,
+  leilao_id     UUID        NOT NULL,
+  versao        INT         NOT NULL,
+  tipo          TEXT        NOT NULL,
+  dados         JSONB       NOT NULL,
+  criado_em     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (leilao_id, versao)
 );
 
 CREATE TABLE event_store.outbox (
-  id               BIGSERIAL PRIMARY KEY,
-  event_global_seq BIGINT NOT NULL REFERENCES event_store.events(global_seq),
-  published_at     TIMESTAMPTZ
+  id            BIGSERIAL PRIMARY KEY,
+  evento_id     BIGINT      NOT NULL REFERENCES event_store.eventos(id),
+  publicado_em  TIMESTAMPTZ
 );
 
-CREATE INDEX outbox_pending ON event_store.outbox (id) WHERE published_at IS NULL;
+CREATE INDEX idx_outbox_pendentes ON event_store.outbox (id) WHERE publicado_em IS NULL;
 
 -- append-only
-CREATE FUNCTION event_store.forbid_mutation() RETURNS trigger LANGUAGE plpgsql AS $$
+CREATE OR REPLACE FUNCTION event_store.proibir_mutacao() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
-  RAISE EXCEPTION 'event_store.events is append-only (% not allowed)', TG_OP;
+  RAISE EXCEPTION 'event_store.eventos é append-only (% não permitido)', TG_OP;
 END $$;
 
-CREATE TRIGGER events_append_only
-  BEFORE UPDATE OR DELETE ON event_store.events
-  FOR EACH ROW EXECUTE FUNCTION event_store.forbid_mutation();
+CREATE TRIGGER eventos_append_only
+  BEFORE UPDATE OR DELETE ON event_store.eventos
+  FOR EACH ROW EXECUTE FUNCTION event_store.proibir_mutacao();

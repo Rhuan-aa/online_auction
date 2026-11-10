@@ -26,7 +26,7 @@ Os três conceitos que a banca vai avaliar:
 
 | Conceito | O que significa aqui | Onde mora no código |
 |---|---|---|
-| **Event Sourcing** | O estado do leilão é derivado dos eventos gravados em `event_store.events`, que nunca são alterados | `leilao-escrita/domain`, `infrastructure/eventstore` |
+| **Event Sourcing** | O estado do leilão é derivado dos eventos gravados em `event_store.eventos`, que nunca são alterados | `leilao-escrita/domain`, `infrastructure/eventstore` |
 | **CQRS** | Escrita e leitura são modelos e APIs separados: a escrita valida regras, a leitura serve telas | `leilao-escrita` x `leilao-leitura` |
 | **EDA com broker** | A escrita publica fatos no Kafka sem saber quem consome; consumidores novos entram sem mexer na escrita | tópico `auction.events` |
 
@@ -95,10 +95,10 @@ Formato de erro: `{"error": "BID_TOO_LOW", "message": "Lance mínimo é 13000"}`
 
 | Rota | Fonte | Resposta |
 |---|---|---|
-| `GET /auctions?status=OPEN` | Postgres `auction_catalog` | lista de `{auctionId, title, status, currentPrice, endsAt}` |
+| `GET /auctions?status=OPEN` | Postgres `catalogo_leiloes` | lista de `{auctionId, title, status, currentPrice, endsAt}` |
 | `GET /auctions/{id}` | Redis (ao vivo) + catálogo | `{auctionId, title, status, currentPrice, leaderId, endsAt, version}` |
-| `GET /auctions/{id}/bids` | `bid_history` | `[{version, bidderId, amount, placedAt}]` |
-| `GET /bidders/{id}/bids` | `bidder_activity` | `[{auctionId, lastBidAmount, lastBidAt}]` |
+| `GET /auctions/{id}/bids` | `historico_lances` | `[{version, bidderId, amount, placedAt}]` |
+| `GET /bidders/{id}/bids` | `atividade_licitantes` | `[{auctionId, lastBidAmount, lastBidAt}]` |
 | `GET /auctions/{id}/stream` | Redis Pub/Sub | SSE: evento `update` com o mesmo JSON de `GET /auctions/{id}` |
 
 Os status no read model são `CREATED`, `OPEN`, `CLOSED` e `CANCELLED`.
@@ -131,7 +131,7 @@ Cada parte tem: **o que é**, **o que entender antes**, **passo a passo** (cada 
 4. `feat(escrita)`: em `api/`, os controllers da seção 2.4, com tradução de exceções para HTTP (`@RestControllerAdvice`) e CORS liberado para `http://localhost:5173`. O `correlationId` vem do header `X-Correlation-Id` ou é gerado.
 5. `feat(escrita)`: listener de `auction.commands.timer` chamando os handlers de start/close.
 
-**Pronto quando:** dá para criar um leilão e dar lances via `curl`, os eventos aparecem em `event_store.events` com versões 1, 2, 3…, e todos os testes do agregado passam.
+**Pronto quando:** dá para criar um leilão e dar lances via `curl`, os eventos aparecem em `event_store.eventos` com versões 1, 2, 3…, e todos os testes do agregado passam.
 
 **Depende de:** B (EventStore). Enquanto ele não fica pronto, use uma implementação em memória no teste: uma `Map<UUID, List<evento>>` basta.
 
@@ -161,12 +161,12 @@ Cada parte tem: **o que é**, **o que entender antes**, **passo a passo** (cada 
 
 **Passo a passo**
 1. `feat(leitura)`: um `@KafkaListener` em `auction.events` (subpacote `projecoes`) que despacha por `type`:
-   - `AuctionCreated`: insere em `auction_catalog`.
+   - `AuctionCreated`: insere em `catalogo_leiloes`.
    - `Started`/`Closed`/`Cancelled`: atualizam o status.
-   - `BidPlaced`: atualiza o preço no catálogo e insere em `bid_history` e `bidder_activity`.
+   - `BidPlaced`: atualiza o preço no catálogo e insere em `historico_lances` e `atividade_licitantes`.
    - `Extended`: atualiza `ends_at`.
    - Todo evento atualiza o hash Redis e publica em `auction:{id}:updates`.
-2. `feat(leitura)`: **idempotência**. Ignore o evento se `version <= last_version` do leilão. `bid_history` já tem PK `(auction_id, version)`, então use `ON CONFLICT DO NOTHING`.
+2. `feat(leitura)`: **idempotência**. Ignore o evento se `version <= last_version` do leilão. `historico_lances` já tem PK `(leilao_id, versao)`, então use `ON CONFLICT DO NOTHING`.
 3. `feat(leitura)`: as rotas da seção 2.5 (subpacote `api`) com o usuário `projector_svc`/`query_svc`. O SSE usa `SseEmitter`, assinando o canal Redis do leilão. Libere CORS para o front.
 4. `feat(leitura)`: um `HealthIndicator` com o **lag** do consumidor (último offset do tópico menos o offset consumido), aparecendo em `/actuator/health`.
 5. `feat(ferramentas)`: `ReprocessadorProjecao` que apaga as chaves `auction:*` do Redis e faz `TRUNCATE` nas tabelas do `read_model`. Depois consome do offset 0 com um group novo, aplicando a mesma lógica de projeção.
@@ -214,7 +214,7 @@ Se um marco atrasar, avise no grupo **no mesmo dia**: os seguintes dependem dele
 |---|---|---|---|
 | 1 | `docker compose up` sobe tudo | Infra reprodutível | D |
 | 2 | Criar leilão e dar lances pela tela | Comando → evento → projeção | A, C, D |
-| 3 | Mostrar a tabela `events` e o Kafka UI | Event Sourcing e broker | B |
+| 3 | Mostrar a tabela `eventos` e o Kafka UI | Event Sourcing e broker | B |
 | 4 | `SimuladorLances` com 50 robôs | Concorrência otimista e um único vencedor | B |
 | 5 | Derrubar o leilao-leitura, dar lances, subir de novo | Desacoplamento e consistência eventual | C |
 | 6 | Apagar o Redis e rodar o reprocessador | Projeções descartáveis | C |
