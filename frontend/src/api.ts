@@ -15,6 +15,15 @@ export interface EstadoLeilao {
   versao: number
 }
 
+/** Item de GET /leiloes?status=. */
+export interface ResumoLeilao {
+  leilaoId: string
+  titulo: string
+  status: EstadoLeilao['status']
+  precoAtual: number | null
+  fimEm: string
+}
+
 /** Item de GET /leiloes/{id}/lances. */
 export interface LanceHistorico { versao: number; licitanteId: string; valor: number; criadoEm: string }
 
@@ -44,6 +53,15 @@ export interface Api {
   /** SEM CQRS: carrega todos os eventos e reconstrói o estado a cada consulta. */
   consultarSemCqrs(leilaoId: string): Promise<EstadoLeilao>
   historicoLances(leilaoId: string): Promise<LanceHistorico[]>
+  /** GET /leiloes?status= (leitura). Sem status, lista todos. */
+  listarLeiloes(status?: EstadoLeilao['status']): Promise<ResumoLeilao[]>
+  /** POST /leiloes/{id}/cancelar. Lança ErroHttp (422 se já tem lance, por exemplo). */
+  cancelarLeilao(leilaoId: string, motivo: string): Promise<{ versao: number }>
+  /**
+   * Acompanha o leilão ao vivo (SSE no real). Manda o estado atual ao assinar e de novo a cada mudança.
+   * Devolve a função que encerra a assinatura.
+   */
+  observarLeilao(leilaoId: string, aoMudar: (estado: EstadoLeilao) => void, aoFalhar?: () => void): () => void
 }
 
 // ---------------------------------------------------------------- real
@@ -90,6 +108,20 @@ const apiReal: Api = {
   // Rota de experimento no leilao-escrita: carregar(eventos) + reconstituir(). Só existe para a comparação.
   consultarSemCqrs: (id) => getJson(`${ESCRITA}/experimento/sem-cqrs/leiloes/${id}`),
   historicoLances: (id) => getJson(`${LEITURA}/leiloes/${id}/lances`),
+  listarLeiloes: (status) => getJson(`${LEITURA}/leiloes${status ? `?status=${status}` : ''}`),
+  async cancelarLeilao(leilaoId, motivo) {
+    const r = await fetch(`${ESCRITA}/leiloes/${leilaoId}/cancelar`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ motivo }),
+    })
+    if (!r.ok) throw await erroDe(r, 'POST cancelar')
+    return r.json()
+  },
+  observarLeilao(leilaoId, aoMudar, aoFalhar) {
+    const fonte = new EventSource(`${LEITURA}/leiloes/${leilaoId}/stream`)
+    fonte.addEventListener('leilao', (ev) => aoMudar(JSON.parse((ev as MessageEvent).data)))
+    fonte.onerror = () => aoFalhar?.() // o EventSource reconecta sozinho; a tela só avisa
+    return () => fonte.close()
+  },
 }
 
 // ---------------------------------------------------------------- simulado
@@ -100,6 +132,7 @@ const apiReal: Api = {
 type Evento =
   | { tipo: 'LeilaoCriado'; vendedorId: string; titulo: string; precoInicial: number; incrementoMinimo: number; fimEm: string }
   | { tipo: 'LeilaoIniciado' }
+  | { tipo: 'LeilaoCancelado' }
   | { tipo: 'LanceRegistrado'; licitanteId: string; valor: number; criadoEm: string }
 
 const naoEncontrado = () => new ErroHttp(404, 'Leilão não encontrado', 'LEILAO_NAO_ENCONTRADO')
@@ -120,6 +153,7 @@ function reconstituir(leilaoId: string, eventos: Evento[]) {
       vendedorId = ev.vendedorId
     }
     if (ev.tipo === 'LeilaoIniciado') estado.status = 'ABERTO'
+    if (ev.tipo === 'LeilaoCancelado') estado.status = 'CANCELADO'
     if (ev.tipo === 'LanceRegistrado') Object.assign(estado, { precoAtual: ev.valor, liderId: ev.licitanteId })
   }
   return { estado, incrementoMinimo, vendedorId }
@@ -136,9 +170,16 @@ function projetar(leilaoId: string) {
     const lances = eventos.flatMap((ev, i) =>
       ev.tipo === 'LanceRegistrado' ? [{ versao: i + 1, licitanteId: ev.licitanteId, valor: ev.valor, criadoEm: ev.criadoEm }] : [])
     const atual = projecao.get(leilaoId)
-    if (!atual || atual.estado.versao < estado.versao) projecao.set(leilaoId, { estado, lances }) // idempotente por versão
+    if (!atual || atual.estado.versao < estado.versao) {                                          // idempotente por versão
+      projecao.set(leilaoId, { estado, lances })
+      avisarObservadores()
+    }
   }, 40 + Math.random() * 80)
 }
+
+const observadoresSimulados = new Set<() => void>()
+/** O "SSE" do simulado: avisa os observadores quando a projeção de algum leilão muda. */
+function avisarObservadores() { observadoresSimulados.forEach((f) => f()) }
 
 const apiSimulada: Api = {
   modo: 'simulado',
@@ -184,6 +225,35 @@ const apiSimulada: Api = {
   async historicoLances(leilaoId) {
     await rede()
     return structuredClone(projecao.get(leilaoId)?.lances ?? [])
+  },
+  async listarLeiloes(status) {
+    await rede()
+    return [...projecao.values()]
+      .map(({ estado: e }) => ({ leilaoId: e.leilaoId, titulo: e.titulo, status: e.status, precoAtual: e.precoAtual, fimEm: e.fimEm }))
+      .filter((l) => !status || l.status === status)
+  },
+  async cancelarLeilao(leilaoId, _motivo) {
+    await rede()
+    const eventos = eventStore.get(leilaoId)
+    if (!eventos) throw naoEncontrado()
+    const { estado } = reconstituir(leilaoId, eventos)
+    if (estado.liderId) throw new ErroHttp(422, 'Leilão com lances não pode ser cancelado', 'HAS_BIDS')
+    if (estado.status === 'ENCERRADO' || estado.status === 'CANCELADO') {
+      throw new ErroHttp(422, 'O leilão não está aberto', 'LEILAO_NAO_ABERTO')
+    }
+    eventos.push({ tipo: 'LeilaoCancelado' })
+    projetar(leilaoId)
+    return { versao: eventos.length }
+  },
+  observarLeilao(leilaoId, aoMudar) {
+    let ultima = -1
+    const enviar = () => {
+      const p = projecao.get(leilaoId)
+      if (p && p.estado.versao !== ultima) { ultima = p.estado.versao; aoMudar(structuredClone(p.estado)) }
+    }
+    observadoresSimulados.add(enviar)
+    enviar()
+    return () => { observadoresSimulados.delete(enviar) }
   },
 }
 
