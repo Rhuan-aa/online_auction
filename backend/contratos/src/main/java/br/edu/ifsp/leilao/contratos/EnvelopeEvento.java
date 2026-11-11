@@ -13,5 +13,5 @@ import java.util.UUID;
  * @param criadoEm momento em que o evento ocorreu
  * @param dados payload com os dados de negócio do evento
  */
-public record EventEnvelope<P>(long id, UUID leilaoId, int versao, String tipo,
+public record EnvelopeEvento<P>(long id, UUID leilaoId, int versao, String tipo,
                                Instant criadoEm, P dados) {}
