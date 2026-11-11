@@ -146,7 +146,7 @@ Cada parte tem: **o que é**, **o que entender antes**, **passo a passo** (cada 
 4. `feat(agendador)`: consome `auction.events` e guarda `auctionId → startsAt/endsAt` em memória. Ao receber `AuctionExtended`, atualiza o prazo. Um `@Scheduled` a cada 1 s publica `StartAuction`/`CloseAuction` em `auction.commands.timer` para o que venceu.
 5. `feat(ferramentas)`: `SimuladorLances` em `ferramentas`. Cria N virtual threads dando lances crescentes no mesmo leilão e, no fim, imprime aceitos, rejeitados por valor e conflitos de versão.
 
-**Pronto quando:** com 50 robôs, o leilão termina com **um único vencedor**, as versões em `events` são contínuas e sem buracos, e todo evento aparece no Kafka UI na mesma ordem.
+**Pronto quando:** com 50 bots, o leilão termina com **um único vencedor**, as versões em `events` são contínuas e sem buracos, e todo evento aparece no Kafka UI na mesma ordem.
 
 ### Pessoa C — Leitura: projeções, consultas e reprocessador
 
@@ -210,7 +210,7 @@ Se um marco atrasar, avise no grupo **no mesmo dia**: os seguintes dependem dele
 | 1 | `docker compose up` sobe tudo | Infra reprodutível | D |
 | 2 | Criar leilão e dar lances pela tela | Comando → evento → projeção | A, C, D |
 | 3 | Mostrar a tabela `eventos` e o Kafka UI | Event Sourcing e broker | B |
-| 4 | `SimuladorLances` com 50 robôs | Concorrência otimista e um único vencedor | B |
+| 4 | `SimuladorLances` com 50 bots | Concorrência otimista e um único vencedor | B |
 | 5 | Derrubar o leilao-leitura, dar lances, subir de novo | Desacoplamento e consistência eventual | C |
 | 6 | Fazer TRUNCATE na leitura e rodar o reprocessador | Projeções descartáveis | C |
 | 7 | Ver notificações no log sem mexer na escrita | Extensibilidade | D |

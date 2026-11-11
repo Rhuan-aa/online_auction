@@ -26,7 +26,7 @@ Módulos: `leilao-escrita` (infraestrutura de eventos), `agendador-leilao` (8084
 - `PostgresEventStore` (em `leilao-escrita/infrastructure`): `load(aggregateId)` e `append(aggregateId, expectedVersion, events)`, gravando eventos e outbox **na mesma transação**. Uma violação do `UNIQUE(aggregate_id, version)` vira `ConcurrencyException`.
 - `OutboxRelay` (em `leilao-escrita/infrastructure`): lê o outbox pendente em ordem, publica em `auction.events` com key = auctionId e marca `published_at`.
 - `agendador-leilao`: consome `AuctionCreated`/`Started`/`Extended`, guarda os prazos e publica `StartAuction`/`CloseAuction` no horário.
-- `ferramentas`: `SimuladorLances` com N robôs (`java.net.http` + virtual threads) dando lances concorrentes no mesmo leilão. Na demo são 50 robôs, com um único vencedor.
+- `ferramentas`: `SimuladorLances` com N bots (`java.net.http` + virtual threads) dando lances concorrentes no mesmo leilão. Na demo são 50 bots, com um único vencedor.
 
 ## Pessoa C — Leitura: projeções, consultas e reprocessamento
 Módulos: `leilao-leitura` (8082), `ferramentas`
