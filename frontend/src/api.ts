@@ -20,13 +20,24 @@ export interface LanceHistorico { versao: number; licitanteId: string; valor: nu
 
 export type ResultadoLance =
   | { tipo: 'aceito'; versao: number }
-  | { tipo: 'recusado' }   // 422: regra violada (ex.: abaixo do mínimo)
-  | { tipo: 'conflito' }   // 409: versão disputada por outro lance mesmo após as retentativas
-  | { tipo: 'erro'; status: number }
+  | { tipo: 'recusado'; codigo?: string }   // 422: regra violada (ex.: LANCE_ABAIXO_DO_MINIMO)
+  | { tipo: 'conflito' }                    // 409: versão disputada por outro lance mesmo após as retentativas
+  | { tipo: 'erro'; status: number }        // status 0 = falha de rede
+
+/** Erro HTTP com o status e, quando o backend mandou, o corpo {erro, mensagem}. */
+export class ErroHttp extends Error {
+  status: number
+  codigo?: string
+  constructor(status: number, mensagem: string, codigo?: string) {
+    super(mensagem)
+    this.status = status
+    this.codigo = codigo
+  }
+}
 
 export interface Api {
   modo: 'real' | 'simulado'
-  criarLeilao(req: CriarLeilaoRequest): Promise<{ leilaoId: string }>
+  criarLeilao(req: CriarLeilaoRequest): Promise<{ leilaoId: string; versao: number }>
   darLance(leilaoId: string, req: DarLanceRequest): Promise<ResultadoLance>
   /** COM CQRS: lê a projeção pronta (read_model). */
   consultarComCqrs(leilaoId: string): Promise<EstadoLeilao>
@@ -40,9 +51,15 @@ export interface Api {
 const ESCRITA = import.meta.env.VITE_COMMAND_API ?? 'http://localhost:8081'
 const LEITURA = import.meta.env.VITE_QUERY_API ?? 'http://localhost:8082'
 
+/** Lê {erro, mensagem}; o 404 da leitura vem no formato padrão do Spring, então o corpo é opcional. */
+async function erroDe(r: Response, rotulo: string): Promise<ErroHttp> {
+  const corpo = await r.json().catch(() => null) as { erro?: string; mensagem?: string } | null
+  return new ErroHttp(r.status, corpo?.mensagem ?? `${rotulo} → ${r.status}`, corpo?.erro)
+}
+
 async function getJson<T>(url: string): Promise<T> {
   const r = await fetch(url)
-  if (!r.ok) throw new Error(`GET ${url} → ${r.status}`)
+  if (!r.ok) throw await erroDe(r, `GET ${url}`)
   return r.json() as Promise<T>
 }
 
@@ -52,15 +69,20 @@ const apiReal: Api = {
     const r = await fetch(`${ESCRITA}/leiloes`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(req),
     })
-    if (!r.ok) throw new Error(`POST /leiloes → ${r.status}`)
+    if (!r.ok) throw await erroDe(r, 'POST /leiloes')
     return r.json()
   },
   async darLance(leilaoId, req) {
-    const r = await fetch(`${ESCRITA}/leiloes/${leilaoId}/lances`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(req),
-    })
+    let r: Response
+    try {
+      r = await fetch(`${ESCRITA}/leiloes/${leilaoId}/lances`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(req),
+      })
+    } catch {
+      return { tipo: 'erro', status: 0 }
+    }
     if (r.ok) return { tipo: 'aceito', versao: (await r.json()).versao }
-    if (r.status === 422) return { tipo: 'recusado' }
+    if (r.status === 422) return { tipo: 'recusado', codigo: (await erroDe(r, 'lance')).codigo }
     if (r.status === 409) return { tipo: 'conflito' }
     return { tipo: 'erro', status: r.status }
   },
@@ -80,6 +102,7 @@ type Evento =
   | { tipo: 'LeilaoIniciado' }
   | { tipo: 'LanceRegistrado'; licitanteId: string; valor: number; criadoEm: string }
 
+const naoEncontrado = () => new ErroHttp(404, 'Leilão não encontrado', 'LEILAO_NAO_ENCONTRADO')
 const esperar = (ms: number) => new Promise((ok) => setTimeout(ok, ms))
 const rede = () => esperar(3 + Math.random() * 5)          // ida e volta HTTP
 const CUSTO_POR_EVENTO_MS = 0.15                            // ler uma linha de eventos + aplicar
@@ -125,16 +148,18 @@ const apiSimulada: Api = {
     eventStore.set(leilaoId, [{ tipo: 'LeilaoCriado', vendedorId: req.vendedorId, titulo: req.titulo, precoInicial: req.precoInicial, incrementoMinimo: req.incrementoMinimo, fimEm: req.fimEm }])
     projetar(leilaoId)
     setTimeout(() => { eventStore.get(leilaoId)!.push({ tipo: 'LeilaoIniciado' }); projetar(leilaoId) }, 300) // agendador
-    return { leilaoId }
+    return { leilaoId, versao: 1 }
   },
   async darLance(leilaoId, req) {
     await rede()
     for (let tentativa = 0; tentativa < 3; tentativa++) {
-      const eventos = eventStore.get(leilaoId)!
+      const eventos = eventStore.get(leilaoId)
+      if (!eventos) throw naoEncontrado()
       const { estado, incrementoMinimo, vendedorId } = reconstituir(leilaoId, eventos) // carregar + reconstituir
-      if (estado.status !== 'ABERTO' || req.licitanteId === vendedorId) return { tipo: 'recusado' }
+      if (estado.status !== 'ABERTO') return { tipo: 'recusado', codigo: 'LEILAO_NAO_ABERTO' }
+      if (req.licitanteId === vendedorId) return { tipo: 'recusado', codigo: 'VENDEDOR_NAO_PODE_DAR_LANCE' }
       const minimo = estado.liderId ? estado.precoAtual! + incrementoMinimo : estado.precoAtual!
-      if (req.valor < minimo) return { tipo: 'recusado' }
+      if (req.valor < minimo) return { tipo: 'recusado', codigo: 'LANCE_ABAIXO_DO_MINIMO' }
       await esperar(Math.random() * 4)                            // tempo entre decidir e gravar
       if (eventos.length !== estado.versao) continue              // UNIQUE(leilao_id, versao) violado → recarrega
       eventos.push({ tipo: 'LanceRegistrado', licitanteId: req.licitanteId, valor: req.valor, criadoEm: new Date().toISOString() })
@@ -145,11 +170,14 @@ const apiSimulada: Api = {
   },
   async consultarComCqrs(leilaoId) {
     await rede()
-    return structuredClone(projecao.get(leilaoId)!.estado)       // uma linha pronta
+    const p = projecao.get(leilaoId)
+    if (!p) throw naoEncontrado()                                // projeção ainda não chegou
+    return structuredClone(p.estado)                             // uma linha pronta
   },
   async consultarSemCqrs(leilaoId) {
     await rede()
-    const eventos = eventStore.get(leilaoId)!
+    const eventos = eventStore.get(leilaoId)
+    if (!eventos) throw naoEncontrado()
     await esperar(eventos.length * CUSTO_POR_EVENTO_MS)            // relê todas as linhas
     return reconstituir(leilaoId, eventos).estado
   },
