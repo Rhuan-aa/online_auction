@@ -18,7 +18,7 @@ class PrazosTest {
     final Prazos prazos = new Prazos();
 
     static List<String> tipos(List<ComandoAgendador> comandos) {
-        return comandos.stream().map(ComandoAgendador::tipo).toList();
+        return comandos.stream().map(comando -> comando.tipo()).toList();
     }
 
     @Test
