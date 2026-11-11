@@ -93,3 +93,49 @@ a { color: var(--destaque); }
 .status-aberto { color: #1a7f37; }
 .status-cancelado { color: #b42318; }
 .erro { color: #b42318; }
+
+h1 { font-size: 1.4rem; margin: 0; }
+.suave { color: var(--suave); }
+.erro {
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-left: 4px solid #c0392b;
+  border-radius: 6px;
+  background: var(--superficie);
+}
+button, select {
+  font: inherit;
+  padding: 6px 12px;
+  color: var(--texto);
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  cursor: pointer;
+}
+button:hover { border-color: var(--destaque); }
+button[aria-pressed='true'] { border-color: var(--destaque); color: var(--destaque); font-weight: 600; }
+
+.filtros { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+
+.cartoes { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.cartao {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 4px 16px;
+  align-items: center;
+  padding: 12px 14px;
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--texto);
+}
+.cartao:hover { border-color: var(--destaque); }
+.cartao .preco { font-weight: 700; font-variant-numeric: tabular-nums; }
+.cartao .suave { grid-column: 1 / -1; font-size: 0.85rem; }
+
+.status { font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--borda); }
+.status-aberto { color: #1a7f4b; border-color: #1a7f4b; }
+.status-criado { color: var(--aviso); border-color: var(--aviso); }
+.status-cancelado { color: #c0392b; border-color: #c0392b; }
+.status-encerrado { color: var(--suave); }
