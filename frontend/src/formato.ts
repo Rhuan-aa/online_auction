@@ -5,3 +5,9 @@ const REAL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL'
 export const dinheiro = (centavos: number | null) => (centavos == null ? '—' : REAL.format(centavos / 100))
 
 export const dataHora = (iso: string) => new Date(iso).toLocaleString('pt-BR')
+
+/** "123,45" ou "123.45" → 12345 centavos. Devolve null se não for um valor positivo. */
+export function paraCentavos(texto: string): number | null {
+  const numero = Number(texto.trim().replace(/\./g, '').replace(',', '.'))
+  return Number.isFinite(numero) && numero > 0 ? Math.round(numero * 100) : null
+}

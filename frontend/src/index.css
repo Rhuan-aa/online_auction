@@ -152,3 +152,28 @@ h2 { font-size: 1.05rem; margin: 24px 0 8px; }
 .lances th, .lances td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--borda); }
 .lances th { font-size: 0.8rem; color: var(--suave); }
 .lances .num { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+.acoes { margin-top: 16px; display: grid; gap: 10px; justify-items: start; }
+.acoes form { width: 100%; max-width: 360px; }
+.acoes label { display: block; font-size: 0.85rem; color: var(--suave); margin-bottom: 4px; }
+.acoes .linha { display: flex; gap: 8px; }
+input {
+  font: inherit;
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  color: var(--texto);
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+}
+button:disabled { opacity: 0.6; cursor: default; }
+.perigo { color: #c0392b; border-color: #c0392b; }
+.ok {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-left: 4px solid #1a7f4b;
+  border-radius: 6px;
+  background: var(--superficie);
+}

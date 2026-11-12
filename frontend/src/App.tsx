@@ -33,7 +33,7 @@ export default function App() {
       <main className="conteudo">
         {rota.tela === 'lista' && <ListaLeiloes />}
         {rota.tela === 'criar' && <p>Criar leilão (etapa futura).</p>}
-        {rota.tela === 'detalhe' && <DetalheLeilao key={rota.leilaoId} leilaoId={rota.leilaoId} />}
+        {rota.tela === 'detalhe' && <DetalheLeilao key={rota.leilaoId} leilaoId={rota.leilaoId} usuario={usuario} />}
       </main>
     </>
   )

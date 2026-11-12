@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
+import AcoesLeilao from './AcoesLeilao.tsx'
 import { api, ErroHttp, type EstadoLeilao, type LanceHistorico } from './api.ts'
 import { dataHora, dinheiro } from './formato.ts'
 import { irPara } from './rota.ts'
+import type { UsuarioId } from './usuarios.ts'
 
-export default function DetalheLeilao({ leilaoId }: { leilaoId: string }) {
+export default function DetalheLeilao({ leilaoId, usuario }: { leilaoId: string; usuario: UsuarioId }) {
   const [estado, setEstado] = useState<EstadoLeilao | null>(null)
   const [lances, setLances] = useState<LanceHistorico[]>([])
   const [naoEncontrado, setNaoEncontrado] = useState(false)
@@ -51,6 +53,8 @@ export default function DetalheLeilao({ leilaoId }: { leilaoId: string }) {
             <div><dt>Líder</dt><dd>{estado.liderId ?? 'sem lances'}</dd></div>
             <div><dt>Termina</dt><dd>{dataHora(estado.fimEm)}</dd></div>
           </dl>
+
+          <AcoesLeilao estado={estado} usuario={usuario} />
 
           <h2>Lances ({lances.length})</h2>
           {lances.length === 0

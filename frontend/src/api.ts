@@ -29,7 +29,7 @@ export interface LanceHistorico { versao: number; licitanteId: string; valor: nu
 
 export type ResultadoLance =
   | { tipo: 'aceito'; versao: number }
-  | { tipo: 'recusado'; codigo?: string }   // 422: regra violada (ex.: LANCE_ABAIXO_DO_MINIMO)
+  | { tipo: 'recusado'; codigo?: string; mensagem?: string }   // 422: regra violada (ex.: LANCE_ABAIXO_DO_MINIMO)
   | { tipo: 'conflito' }                    // 409: versão disputada por outro lance mesmo após as retentativas
   | { tipo: 'erro'; status: number }        // status 0 = falha de rede
 
@@ -100,7 +100,10 @@ const apiReal: Api = {
       return { tipo: 'erro', status: 0 }
     }
     if (r.ok) return { tipo: 'aceito', versao: (await r.json()).versao }
-    if (r.status === 422) return { tipo: 'recusado', codigo: (await erroDe(r, 'lance')).codigo }
+    if (r.status === 422) {
+      const e = await erroDe(r, 'lance')
+      return { tipo: 'recusado', codigo: e.codigo, mensagem: e.message }
+    }
     if (r.status === 409) return { tipo: 'conflito' }
     return { tipo: 'erro', status: r.status }
   },
@@ -197,10 +200,10 @@ const apiSimulada: Api = {
       const eventos = eventStore.get(leilaoId)
       if (!eventos) throw naoEncontrado()
       const { estado, incrementoMinimo, vendedorId } = reconstituir(leilaoId, eventos) // carregar + reconstituir
-      if (estado.status !== 'ABERTO') return { tipo: 'recusado', codigo: 'LEILAO_NAO_ABERTO' }
-      if (req.licitanteId === vendedorId) return { tipo: 'recusado', codigo: 'VENDEDOR_NAO_PODE_DAR_LANCE' }
+      if (estado.status !== 'ABERTO') return { tipo: 'recusado', codigo: 'LEILAO_NAO_ABERTO', mensagem: 'O leilão não está aberto para lances' }
+      if (req.licitanteId === vendedorId) return { tipo: 'recusado', codigo: 'VENDEDOR_NAO_PODE_DAR_LANCE', mensagem: 'O vendedor não pode dar lance no próprio leilão' }
       const minimo = estado.liderId ? estado.precoAtual! + incrementoMinimo : estado.precoAtual!
-      if (req.valor < minimo) return { tipo: 'recusado', codigo: 'LANCE_ABAIXO_DO_MINIMO' }
+      if (req.valor < minimo) return { tipo: 'recusado', codigo: 'LANCE_ABAIXO_DO_MINIMO', mensagem: `Lance mínimo é ${minimo}` }
       await esperar(Math.random() * 4)                            // tempo entre decidir e gravar
       if (eventos.length !== estado.versao) continue              // UNIQUE(leilao_id, versao) violado → recarrega
       eventos.push({ tipo: 'LanceRegistrado', licitanteId: req.licitanteId, valor: req.valor, criadoEm: new Date().toISOString() })
