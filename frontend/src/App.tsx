@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { api } from './api.ts'
 import CriarLeilao from './CriarLeilao.tsx'
 import DetalheLeilao from './DetalheLeilao.tsx'
 import ListaLeiloes from './ListaLeiloes.tsx'
@@ -17,7 +16,6 @@ export default function App() {
 
   return (
     <>
-      {api.modo === 'simulado' && <div className="selo-simulado">MODO SIMULADO: dados em memória, sem backend</div>}
       <header className="topo">
         <a className="marca" href={irPara.lista()}>Leilão</a>
         <nav>

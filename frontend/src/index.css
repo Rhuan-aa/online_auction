@@ -28,15 +28,6 @@
 body { margin: 0; background: var(--fundo); }
 a { color: var(--destaque); }
 
-.selo-simulado {
-  background: var(--aviso-fundo);
-  color: var(--aviso);
-  text-align: center;
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 4px 16px;
-}
-
 .topo {
   display: flex;
   flex-wrap: wrap;
