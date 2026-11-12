@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import Confirmar from './Confirmar.tsx'
 import { api, ErroHttp, type EstadoLeilao } from './api.ts'
 import { dinheiro, paraCentavos } from './formato.ts'
 import type { UsuarioId } from './usuarios.ts'
@@ -18,6 +19,7 @@ function traduzirMensagem(codigo: string | undefined, mensagem: string | undefin
 export default function AcoesLeilao({ estado, usuario }: Props) {
   const [valor, setValor] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [confirmandoCancelamento, setConfirmandoCancelamento] = useState(false)
   const [aviso, setAviso] = useState<Aviso | null>(null)
 
   const vendedor = usuario === 'vendedor-1'
@@ -38,7 +40,7 @@ export default function AcoesLeilao({ estado, usuario }: Props) {
   }
 
   async function cancelar() {
-    if (!window.confirm('Cancelar este leilão?')) return
+    setConfirmandoCancelamento(false)
     setEnviando(true)
     try {
       await api.cancelarLeilao(estado.leilaoId, 'Cancelado pelo vendedor')
@@ -66,7 +68,16 @@ export default function AcoesLeilao({ estado, usuario }: Props) {
       )}
       {aberto && vendedor && <p className="suave">Você está como vendedor: troque o usuário para dar lance.</p>}
       {!aberto && <p className="suave">Este leilão não está aberto para lances.</p>}
-      {vendedor && cancelavel && <button className="perigo" onClick={cancelar} disabled={enviando}>Cancelar leilão</button>}
+      {vendedor && cancelavel && <button className="perigo" onClick={() => setConfirmandoCancelamento(true)} disabled={enviando}>Cancelar leilão</button>}
+      <Confirmar
+        aberto={confirmandoCancelamento}
+        titulo="Cancelar este leilão?"
+        texto="O leilão será encerrado sem vencedor. Isso não pode ser desfeito."
+        rotuloConfirmar="Cancelar leilão"
+        perigo
+        aoConfirmar={cancelar}
+        aoCancelar={() => setConfirmandoCancelamento(false)}
+      />
       {aviso && <p className={aviso.tipo === 'erro' ? 'erro' : 'ok'} role={aviso.tipo === 'erro' ? 'alert' : 'status'}>{aviso.texto}</p>}
     </div>
   )

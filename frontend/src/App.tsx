@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { api } from './api.ts'
+import CriarLeilao from './CriarLeilao.tsx'
 import DetalheLeilao from './DetalheLeilao.tsx'
 import ListaLeiloes from './ListaLeiloes.tsx'
 import { irPara, useRota } from './rota.ts'
@@ -32,7 +33,7 @@ export default function App() {
       </header>
       <main className="conteudo">
         {rota.tela === 'lista' && <ListaLeiloes />}
-        {rota.tela === 'criar' && <p>Criar leilão (etapa futura).</p>}
+        {rota.tela === 'criar' && <CriarLeilao />}
         {rota.tela === 'detalhe' && <DetalheLeilao key={rota.leilaoId} leilaoId={rota.leilaoId} usuario={usuario} />}
       </main>
     </>

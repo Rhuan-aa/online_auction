@@ -177,3 +177,19 @@ button:disabled { opacity: 0.6; cursor: default; }
   border-radius: 6px;
   background: var(--superficie);
 }
+
+.formulario { display: grid; gap: 12px; max-width: 420px; margin-top: 16px; }
+.formulario label { display: grid; gap: 4px; font-size: 0.85rem; color: var(--suave); }
+.formulario button { justify-self: start; }
+
+.modal {
+  max-width: 420px;
+  padding: 20px;
+  color: var(--texto);
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+}
+.modal::backdrop { background: rgb(0 0 0 / 0.5); }
+.modal h2 { margin: 0 0 8px; }
+.modal-botoes { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
