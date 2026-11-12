@@ -17,7 +17,7 @@ export default function App() {
   return (
     <>
       <header className="topo">
-        <a className="marca" href={irPara.lista()}>Leilão</a>
+        <a className="marca" href={irPara.lista()}><span className="logo" aria-hidden="true">⚖</span>Leilão online</a>
         <nav>
           <a href={irPara.lista()} aria-current={rota.tela === 'lista' ? 'page' : undefined}>Leilões</a>
           <a href={irPara.criar()} aria-current={rota.tela === 'criar' ? 'page' : undefined}>Criar leilão</a>

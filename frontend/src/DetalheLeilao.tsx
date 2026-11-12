@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import AcoesLeilao from './AcoesLeilao.tsx'
 import { api, ErroHttp, type EstadoLeilao, type LanceHistorico } from './api.ts'
-import { dataHora, dinheiro, tempoRestante } from './formato.ts'
+import { dataHora, dinheiro, ROTULO_STATUS, tempoRestante } from './formato.ts'
 import { irPara } from './rota.ts'
 import type { UsuarioId } from './usuarios.ts'
 
@@ -47,19 +47,19 @@ export default function DetalheLeilao({ leilaoId, usuario }: { leilaoId: string;
 
   return (
     <section>
-      <p><a href={irPara.lista()}>← Voltar para os leilões</a></p>
+      <p><a className="voltar" href={irPara.lista()}>← Voltar para os leilões</a></p>
 
       {naoEncontrado && !estado && (
         <p className="erro" role="alert">Leilão não encontrado (ou ainda sendo processado). Se você acabou de criar, aguarde um instante.</p>
       )}
-      {!estado && !naoEncontrado && <p>Carregando…</p>}
+      {!estado && !naoEncontrado && <p className="suave">Carregando…</p>}
       {conexaoCaiu && <p className="erro" role="status">Conexão ao vivo perdida. Tentando reconectar…</p>}
 
       {estado && (
         <>
           <div className="detalhe-topo">
             <h1>{estado.titulo}</h1>
-            <span className={`status status-${estado.status.toLowerCase()}`}>{estado.status}</span>
+            <span className={`status status-${estado.status.toLowerCase()}`}>{ROTULO_STATUS[estado.status]}</span>
           </div>
           {estado.status === 'ENCERRADO' && (
             <p className="resultado" role="status">
@@ -70,7 +70,7 @@ export default function DetalheLeilao({ leilaoId, usuario }: { leilaoId: string;
           )}
           {estado.status === 'CANCELADO' && <p className="resultado" role="status">Leilão cancelado pelo vendedor.</p>}
           <dl className="resumo">
-            <div>
+            <div className="destaque">
               <dt>{estado.status === 'ENCERRADO' ? 'Valor final' : 'Preço atual'}</dt>
               <dd className="preco-grande">{dinheiro(estado.precoAtual)}</dd>
             </div>
@@ -82,7 +82,7 @@ export default function DetalheLeilao({ leilaoId, usuario }: { leilaoId: string;
               <dt>{estado.status === 'ENCERRADO' ? 'Terminou' : 'Termina'}</dt>
               <dd>{dataHora(estado.fimEm)}</dd>
               {estado.status === 'ABERTO' && (
-                <dd className="contagem">
+                <dd className={`contagem${Date.parse(estado.fimEm) - agora < 30_000 ? ' urgente' : ''}`}>
                   {Date.parse(estado.fimEm) > agora ? `Faltam ${tempoRestante(Date.parse(estado.fimEm) - agora)}` : 'Encerrando…'}
                 </dd>
               )}
@@ -95,16 +95,19 @@ export default function DetalheLeilao({ leilaoId, usuario }: { leilaoId: string;
           {lances.length === 0
             ? <p className="suave">Nenhum lance ainda.</p>
             : (
+              <div className="tabela">
               <table className="lances">
                 <thead><tr><th>#</th><th>Licitante</th><th>Valor</th><th>Quando</th></tr></thead>
                 <tbody>
-                  {[...lances].reverse().map((l) => (
-                    <tr key={l.versao}>
-                      <td>{l.versao}</td><td>{l.licitanteId}</td><td className="num">{dinheiro(l.valor)}</td><td>{dataHora(l.criadoEm)}</td>
+                  {[...lances].reverse().map((l, i) => (
+                    <tr key={l.versao} className={i === 0 ? 'lider' : undefined}>
+                      <td>{l.versao}</td>
+                      <td>{l.licitanteId}{l.licitanteId === usuario && <span className="voce">você</span>}</td><td className="num">{dinheiro(l.valor)}</td><td>{dataHora(l.criadoEm)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
         </>
       )}

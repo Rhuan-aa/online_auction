@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, type EstadoLeilao, type ResumoLeilao } from './api.ts'
-import { dataHora, dinheiro } from './formato.ts'
+import { dataHora, dinheiro, ROTULO_STATUS } from './formato.ts'
 import { irPara } from './rota.ts'
 
 const FILTROS: { valor: EstadoLeilao['status'] | ''; rotulo: string }[] = [
@@ -31,6 +31,10 @@ export default function ListaLeiloes() {
 
   return (
     <section>
+      <div className="cabecalho">
+        <h1>Leilões</h1>
+        <a className="botao" href={irPara.criar()}>+ Novo leilão</a>
+      </div>
       <div className="filtros" role="group" aria-label="Filtrar por situação">
         {FILTROS.map((f) => (
           <button key={f.valor} aria-pressed={filtro === f.valor} onClick={() => { setLeiloes(null); setFiltro(f.valor) }}>
@@ -38,17 +42,17 @@ export default function ListaLeiloes() {
           </button>
         ))}
       </div>
-      {falhou && <p className="erro">Não consegui carregar a lista. Tentando de novo…</p>}
-      {leiloes === null && !falhou && <p>Carregando…</p>}
-      {leiloes?.length === 0 && <p>Nenhum leilão por aqui. <a href={irPara.criar()}>Criar o primeiro</a>.</p>}
+      {falhou && <p className="erro" role="alert">Não consegui carregar a lista. Tentando de novo…</p>}
+      {leiloes === null && !falhou && <p className="suave">Carregando…</p>}
+      {leiloes?.length === 0 && <p className="vazio">Nenhum leilão por aqui. <a href={irPara.criar()}>Criar o primeiro</a>.</p>}
       <ul className="cartoes">
         {leiloes?.map((l) => (
           <li key={l.leilaoId}>
             <a className="cartao" href={irPara.detalhe(l.leilaoId)}>
               <strong>{l.titulo}</strong>
               <span className="preco">{dinheiro(l.precoAtual)}</span>
-              <span className={`status status-${l.status.toLowerCase()}`}>{l.status}</span>
-              <span className="suave">termina {dataHora(l.fimEm)}</span>
+              <span className={`status status-${l.status.toLowerCase()}`}>{ROTULO_STATUS[l.status]}</span>
+              <span className="suave">{l.status === 'ENCERRADO' ? 'terminou' : 'termina'} {dataHora(l.fimEm)}</span>
             </a>
           </li>
         ))}

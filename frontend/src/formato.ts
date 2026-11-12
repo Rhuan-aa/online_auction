@@ -25,3 +25,10 @@ export function tempoRestante(ms: number): string {
   if (min > 0) return `${min}min ${dois(s)}s`
   return `${s}s`
 }
+
+export const ROTULO_STATUS = {
+  CRIADO: 'Agendado',
+  ABERTO: 'Aberto',
+  ENCERRADO: 'Encerrado',
+  CANCELADO: 'Cancelado',
+} as const
