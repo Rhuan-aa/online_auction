@@ -1,9 +1,20 @@
 import { useEffect, useState } from 'react'
 import AcoesLeilao from './AcoesLeilao.tsx'
 import { api, ErroHttp, type EstadoLeilao, type LanceHistorico } from './api.ts'
-import { dataHora, dinheiro } from './formato.ts'
+import { dataHora, dinheiro, tempoRestante } from './formato.ts'
 import { irPara } from './rota.ts'
 import type { UsuarioId } from './usuarios.ts'
+
+/** Relógio da tela: a hora atual, atualizada a cada segundo enquanto `ativo`. */
+function useAgora(ativo: boolean): number {
+  const [agora, setAgora] = useState(() => Date.now())
+  useEffect(() => {
+    if (!ativo) return
+    const timer = setInterval(() => setAgora(Date.now()), 1000)
+    return () => clearInterval(timer)
+  }, [ativo])
+  return agora
+}
 
 export default function DetalheLeilao({ leilaoId, usuario }: { leilaoId: string; usuario: UsuarioId }) {
   const [estado, setEstado] = useState<EstadoLeilao | null>(null)
@@ -22,6 +33,8 @@ export default function DetalheLeilao({ leilaoId, usuario }: { leilaoId: string;
     api.consultarComCqrs(leilaoId).catch((e) => { if (e instanceof ErroHttp && e.status === 404) setNaoEncontrado(true) })
     return parar
   }, [leilaoId])
+
+  const agora = useAgora(estado?.status === 'ABERTO')
 
   // O histórico vem da mesma projeção: recarrega quando a versão do leilão muda.
   const versao = estado?.versao
@@ -48,10 +61,32 @@ export default function DetalheLeilao({ leilaoId, usuario }: { leilaoId: string;
             <h1>{estado.titulo}</h1>
             <span className={`status status-${estado.status.toLowerCase()}`}>{estado.status}</span>
           </div>
+          {estado.status === 'ENCERRADO' && (
+            <p className="resultado" role="status">
+              {estado.liderId
+                ? <>Leilão encerrado. Vencedor: <strong>{estado.liderId}</strong> com <strong>{dinheiro(estado.precoAtual)}</strong>.</>
+                : 'Leilão encerrado sem lances.'}
+            </p>
+          )}
+          {estado.status === 'CANCELADO' && <p className="resultado" role="status">Leilão cancelado pelo vendedor.</p>}
           <dl className="resumo">
-            <div><dt>Preço atual</dt><dd className="preco-grande">{dinheiro(estado.precoAtual)}</dd></div>
-            <div><dt>Líder</dt><dd>{estado.liderId ?? 'sem lances'}</dd></div>
-            <div><dt>Termina</dt><dd>{dataHora(estado.fimEm)}</dd></div>
+            <div>
+              <dt>{estado.status === 'ENCERRADO' ? 'Valor final' : 'Preço atual'}</dt>
+              <dd className="preco-grande">{dinheiro(estado.precoAtual)}</dd>
+            </div>
+            <div>
+              <dt>{estado.status === 'ENCERRADO' ? 'Vencedor' : 'Líder'}</dt>
+              <dd>{estado.liderId ?? 'sem lances'}</dd>
+            </div>
+            <div>
+              <dt>{estado.status === 'ENCERRADO' ? 'Terminou' : 'Termina'}</dt>
+              <dd>{dataHora(estado.fimEm)}</dd>
+              {estado.status === 'ABERTO' && (
+                <dd className="contagem">
+                  {Date.parse(estado.fimEm) > agora ? `Faltam ${tempoRestante(Date.parse(estado.fimEm) - agora)}` : 'Encerrando…'}
+                </dd>
+              )}
+            </div>
           </dl>
 
           <AcoesLeilao estado={estado} usuario={usuario} />

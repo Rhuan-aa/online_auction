@@ -184,3 +184,14 @@ button:disabled { opacity: 0.6; cursor: default; }
 .modal::backdrop { background: rgb(0 0 0 / 0.5); }
 .modal h2 { margin: 0 0 8px; }
 .modal-botoes { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+.resultado {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-left: 4px solid var(--destaque);
+  border-radius: 8px;
+}
+
+.resumo .contagem { color: var(--destaque); font-variant-numeric: tabular-nums; }
