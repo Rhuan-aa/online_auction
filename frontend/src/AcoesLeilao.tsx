@@ -46,7 +46,7 @@ export default function AcoesLeilao({ estado, usuario }: Props) {
       await api.cancelarLeilao(estado.leilaoId, 'Cancelado pelo vendedor')
       setAviso({ tipo: 'ok', texto: 'Leilão cancelado.' })
     } catch (err) {
-      const texto = err instanceof ErroHttp && err.codigo === 'HAS_BIDS'
+      const texto = err instanceof ErroHttp && err.codigo === 'LEILAO_COM_LANCES'
         ? 'Não dá para cancelar: o leilão já tem lances.'
         : err instanceof Error ? err.message : 'Não foi possível cancelar.'
       setAviso({ tipo: 'erro', texto })
