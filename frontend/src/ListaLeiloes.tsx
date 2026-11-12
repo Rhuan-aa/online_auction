@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, type EstadoLeilao, type ResumoLeilao } from './api.ts'
+import { dataHora, dinheiro } from './formato.ts'
 import { irPara } from './rota.ts'
 
 const FILTROS: { valor: EstadoLeilao['status'] | ''; rotulo: string }[] = [
@@ -9,9 +10,6 @@ const FILTROS: { valor: EstadoLeilao['status'] | ''; rotulo: string }[] = [
   { valor: 'ENCERRADO', rotulo: 'Encerrados' },
   { valor: 'CANCELADO', rotulo: 'Cancelados' },
 ]
-
-const REAL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
-export const dinheiro = (centavos: number | null) => (centavos == null ? '—' : REAL.format(centavos / 100))
 
 const INTERVALO_MS = 3000 // a lista não tem SSE: reconsulta de tempos em tempos
 
@@ -50,7 +48,7 @@ export default function ListaLeiloes() {
               <strong>{l.titulo}</strong>
               <span className="preco">{dinheiro(l.precoAtual)}</span>
               <span className={`status status-${l.status.toLowerCase()}`}>{l.status}</span>
-              <span className="suave">termina {new Date(l.fimEm).toLocaleString('pt-BR')}</span>
+              <span className="suave">termina {dataHora(l.fimEm)}</span>
             </a>
           </li>
         ))}
