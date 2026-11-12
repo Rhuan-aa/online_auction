@@ -2,6 +2,10 @@
 export const USUARIOS = ['vendedor-1', 'licitante-1', 'licitante-2', 'licitante-3'] as const
 export type UsuarioId = (typeof USUARIOS)[number]
 
+/** O vendedor é o único que cria e cancela leilões; os licitantes só dão lances. */
+export const VENDEDOR: UsuarioId = 'vendedor-1'
+export const isVendedor = (usuario: UsuarioId) => usuario === VENDEDOR
+
 const CHAVE = 'usuario'
 
 export function usuarioSalvo(): UsuarioId {

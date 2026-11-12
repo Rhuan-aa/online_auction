@@ -2,8 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { api } from './api.ts'
 import { paraCentavos } from './formato.ts'
 import { irPara } from './rota.ts'
-
-const VENDEDOR = 'vendedor-1' // usuário fixo, sem login (PLANO.md, seção 2.6)
+import { isVendedor, VENDEDOR, type UsuarioId } from './usuarios.ts'
 
 /** Date → "2026-11-11T14:30", o formato do <input type="datetime-local">, no fuso local. */
 function paraCampo(d: Date): string {
@@ -11,7 +10,7 @@ function paraCampo(d: Date): string {
   return local.toISOString().slice(0, 16)
 }
 
-export default function CriarLeilao() {
+export default function CriarLeilao({ usuario }: { usuario: UsuarioId }) {
   const [titulo, setTitulo] = useState('')
   const [precoInicial, setPrecoInicial] = useState('')
   const [incremento, setIncremento] = useState('')
@@ -22,6 +21,7 @@ export default function CriarLeilao() {
 
   async function criar(e: FormEvent) {
     e.preventDefault()
+    if (!isVendedor(usuario)) return
     const preco = paraCentavos(precoInicial)
     const inc = paraCentavos(incremento)
     if (!titulo.trim()) return setErro('Informe o título.')
@@ -44,6 +44,15 @@ export default function CriarLeilao() {
       setErro(err instanceof Error && err.name !== 'TypeError' ? err.message : 'Não foi possível falar com o servidor.')
       setEnviando(false)
     }
+  }
+
+  if (!isVendedor(usuario)) {
+    return (
+      <section>
+        <h1>Criar leilão</h1>
+        <p className="erro" role="alert">Só o vendedor cria leilões. Você está como {usuario}: troque para {VENDEDOR} no topo da página.</p>
+      </section>
+    )
   }
 
   return (

@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import Confirmar from './Confirmar.tsx'
 import { api, ErroHttp, type EstadoLeilao } from './api.ts'
 import { dinheiro, paraCentavos } from './formato.ts'
-import type { UsuarioId } from './usuarios.ts'
+import { isVendedor, type UsuarioId } from './usuarios.ts'
 
 interface Props { estado: EstadoLeilao; usuario: UsuarioId }
 type Aviso = { tipo: 'ok' | 'erro'; texto: string }
@@ -22,7 +22,7 @@ export default function AcoesLeilao({ estado, usuario }: Props) {
   const [confirmandoCancelamento, setConfirmandoCancelamento] = useState(false)
   const [aviso, setAviso] = useState<Aviso | null>(null)
 
-  const vendedor = usuario === 'vendedor-1'
+  const vendedor = isVendedor(usuario)
   const aberto = estado.status === 'ABERTO'
   const cancelavel = estado.status === 'CRIADO' || estado.status === 'ABERTO'
 
