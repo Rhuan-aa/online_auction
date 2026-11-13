@@ -1,0 +1,46 @@
+@startuml 3-componente-escrita
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Nível 3 – Componentes: leilao-escrita
+
+ContainerDb(postgres, "PostgreSQL 16", "Postgres", "event_store (eventos, outbox) e checkpoint.")
+ContainerDb(redis, "Redis", "Redis", "Estado do leilão com versão.")
+ContainerQueue(kafka, "Kafka", "Apache Kafka", "leilao.eventos / leilao.comandos-agendador.")
+Container(front, "Frontend", "React", "Envia comandos REST.")
+
+Container_Boundary(escrita, "leilao-escrita") {
+  Component(controller, "LeilaoController", "Spring REST Controller", "POST /leiloes, /leiloes/{id}/lances, /leiloes/{id}/cancelar.")
+  Component(erros, "TratadorErros", "Spring ControllerAdvice", "Converte regra violada e conflito em respostas HTTP com código.")
+  Component(ouvinte, "OuvinteAgendador", "Kafka Listener", "Recebe comandos iniciar/encerrar do agendador.")
+  Component(servico, "ServicoLeilao", "Application Service", "Obtém o estado, decide e grava com versaoEsperada; retry em conflito (até 3). O encerramento lê sempre do event store, sem cache (ADR-003).")
+  Component(obter, "ObterEstado", "Módulo estado (compartilhado com a leitura)", "Redis, depois checkpoint, depois eventos posteriores à versão.")
+  Component(porta, "EventStore", "Porta (interface)", "Contrato de persistência de eventos.")
+  Component(dominio, "Leilao", "Agregado de domínio (Java puro)", "Lance mínimo, anti-sniping 30 s, cancelamento; devolve eventos.")
+  Component(storepg, "EventStorePostgres", "JDBC", "Implementa EventStore; UNIQUE(leilao_id, versao).")
+  Component(outbox, "PublicadorOutbox", "Relay", "Publica no Kafka os eventos da tabela outbox.")
+  Component(checkpoint, "Checkpoint", "Módulo estado, JDBC", "Grava o estado a cada N eventos e no encerramento, com schema_version.")
+  Component(cache, "CacheEstadoRedis", "Módulo estado, Spring Data Redis", "Estado, resumos e índices. Cache-aside na leitura e write-through após o commit, sempre com a versão.")
+}
+
+Rel(front, controller, "Comandos", "REST/JSON")
+Rel(controller, servico, "Usa")
+Rel(controller, erros, "Erros tratados por")
+Rel(kafka, ouvinte, "Comandos", "Kafka")
+Rel(ouvinte, servico, "Iniciar e encerrar leilão")
+Rel(servico, obter, "Obtém estado")
+Rel(servico, dominio, "Decide")
+Rel(servico, porta, "Anexa eventos")
+Rel(obter, cache, "1. consulta")
+Rel(obter, checkpoint, "2. consulta")
+Rel(obter, porta, "3. eventos posteriores")
+Rel(servico, cache, "Write-through após o commit")
+Rel(servico, checkpoint, "Grava a cada N eventos (assíncrono, após o commit)")
+Rel(storepg, porta, "Implementa")
+Rel(storepg, postgres, "Lê/grava eventos e outbox", "JDBC")
+Rel(checkpoint, postgres, "Lê/grava checkpoints", "JDBC")
+Rel(cache, redis, "Lê/grava", "Redis")
+Rel(outbox, postgres, "Lê outbox", "JDBC")
+Rel(outbox, kafka, "Publica eventos", "Kafka")
+
+SHOW_LEGEND()
+@enduml

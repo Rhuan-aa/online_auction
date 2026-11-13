@@ -1,0 +1,46 @@
+@startuml 2-conteiner
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Nível 2 – Contêineres: Sistema de Leilão Online (Event Sourcing com caching)
+
+SHOW_PERSON_OUTLINE()
+
+Person(vendedor, "Vendedor", "Cria e cancela leilões.")
+Person(licitante, "Licitante", "Dá lances e acompanha ao vivo.")
+Person(adm, "ADM / Apresentador", "Painel de simulação e desempenho.")
+
+System_Boundary(sistema, "Sistema de Leilão Online") {
+  Container(front, "Frontend", "React 19, Vite, TypeScript (:5173)","Lista, detalhe (valor ao vivo), criação de leilão e lances; painel de ADM para simulação e desempenho (A, B e C). Usuários fixos, sem login.")
+  Container(escrita, "leilao-escrita", "Java 21, Spring Boot 4 (:8081)", "Comandos (criar, lance, cancelar). Agregado Leilao, event store, outbox, checkpoint e cache.")
+  Container(leitura, "leilao-leitura", "Java 21, Spring Boot 4 (:8082)", "Consultas (lê o estado do leilão pelo cache, usando o módulo compartilhado estado), SSE e consumidor de notificações (log).")
+  Container(agendador, "agendador-leilao", "Java 21, Spring Boot 4 (:8084)", "Abre e encerra leilões no horário, emitindo comandos.")
+  Container(ferramentas, "ferramentas", "Java, CLI", "Reconstrução do cache e dos checkpoints a partir do event store.")
+  ContainerDb(postgres, "PostgreSQL 16", "Postgres (:5432)", "event_store (eventos append-only e outbox: fonte da verdade) e checkpoint (derivado).")
+  ContainerDb(redis, "Redis", "Redis (:6379)", "Estado do leilão com versão (invalidação por versão); resumos e índices com expiração curta. Derivado e descartável.")
+  ContainerQueue(kafka, "Kafka", "Apache Kafka 3.9 KRaft (:9092)", "Tópicos leilao.eventos e leilao.comandos-agendador; 3 partições, chave = id do leilão.")
+}
+
+Rel(vendedor, front, "Usa", "HTTP")
+Rel(licitante, front, "Usa", "HTTP")
+Rel(adm, front, "Usa painel", "HTTP")
+
+Rel(front, escrita, "Cria leilão, dá lance, cancela", "REST/JSON")
+Rel(front, leitura, "Consulta leilões e lances; atualizações ao vivo", "REST/JSON, SSE")
+
+Rel(escrita, postgres, "Grava eventos, outbox e checkpoints (versaoEsperada)", "JDBC")
+Rel(escrita, redis, "Lê estado; após o commit atualiza estado, resumos e índices (write-through)", "Redis")
+Rel(escrita, kafka, "Publica eventos via outbox", "Kafka")
+Rel(kafka, escrita, "Comandos iniciar/encerrar", "Kafka")
+
+Rel(kafka, agendador, "Eventos do leilão", "Kafka")
+Rel(agendador, kafka, "Comandos iniciar/encerrar", "Kafka")
+
+Rel(kafka, leitura, "Eventos para SSE e notificações", "Kafka")
+Rel(leitura, redis, "Lê estado, resumos e índices", "Redis")
+Rel(leitura, postgres, "Somente leitura: confere a versão; checkpoint + eventos se o cache falhar ou estiver atrás", "JDBC")
+
+Rel(ferramentas, redis, "Apaga e reconstrói", "Redis")
+Rel(ferramentas, postgres, "Apaga checkpoints e relê eventos", "JDBC")
+
+SHOW_LEGEND()
+@enduml

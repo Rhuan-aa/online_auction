@@ -1,0 +1,19 @@
+@startuml 1-contexto
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title Nível 1 – Contexto: Sistema de Leilão Online
+
+SHOW_PERSON_OUTLINE()
+
+Person(vendedor, "Vendedor", "Cria leilões e cancela os que ainda não receberam lances.")
+Person(licitante, "Licitante", "Consulta leilões, dá lances e acompanha o leilão ao vivo.")
+Person(adm, "ADM / Apresentador", "Dispara lances simulados e compara o desempenho das configurações A, B e C.")
+
+System(leilao, "Sistema de Leilão Online", "Permite criar leilões, dar lances em tempo real, encerrar por prazo (com anti-sniping de 30 s) e consultar o estado e o histórico de lances.")
+
+Rel(vendedor, leilao, "Cria e cancela leilões")
+Rel(licitante, leilao, "Consulta leilões e dá lances; recebe atualizações ao vivo")
+Rel(adm, leilao, "Simula lances e mede desempenho")
+
+SHOW_LEGEND()
+@enduml
