@@ -34,9 +34,30 @@ public class ObterEstado {
         this.eventos = eventos;
     }
 
-    /** Caminho normal: usa a cópia do Redis se houver. Vazio se o leilão não existe. */
+    /**
+     * Caminho dos comandos (escrita): usa a cópia do Redis se houver e SEMPRE completa com os
+     * eventos posteriores, para decidir sobre o estado mais recente. Vazio se o leilão não existe.
+     */
     public Optional<EstadoLeilao> obter(UUID leilaoId) {
+        return completarCopia(leilaoId, cache.ler(leilaoId));
+    }
+
+    /**
+     * Caminho das consultas (leitura): confia na cópia do Redis, sem ir ao Event Store, se ela
+     * tiver pelo menos a versaoMinima pedida. Se não houver cópia ou ela estiver atrás, completa
+     * pelo caminho normal (e já deixa a cópia em dia para as próximas consultas).
+     * Com versaoMinima = 0, qualquer cópia serve.
+     */
+    public Optional<EstadoLeilao> obterParaConsulta(UUID leilaoId, int versaoMinima) {
         Optional<EstadoLeilao> copia = cache.ler(leilaoId);
+        if (copia.isPresent() && copia.get().versao() >= versaoMinima) {
+            return copia;
+        }
+        return completarCopia(leilaoId, copia);
+    }
+
+    /** Com cópia: completa a partir dela. Sem cópia: reconstrói (checkpoint ou do início), uma vez só. */
+    private Optional<EstadoLeilao> completarCopia(UUID leilaoId, Optional<EstadoLeilao> copia) {
         if (copia.isPresent()) {
             return completarEGuardar(leilaoId, copia.get());
         }

@@ -7,6 +7,13 @@ spring:
     password: ${DB_PROJECTOR_PASSWORD:projector_svc}
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      # Curtos de propósito: com o Redis fora do ar, a consulta desiste logo e segue pelo banco.
+      timeout: 200ms
+      connect-timeout: 200ms
 server:
   port: 8082
 management:
@@ -17,3 +24,7 @@ management:
   endpoint:
     health:
       show-details: always # mostra o lag da projeção
+  health:
+    redis:
+      # O Redis é só cache: se ele cair, a leitura continua funcionando (ADR-003).
+      enabled: false

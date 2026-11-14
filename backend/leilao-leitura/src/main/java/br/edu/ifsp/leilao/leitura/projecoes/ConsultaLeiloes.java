@@ -4,7 +4,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -14,8 +13,6 @@ import org.springframework.stereotype.Repository;
 public class ConsultaLeiloes {
 
     public record LeilaoResumo(UUID leilaoId, String titulo, String status, Long precoAtual, Instant fimEm) {}
-    public record LeilaoDetalhe(UUID leilaoId, String titulo, String status, Long precoAtual, String liderId,
-                                Instant fimEm, int versao) {}
     public record Lance(int versao, String licitanteId, long valor, Instant criadoEm) {}
     public record Atividade(UUID leilaoId, long ultimoValor, Instant ultimoLanceEm) {}
 
@@ -33,17 +30,6 @@ public class ConsultaLeiloes {
                 ORDER BY fim_em""").params(status, status);
         return sql.query((rs, linha) -> new LeilaoResumo(rs.getObject("leilao_id", UUID.class), rs.getString("titulo"),
                 rs.getString("status"), rs.getObject("preco_atual", Long.class), instante(rs, "fim_em"))).list();
-    }
-
-    public Optional<LeilaoDetalhe> buscar(UUID leilaoId) {
-        return jdbc.sql("""
-                        SELECT leilao_id, titulo, status, preco_atual, vencedor_id, fim_em, ultima_versao
-                        FROM read_model.catalogo_leiloes WHERE leilao_id = ?""")
-                .param(leilaoId)
-                .query((rs, linha) -> new LeilaoDetalhe(rs.getObject("leilao_id", UUID.class), rs.getString("titulo"),
-                        rs.getString("status"), rs.getObject("preco_atual", Long.class), rs.getString("vencedor_id"),
-                        instante(rs, "fim_em"), rs.getInt("ultima_versao")))
-                .optional();
     }
 
     public List<Lance> lances(UUID leilaoId) {

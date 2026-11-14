@@ -1,9 +1,9 @@
 package br.edu.ifsp.leilao.leitura.api;
 
+import br.edu.ifsp.leilao.estado.ObterEstado;
 import br.edu.ifsp.leilao.leitura.projecoes.ConsultaLeiloes;
 import br.edu.ifsp.leilao.leitura.projecoes.ConsultaLeiloes.Atividade;
 import br.edu.ifsp.leilao.leitura.projecoes.ConsultaLeiloes.Lance;
-import br.edu.ifsp.leilao.leitura.projecoes.ConsultaLeiloes.LeilaoDetalhe;
 import br.edu.ifsp.leilao.leitura.projecoes.ConsultaLeiloes.LeilaoResumo;
 import java.util.List;
 import java.util.UUID;
@@ -17,16 +17,22 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-/** API de consulta (PLANO.md, seção 2.5). Só lê o read_model: nunca chama o leilao-escrita. */
+/**
+ * API de consulta (PLANO.md, seção 2.5). Nunca chama o leilao-escrita.
+ * O estado de um leilão vem do cache (ObterEstado); lista e históricos ainda vêm do read_model
+ * até as etapas 8 e 9.
+ */
 @RestController
 @CrossOrigin(origins = "http://localhost:5173")
 public class ConsultaController {
 
     private final ConsultaLeiloes consulta;
+    private final ObterEstado obterEstado;
     private final TransmissorSse transmissor;
 
-    public ConsultaController(ConsultaLeiloes consulta, TransmissorSse transmissor) {
+    public ConsultaController(ConsultaLeiloes consulta, ObterEstado obterEstado, TransmissorSse transmissor) {
         this.consulta = consulta;
+        this.obterEstado = obterEstado;
         this.transmissor = transmissor;
     }
 
@@ -35,9 +41,14 @@ public class ConsultaController {
         return consulta.listar(status);
     }
 
+    /**
+     * Estado do leilão pelo cache. Com ?versaoMinima=N, garante uma resposta com pelo menos a
+     * versão N (ex.: a que o POST do lance devolveu); sem ele, aceita a cópia que houver no Redis.
+     */
     @GetMapping("/leiloes/{id}")
-    public LeilaoDetalhe buscar(@PathVariable UUID id) {
-        return consulta.buscar(id)
+    public LeilaoDetalhe buscar(@PathVariable UUID id, @RequestParam(defaultValue = "0") int versaoMinima) {
+        return obterEstado.obterParaConsulta(id, versaoMinima)
+                .map(estado -> LeilaoDetalhe.de(id, estado))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Leilão não encontrado"));
     }
 

@@ -106,6 +106,25 @@ class ObterEstadoTest {
     }
 
     @Test
+    void consultaConfiaNaCopiaQueTemAVersaoMinimaSemIrAoEventStore() {
+        EstadoLeilao copiaV4 = EstadoLeilao.INICIAL.aplicarTodos(EVENTOS.subList(0, 4));
+        cache.guardado.put(ID, copiaV4);
+
+        assertEquals(Optional.of(copiaV4), obterEstado.obterParaConsulta(ID, 0)); // sem mínima: qualquer cópia
+        assertEquals(Optional.of(copiaV4), obterEstado.obterParaConsulta(ID, 4)); // cópia já tem a v4
+        assertEquals(List.of(), eventStore.pedidosAPartirDe);                     // não foi ao banco
+    }
+
+    @Test
+    void consultaComCopiaAtrasDaVersaoMinimaCompletaPeloEventStore() {
+        cache.guardado.put(ID, EstadoLeilao.INICIAL.aplicarTodos(EVENTOS.subList(0, 4))); // cópia na v4
+
+        assertEquals(Optional.of(ATUAL), obterEstado.obterParaConsulta(ID, 6)); // pediu pelo menos a v6
+        assertEquals(List.of(4), eventStore.pedidosAPartirDe);                  // leu só o que faltava
+        assertEquals(6, cache.guardado.get(ID).versao());                       // e consertou a cópia
+    }
+
+    @Test
     void obterDaFonteIgnoraOCacheMesmoComCopiaEmDia() {
         cache.guardado.put(ID, ATUAL);
 

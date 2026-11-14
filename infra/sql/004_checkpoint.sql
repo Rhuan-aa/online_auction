@@ -15,3 +15,8 @@ CREATE TABLE checkpoint.estados (
 GRANT USAGE ON SCHEMA checkpoint TO command_svc, query_svc;
 GRANT SELECT, INSERT, UPDATE, DELETE ON checkpoint.estados TO command_svc;
 GRANT SELECT ON checkpoint.estados TO query_svc;
+
+-- Temporário: enquanto as projeções existem, a leitura conecta como projector_svc.
+-- Sai junto com o read_model (etapa 9), quando a leitura passa a usar o query_svc.
+GRANT USAGE ON SCHEMA checkpoint TO projector_svc;
+GRANT SELECT ON checkpoint.estados TO projector_svc;
