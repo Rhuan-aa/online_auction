@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
  *
  * Parte da cópia mais recente que houver e aplica só os eventos posteriores à versão dela:
  *   1. cópia no Redis;
- *   2. se não houver, o estado INICIAL (na Etapa 6: o checkpoint);
+ *   2. se não houver, o checkpoint no Postgres; se também não houver, o estado INICIAL (versão 0);
  *   3. eventos do Event Store com versão maior que a da cópia.
  * O Event Store continua sendo a fonte da verdade: a cópia só evita reler o histórico inteiro.
  */
@@ -22,13 +22,15 @@ import org.springframework.stereotype.Component;
 public class ObterEstado {
 
     private final CacheEstadoLeilao cache;
+    private final Checkpoint checkpoint;
     private final LeitorEventos eventos;
 
     /** Reconstruções em andamento, por leilão (ver umaReconstrucaoPorVez). */
     private final Map<UUID, CompletableFuture<Optional<EstadoLeilao>>> emAndamento = new ConcurrentHashMap<>();
 
-    public ObterEstado(CacheEstadoLeilao cache, LeitorEventos eventos) {
+    public ObterEstado(CacheEstadoLeilao cache, Checkpoint checkpoint, LeitorEventos eventos) {
         this.cache = cache;
+        this.checkpoint = checkpoint;
         this.eventos = eventos;
     }
 
@@ -38,7 +40,7 @@ public class ObterEstado {
         if (copia.isPresent()) {
             return completarEGuardar(leilaoId, copia.get());
         }
-        return umaReconstrucaoPorVez(leilaoId, () -> completarEGuardar(leilaoId, EstadoLeilao.INICIAL));
+        return umaReconstrucaoPorVez(leilaoId, () -> completarEGuardar(leilaoId, checkpointOuInicio(leilaoId)));
     }
 
     /**
@@ -47,6 +49,11 @@ public class ObterEstado {
      */
     public Optional<EstadoLeilao> obterDaFonte(UUID leilaoId) {
         return completar(leilaoId, EstadoLeilao.INICIAL);
+    }
+
+    /** Sem cópia no Redis: parte do checkpoint; sem checkpoint, do começo (versão 0). */
+    private EstadoLeilao checkpointOuInicio(UUID leilaoId) {
+        return checkpoint.ler(leilaoId).orElse(EstadoLeilao.INICIAL);
     }
 
     /** Aplica sobre a base os eventos que vieram depois dela. */

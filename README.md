@@ -30,10 +30,17 @@ cd frontend && npm install && npm run dev          # front em http://localhost:5
 | leilao-leitura | http://localhost:8082 | API de consulta (REST + SSE) e projeções / notificações |
 | agendador-leilao | http://localhost:8084 | Worker agendador de abertura e encerramento |
 | PostgreSQL | `localhost:5432`, banco `leilao` (usuários em `backend/.env.example`) |
+| Redis | `localhost:6379` (cache do estado dos leilões; descartável, sem volume) |
 | Kafka | `localhost:9092` (tópicos `auction.events` e `auction.commands.timer`) |
 | Kafka UI | http://localhost:8080 |
 
 Para zerar tudo, inclusive os dados: `docker compose -f infra/docker-compose.yml down -v`. O SQL em `infra/sql` só roda com o volume vazio.
+
+Para aplicar um SQL novo sem perder os dados (ex.: o `004_checkpoint.sql` num banco que já existia):
+
+```bash
+docker compose -f infra/docker-compose.yml exec -T postgres psql -U postgres -d leilao < infra/sql/004_checkpoint.sql
+```
 
 ## Regras de arquitetura
 - Só o `leilao-escrita` escreve no event store, e `event_store.eventos` é append-only (protegido por trigger).

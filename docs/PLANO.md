@@ -107,6 +107,27 @@ Os status no read model são `CREATED`, `OPEN`, `CLOSED` e `CANCELLED`.
 
 O vendedor é `vendedor-1` e os licitantes são `licitante-1`, `licitante-2` e `licitante-3`. O front tem um seletor "Estou como: …".
 
+### 2.7 Cache e checkpoint (módulo `estado`, ADR-003)
+
+O estado de um leilão é uma cópia derivada dos eventos, obtida pelo `ObterEstado`:
+
+1. cópia no **Redis**;
+2. se não houver, o **checkpoint** no Postgres;
+3. se também não houver, o estado inicial (versão 0);
+4. em todos os casos, aplicam-se só os eventos do Event Store com versão **maior** que a da cópia.
+
+O encerramento e a nova tentativa depois de um conflito de versão ignoram as cópias e releem todos os eventos.
+
+| Cópia | Onde | Quando é gravada | Se falhar |
+|---|---|---|---|
+| Redis | hash `leilao:{id}:estado:v1` com os campos `versao` e `json` | A cada evento, logo depois do commit. Um script Lua só grava se a versão for maior. | Aviso no log; a próxima leitura completa com os eventos. |
+| Checkpoint | tabela `checkpoint.estados` (`infra/sql/004_checkpoint.sql`) | Quando a versão passa de um múltiplo de N (`leilao.checkpoint.a-cada-eventos`, padrão **50**) e quando o leilão termina. O upsert só avança. | Aviso no log; o lance continua aceito. |
+
+- As duas cópias guardam o `EstadoLeilao` em JSON com o `SCHEMA_VERSION`. Uma cópia de outro formato é ignorada.
+- Elas são descartáveis: apagar o Redis e a tabela `checkpoint.estados` não perde nada, porque tudo se refaz a partir dos eventos.
+- O checkpoint fica num schema próprio, separado do `event_store`, porque pode ser apagado (ADR-002). O `command_svc` grava e apaga; o `query_svc` só lê.
+- Num banco que já existia, aplique o `004_checkpoint.sql` com o comando do README.
+
 ---
 
 ## 3. As quatro partes

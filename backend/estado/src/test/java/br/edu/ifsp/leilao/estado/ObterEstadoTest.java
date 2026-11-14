@@ -61,9 +61,24 @@ class ObterEstadoTest {
         }
     }
 
+    /** Checkpoint em memória. */
+    static class CheckpointFalso extends Checkpoint {
+        final Map<UUID, EstadoLeilao> guardado = new HashMap<>();
+
+        CheckpointFalso() {
+            super(null, null, 50);
+        }
+
+        @Override
+        public Optional<EstadoLeilao> ler(UUID leilaoId) {
+            return Optional.ofNullable(guardado.get(leilaoId));
+        }
+    }
+
     final EventStoreFalso eventStore = new EventStoreFalso();
     final CacheFalso cache = new CacheFalso();
-    final ObterEstado obterEstado = new ObterEstado(cache, eventStore);
+    final CheckpointFalso checkpoint = new CheckpointFalso();
+    final ObterEstado obterEstado = new ObterEstado(cache, checkpoint, eventStore);
 
     @Test
     void semCopiaLeTodosOsEventosEGuardaNoCache() {
@@ -82,6 +97,15 @@ class ObterEstadoTest {
     }
 
     @Test
+    void semRedisParteDoCheckpointELeSoOQueVeioDepois() {
+        checkpoint.guardado.put(ID, EstadoLeilao.INICIAL.aplicarTodos(EVENTOS.subList(0, 3))); // checkpoint na v3
+
+        assertEquals(Optional.of(ATUAL), obterEstado.obter(ID));
+        assertEquals(List.of(3), eventStore.pedidosAPartirDe); // leu só as versões 4, 5 e 6
+        assertEquals(6, cache.guardado.get(ID).versao());       // e deixou a cópia completa no Redis
+    }
+
+    @Test
     void obterDaFonteIgnoraOCacheMesmoComCopiaEmDia() {
         cache.guardado.put(ID, ATUAL);
 
@@ -97,7 +121,7 @@ class ObterEstadoTest {
                 return List.of();
             }
         };
-        assertTrue(new ObterEstado(cache, vazio).obter(ID).isEmpty());
+        assertTrue(new ObterEstado(cache, checkpoint, vazio).obter(ID).isEmpty());
         assertTrue(cache.guardado.isEmpty()); // nada é guardado para um leilão que não existe
     }
 }
