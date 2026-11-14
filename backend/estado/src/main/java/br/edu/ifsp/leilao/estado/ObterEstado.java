@@ -1,5 +1,7 @@
 package br.edu.ifsp.leilao.estado;
 
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -54,6 +56,23 @@ public class ObterEstado {
             return copia;
         }
         return completarCopia(leilaoId, copia);
+    }
+
+    /**
+     * Para listas: busca as cópias de todos de uma vez no Redis (uma ida só) e confia nelas;
+     * os que não têm cópia passam pelo caminho normal, um a um. Leilões inexistentes ficam de fora.
+     * O mapa devolvido mantém a ordem da lista recebida.
+     */
+    public Map<UUID, EstadoLeilao> obterVariosParaConsulta(List<UUID> leiloes) {
+        Map<UUID, EstadoLeilao> copias = cache.lerVarios(leiloes);
+        Map<UUID, EstadoLeilao> estados = new LinkedHashMap<>();
+        for (UUID leilaoId : leiloes) {
+            Optional<EstadoLeilao> estado = copias.containsKey(leilaoId)
+                    ? Optional.of(copias.get(leilaoId))
+                    : completarCopia(leilaoId, Optional.empty());
+            estado.ifPresent(e -> estados.put(leilaoId, e));
+        }
+        return estados;
     }
 
     /** Com cópia: completa a partir dela. Sem cópia: reconstrói (checkpoint ou do início), uma vez só. */

@@ -37,4 +37,11 @@ public class LeitorEventos {
                         TiposEvento.classeDe(rs.getString("tipo"))))
                 .list();
     }
+
+    /** Ids de todos os leilões: cada leilão tem exatamente um evento de versão 1 (o LeilaoCriado). */
+    public List<UUID> idsDosLeiloes() {
+        return jdbc.sql("SELECT leilao_id FROM event_store.eventos WHERE versao = 1")
+                .query(UUID.class)
+                .list();
+    }
 }

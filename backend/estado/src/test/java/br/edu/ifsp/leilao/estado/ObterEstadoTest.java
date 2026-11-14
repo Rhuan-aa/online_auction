@@ -51,6 +51,13 @@ class ObterEstadoTest {
         }
 
         @Override
+        public Map<UUID, EstadoLeilao> lerVarios(List<UUID> leiloes) {
+            Map<UUID, EstadoLeilao> achados = new HashMap<>();
+            leiloes.stream().filter(guardado::containsKey).forEach(id -> achados.put(id, guardado.get(id)));
+            return achados;
+        }
+
+        @Override
         public boolean gravar(UUID leilaoId, EstadoLeilao estado) {
             EstadoLeilao atual = guardado.get(leilaoId);
             if (atual != null && atual.versao() >= estado.versao()) {
@@ -122,6 +129,20 @@ class ObterEstadoTest {
         assertEquals(Optional.of(ATUAL), obterEstado.obterParaConsulta(ID, 6)); // pediu pelo menos a v6
         assertEquals(List.of(4), eventStore.pedidosAPartirDe);                  // leu só o que faltava
         assertEquals(6, cache.guardado.get(ID).versao());                       // e consertou a cópia
+    }
+
+    @Test
+    void variosDeUmaVezUsaAsCopiasEReconstroiSoOsQueFaltam() {
+        UUID semCopia = UUID.fromString("22222222-2222-2222-2222-222222222222");
+        EstadoLeilao copiaV4 = EstadoLeilao.INICIAL.aplicarTodos(EVENTOS.subList(0, 4));
+        cache.guardado.put(ID, copiaV4);
+
+        Map<UUID, EstadoLeilao> estados = obterEstado.obterVariosParaConsulta(List.of(semCopia, ID));
+
+        assertEquals(List.of(semCopia, ID), List.copyOf(estados.keySet())); // mantém a ordem pedida
+        assertEquals(copiaV4, estados.get(ID));                             // confiou na cópia
+        assertEquals(ATUAL, estados.get(semCopia));                         // reconstruiu o que faltava
+        assertEquals(List.of(0), eventStore.pedidosAPartirDe);              // só esse foi ao banco
     }
 
     @Test

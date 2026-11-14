@@ -12,7 +12,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class ConsultaLeiloes {
 
-    public record LeilaoResumo(UUID leilaoId, String titulo, String status, Long precoAtual, Instant fimEm) {}
     public record Lance(int versao, String licitanteId, long valor, Instant criadoEm) {}
     public record Atividade(UUID leilaoId, long ultimoValor, Instant ultimoLanceEm) {}
 
@@ -20,16 +19,6 @@ public class ConsultaLeiloes {
 
     public ConsultaLeiloes(JdbcClient jdbc) {
         this.jdbc = jdbc;
-    }
-
-    /** status = null lista todos. */
-    public List<LeilaoResumo> listar(String status) {
-        var sql = jdbc.sql("""
-                SELECT leilao_id, titulo, status, preco_atual, fim_em FROM read_model.catalogo_leiloes
-                WHERE ?::text IS NULL OR status = ?::text
-                ORDER BY fim_em""").params(status, status);
-        return sql.query((rs, linha) -> new LeilaoResumo(rs.getObject("leilao_id", UUID.class), rs.getString("titulo"),
-                rs.getString("status"), rs.getObject("preco_atual", Long.class), instante(rs, "fim_em"))).list();
     }
 
     public List<Lance> lances(UUID leilaoId) {
