@@ -37,11 +37,6 @@ public final class Leilao {
         return new Leilao(estado);
     }
 
-    /** Aplica todos os eventos desde o início (usado até a Etapa 3 e nos testes). */
-    public static Leilao reconstituir(List<EventoLeilao> eventos) {
-        return de(EstadoLeilao.INICIAL.aplicarTodos(eventos));
-    }
-
     // ------------------------------------------------------------------ DECIDIR
 
     public static List<EventoLeilao> criar(String vendedorId, String titulo, long precoInicial,

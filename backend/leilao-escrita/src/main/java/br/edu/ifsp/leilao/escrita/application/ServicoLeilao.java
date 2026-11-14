@@ -3,6 +3,8 @@ package br.edu.ifsp.leilao.escrita.application;
 import br.edu.ifsp.leilao.contratos.CriarLeilaoRequest;
 import br.edu.ifsp.leilao.contratos.EventoLeilao;
 import br.edu.ifsp.leilao.escrita.domain.Leilao;
+import br.edu.ifsp.leilao.estado.EstadoLeilao;
+import br.edu.ifsp.leilao.estado.LeitorEventos;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -11,8 +13,8 @@ import org.springframework.stereotype.Service;
 
 /**
  * Executa cada comando sempre do mesmo jeito:
- *   carregar eventos -> reconstituir o Leilao -> Leilao decide -> anexar os novos eventos.
- * Não tem regra de negócio (ela está no Leilao) nem SQL (está no EventStore).
+ *   obter o estado -> Leilao decide -> anexar os novos eventos.
+ * Não tem regra de negócio (ela está no Leilao) nem SQL (está no EventStore e no LeitorEventos).
  */
 @Service
 public class ServicoLeilao {
@@ -20,17 +22,19 @@ public class ServicoLeilao {
     private static final int TENTATIVAS = 3;
 
     private final EventStore eventStore;
+    private final LeitorEventos eventos;
 
-    public ServicoLeilao(EventStore eventStore) {
+    public ServicoLeilao(EventStore eventStore, LeitorEventos eventos) {
         this.eventStore = eventStore;
+        this.eventos = eventos;
     }
 
     /** Devolve o id do novo leilão. A versão dele é 1 (um evento: LeilaoCriado). */
     public UUID criar(CriarLeilaoRequest r) {
-        List<EventoLeilao> eventos = Leilao.criar(r.vendedorId(), r.titulo(), r.precoInicial(),
+        List<EventoLeilao> novos = Leilao.criar(r.vendedorId(), r.titulo(), r.precoInicial(),
                 r.incrementoMinimo(), r.inicioEm(), r.fimEm());
         UUID leilaoId = UUID.randomUUID();
-        eventStore.anexar(leilaoId, 0, eventos);
+        eventStore.anexar(leilaoId, 0, novos);
         return leilaoId;
     }
 
@@ -50,22 +54,22 @@ public class ServicoLeilao {
         executar(leilaoId, leilao -> leilao.encerrar(Instant.now()));
     }
 
-    /** Estado atual reconstituído dos eventos (usado só pela rota de experimento "sem CQRS"). */
-    public Leilao consultar(UUID leilaoId) {
-        return carregar(leilaoId);
+    /** Estado atual (usado só pela rota de experimento do painel de ADM). */
+    public EstadoLeilao consultar(UUID leilaoId) {
+        return obterEstado(leilaoId);
     }
 
     /**
-     * Se dois comandos disputarem a mesma versão, o perdedor recarrega o leilão e decide de novo
+     * Se dois comandos disputarem a mesma versão, o perdedor obtém o estado de novo e decide de novo
      * (o lance pode passar a ser recusado por estar abaixo do novo mínimo). Devolve a nova versão.
      */
     private int executar(UUID leilaoId, Function<Leilao, List<EventoLeilao>> decisao) {
         for (int tentativa = 1; ; tentativa++) {
-            Leilao leilao = carregar(leilaoId);
-            List<EventoLeilao> novos = decisao.apply(leilao);
+            EstadoLeilao estado = obterEstado(leilaoId);
+            List<EventoLeilao> novos = decisao.apply(Leilao.de(estado));
             try {
-                eventStore.anexar(leilaoId, leilao.versao(), novos);
-                return leilao.versao() + novos.size();
+                eventStore.anexar(leilaoId, estado.versao(), novos);
+                return estado.versao() + novos.size();
             } catch (ConflitoDeVersaoException conflito) {
                 if (tentativa == TENTATIVAS) {
                     throw conflito;
@@ -74,11 +78,17 @@ public class ServicoLeilao {
         }
     }
 
-    private Leilao carregar(UUID leilaoId) {
-        List<EventoLeilao> eventos = eventStore.carregar(leilaoId);
-        if (eventos.isEmpty()) {
+    /**
+     * Configuração A (sem cópia): parte do estado INICIAL (versão 0) e aplica todos os eventos.
+     * Na Etapa 5, o ponto de partida passa a ser a cópia do Redis/checkpoint, e só os eventos
+     * posteriores a ela são lidos.
+     */
+    private EstadoLeilao obterEstado(UUID leilaoId) {
+        EstadoLeilao base = EstadoLeilao.INICIAL;
+        EstadoLeilao estado = base.aplicarTodos(eventos.posteriores(leilaoId, base.versao()));
+        if (!estado.existe()) {
             throw new LeilaoNaoEncontradoException(leilaoId);
         }
-        return Leilao.reconstituir(eventos);
+        return estado;
     }
 }

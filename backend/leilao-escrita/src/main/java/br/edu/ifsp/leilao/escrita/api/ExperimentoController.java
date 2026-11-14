@@ -28,7 +28,7 @@ public class ExperimentoController {
 
     @GetMapping("/experimento/sem-cqrs/leiloes/{id}")
     public Resposta consultar(@PathVariable UUID id) {
-        EstadoLeilao e = servico.consultar(id).estado();
+        EstadoLeilao e = servico.consultar(id);
         return new Resposta(id, e.titulo(), e.status(), e.precoAtual(), e.liderId(), e.fimEm(), e.versao());
     }
 }
