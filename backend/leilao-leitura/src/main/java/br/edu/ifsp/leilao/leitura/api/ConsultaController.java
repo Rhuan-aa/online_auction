@@ -1,11 +1,11 @@
 package br.edu.ifsp.leilao.leitura.api;
 
 import br.edu.ifsp.leilao.estado.ObterEstado;
+import br.edu.ifsp.leilao.leitura.consultas.HistoricoLances;
+import br.edu.ifsp.leilao.leitura.consultas.HistoricoLances.Atividade;
+import br.edu.ifsp.leilao.leitura.consultas.HistoricoLances.Lance;
 import br.edu.ifsp.leilao.leitura.consultas.ListagemLeiloes;
 import br.edu.ifsp.leilao.leitura.consultas.ListagemLeiloes.LeilaoResumo;
-import br.edu.ifsp.leilao.leitura.projecoes.ConsultaLeiloes;
-import br.edu.ifsp.leilao.leitura.projecoes.ConsultaLeiloes.Atividade;
-import br.edu.ifsp.leilao.leitura.projecoes.ConsultaLeiloes.Lance;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -20,22 +20,21 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 /**
  * API de consulta (PLANO.md, seção 2.5). Nunca chama o leilao-escrita.
- * O estado e a lista vêm do cache (módulo estado); os históricos ainda vêm do read_model
- * até a etapa 9.
+ * O estado e a lista vêm do cache (módulo estado); os históricos de lances, do Event Store.
  */
 @RestController
 @CrossOrigin(origins = "http://localhost:5173")
 public class ConsultaController {
 
-    private final ConsultaLeiloes consulta;
     private final ListagemLeiloes listagem;
+    private final HistoricoLances historico;
     private final ObterEstado obterEstado;
     private final TransmissorSse transmissor;
 
-    public ConsultaController(ConsultaLeiloes consulta, ListagemLeiloes listagem, ObterEstado obterEstado,
+    public ConsultaController(ListagemLeiloes listagem, HistoricoLances historico, ObterEstado obterEstado,
                               TransmissorSse transmissor) {
-        this.consulta = consulta;
         this.listagem = listagem;
+        this.historico = historico;
         this.obterEstado = obterEstado;
         this.transmissor = transmissor;
     }
@@ -64,11 +63,11 @@ public class ConsultaController {
 
     @GetMapping("/leiloes/{id}/lances")
     public List<Lance> lances(@PathVariable UUID id) {
-        return consulta.lances(id);
+        return historico.doLeilao(id);
     }
 
     @GetMapping("/licitantes/{id}/lances")
     public List<Atividade> atividade(@PathVariable String id) {
-        return consulta.atividade(id);
+        return historico.doLicitante(id);
     }
 }
