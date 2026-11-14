@@ -120,6 +120,6 @@ class LeilaoTest {
     void versaoEhONumeroDeEventosAplicados() {
         Leilao leilao = Leilao.reconstituir(aberto(new LanceRegistrado("licitante-1", 10_000)));
         assertEquals(3, leilao.versao());
-        assertEquals("licitante-1", leilao.liderId());
+        assertEquals("licitante-1", leilao.estado().liderId());
     }
 }

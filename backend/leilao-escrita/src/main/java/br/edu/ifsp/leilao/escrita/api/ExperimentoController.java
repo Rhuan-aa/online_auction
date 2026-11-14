@@ -1,7 +1,7 @@
 package br.edu.ifsp.leilao.escrita.api;
 
 import br.edu.ifsp.leilao.escrita.application.ServicoLeilao;
-import br.edu.ifsp.leilao.escrita.domain.Leilao;
+import br.edu.ifsp.leilao.estado.EstadoLeilao;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -17,8 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 @CrossOrigin(origins = "http://localhost:5173")
 public class ExperimentoController {
 
-    record EstadoLeilao(UUID leilaoId, String titulo, Leilao.Status status, long precoAtual,
-                        String liderId, Instant fimEm, int versao) {}
+    record Resposta(UUID leilaoId, String titulo, EstadoLeilao.Status status, long precoAtual,
+                    String liderId, Instant fimEm, int versao) {}
 
     private final ServicoLeilao servico;
 
@@ -27,8 +27,8 @@ public class ExperimentoController {
     }
 
     @GetMapping("/experimento/sem-cqrs/leiloes/{id}")
-    public EstadoLeilao consultar(@PathVariable UUID id) {
-        Leilao l = servico.consultar(id);
-        return new EstadoLeilao(id, l.titulo(), l.status(), l.precoAtual(), l.liderId(), l.fimEm(), l.versao());
+    public Resposta consultar(@PathVariable UUID id) {
+        EstadoLeilao e = servico.consultar(id).estado();
+        return new Resposta(id, e.titulo(), e.status(), e.precoAtual(), e.liderId(), e.fimEm(), e.versao());
     }
 }
