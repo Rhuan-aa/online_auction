@@ -32,7 +32,7 @@ Módulos: `leilao-escrita` (infraestrutura de eventos), `agendador-leilao` (8084
 ## Pessoa C — Cache do estado, consultas e reconstrução
 Módulos: `estado`, `leilao-leitura` (8082), `ferramentas` (detalhes em [PLANO_CACHE.md](PLANO_CACHE.md))
 
-- `estado`: `EstadoLeilao` (aplicar eventos) e `ObterEstado` (Redis → checkpoint → eventos posteriores), com `CacheEstadoLeilao` (Redis, Lua condicional, índice de abertos), `Checkpoint`, `LeitorEventos`, configurações A/B/C e métricas.
+- `estado`: `EstadoLeilao` (aplicar eventos) e `ObterEstado` (Redis → checkpoint → eventos posteriores), com `CacheEstadoLeilao` (Redis com comandos básicos: GET/SET/MGET e set de abertos), `Checkpoint`, `LeitorEventos`, configurações A/B/C e métricas.
 - `leilao-leitura`:
   - `api`: `GET /leiloes`, `GET /leiloes/{id}?versaoMinima=`, `GET /leiloes/{id}/lances`, `GET /licitantes/{id}/lances` e `GET /leiloes/{id}/stream` (SSE com `SseEmitter`, disparado pelo Kafka). Liberar CORS para o front.
   - `consultas`: lista pelo índice de abertos; históricos de lances direto do Event Store.

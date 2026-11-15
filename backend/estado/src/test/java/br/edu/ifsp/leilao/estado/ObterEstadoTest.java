@@ -38,7 +38,7 @@ class ObterEstadoTest {
         }
     }
 
-    /** Redis em memória, com a mesma regra do Lua: só grava se a versão for maior. */
+    /** Redis em memória, com a mesma regra do cache: só grava se a versão for maior. */
     static class CacheFalso extends CacheEstadoLeilao {
         final Map<UUID, EstadoLeilao> guardado = new HashMap<>();
 

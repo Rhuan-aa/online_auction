@@ -12,13 +12,13 @@ Stack: Spring Boot 4.1.2 (Jackson 3), Java 21, JdbcClient, Kafka, Postgres, Mave
 |---|---|
 | Escopo | Seguir o ADR-003: migrar e remover o `read_model` |
 | Mecanismo | Só `RedisTemplate` (sem Spring Cache) |
-| Estado por leilão | Hash `{versao, json}` em `leilao:{id}:estado:v1` (o `v1` é o `SCHEMA_VERSION`), sem TTL, gravação condicional por versão (script Lua) |
+| Estado por leilão | Texto com o JSON em `leilao:{id}:estado:v1` (o `v1` é o `SCHEMA_VERSION`), sem TTL, gravação condicional por versão: `GET`, compara, `SET` *(ajustado: comandos básicos no lugar do Lua)* |
 | Comandos | Nunca confiam no cache: o banco decide (`versaoEsperada` + `UNIQUE(leilao_id, versao)`); em conflito recarrega da fonte sem cache |
 | Consultas | Confiam no Redis. Com versão mínima (`?versaoMinima=`, opcional), se o cache estiver atrás, desce para checkpoint + eventos *(ajustado: nome em português)*. O ouvinte Kafka do SSE pede a versão de cada evento e, com isso, conserta a cópia se a escrita não conseguiu gravá-la |
 | Encerramento e vencedor | Sempre reconstroem do event store |
 | Redis fora do ar | Captura a exceção e usa timeout curto (100–200 ms). **Sem circuit breaker** |
 | Stampede | Single-flight por JVM (a escrita tem uma instância) |
-| Listas | Índice `leiloes:abertos` (sorted set, score = `fimEm`, sem TTL), mantido pelo **mesmo script Lua** que grava o estado *(ajustado)*. `?status=ABERTO` lê o índice; os outros filtros, "todos" e o índice vazio usam os ids do Event Store. Os estados vêm de uma vez por pipeline (`MGET` não serve para hash) |
+| Listas | Índice `leiloes:abertos` (set de ids, sem TTL; `SADD`/`SREM` logo depois do `SET` do estado) *(ajustado: set simples, a ordem pelo fim é feita em Java)*. `?status=ABERTO` lê o índice (`SMEMBERS`); os outros filtros, "todos" e o índice vazio usam os ids do Event Store. Os estados vêm de uma vez por `MGET` |
 | Históricos (lances do leilão e do licitante) | Direto do Event Store, filtrando `LanceRegistrado` *(ajustado: sem sorted set no Redis)*. Sempre corretos e sem estrutura extra |
 | Quando gravar no Redis | Logo depois do `anexar`, que já fez o commit (o `@Transactional` está nele) *(ajustado: sem `afterCommit`)*. Exceções capturadas por dentro (não podem fazer o comando parecer falho) |
 | Lógica de aplicar eventos | Função pura `aplicar(estado, evento)` e record `EstadoLeilao` no módulo `estado`, reutilizados pelo agregado `Leilao` e pela leitura |
@@ -43,13 +43,13 @@ Stack: Spring Boot 4.1.2 (Jackson 3), Java 21, JdbcClient, Kafka, Postgres, Mave
 
 **SSE:** a leitura recebe o evento pelo Kafka e consulta com versão mínima igual à do evento.
 
-**Lista de abertos:** entra no `LeilaoIniciado`, sai no `LeilaoEncerrado` e no `LeilaoCancelado`, muda de score no `LeilaoProrrogado`. A rota lê os ids do índice, busca os estados de uma vez (`MGET`) e monta o resumo.
+**Lista de abertos:** entra no `LeilaoIniciado`, sai no `LeilaoEncerrado` e no `LeilaoCancelado`. A rota lê os ids do índice, busca os estados de uma vez (`MGET`) e monta o resumo.
 
 ## 4. Entregas (PRs pequenos)
 
 ### PR 1 — Redis + estado na escrita (configs A e C)
 - Redis (`redis:7-alpine`) em `infra/docker-compose.yml`, `REDIS_HOST/PORT` em `backend/.env.example` e `spring.data.redis.*` nos YAMLs, com timeout curto.
-- Módulo novo `estado` no `backend/pom.xml`: `EstadoLeilao`, `aplicar`, interface de obter estado (para a Pessoa B plugar o checkpoint), `CacheEstadoLeilao` (hash + Lua).
+- Módulo novo `estado` no `backend/pom.xml`: `EstadoLeilao`, `aplicar`, interface de obter estado (para a Pessoa B plugar o checkpoint), `CacheEstadoLeilao` (GET/SET + set de abertos).
 - `Leilao` passa a usar `aplicar` (continua Java puro).
 - `ServicoLeilao.carregar`: Redis → eventos posteriores (e checkpoint quando existir).
 - Gravação no Redis após o commit, pelo método auxiliar de "após commit" chamado no `ServicoLeilao.executar` (e no `criar`), logo depois do `anexar`.
@@ -91,8 +91,7 @@ Stack: Spring Boot 4.1.2 (Jackson 3), Java 21, JdbcClient, Kafka, Postgres, Mave
 - ArchUnit: estado/cache só no módulo `estado`; `leilao-leitura` não depende de `leilao-escrita`; `Leilao` sem Spring.
 
 ## 6. Riscos e armadilhas
-- **Cache velho sobrescrevendo novo:** leitor lê a versão 5, a escrita grava a 6, o leitor grava a 5 por cima. A gravação condicional em Lua resolve; não usar `SET` simples.
-- **Lua e JSON:** compare a versão num campo numérico do hash; não parsear JSON no Lua.
+- **Cache velho sobrescrevendo novo:** leitor lê a versão 5, a escrita grava a 6, o leitor grava a 5 por cima. Comparar a versão (`GET`) antes do `SET` resolve quase sempre *(ajustado: sem Lua)*; a brecha que sobra entre o `GET` e o `SET` só deixa a cópia atrasada, e quem lê completa com os eventos.
 - **Gravar antes do commit:** se houver rollback, o Redis fica à frente do banco e, sem TTL, o erro permanece. Gravar só em `afterCommit`.
 - **Formato do estado mudou:** versionar o formato (`schema_version`) e descartar entradas antigas.
 - **Jackson 3:** `GenericJacksonJsonRedisSerializer` não liga default typing sozinho e a saída pode diferir do Jackson 2; há issue aberta sobre coleções (contra versão antiga, não sei se corrigida). Usar `StringRedisTemplate` + o `JsonMapper` da aplicação com record concreto.

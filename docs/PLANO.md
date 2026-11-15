@@ -128,7 +128,7 @@ Há três jeitos de pedir o estado:
 
 | Cópia | Onde | Quando é gravada | Se falhar |
 |---|---|---|---|
-| Redis | hash `leilao:{id}:estado:v1` (`versao` e `json`) e o índice `leiloes:abertos` (sorted set, score = fim) | A cada evento, logo depois do commit, e quando uma leitura completa uma cópia atrasada. Um único script Lua grava o estado só se a versão for maior e, junto, atualiza o índice. | Aviso no log. A próxima leitura completa com os eventos, e o ouvinte do SSE conserta a cópia quando o evento chega pelo Kafka. |
+| Redis | texto `leilao:{id}:estado:v1` (JSON do estado, com a versão) e o índice `leiloes:abertos` (set de ids) | A cada evento, logo depois do commit, e quando uma leitura completa uma cópia atrasada. Comandos básicos: `GET` a cópia, compara a versão, `SET` se for maior e `SADD`/`SREM` no índice. | Aviso no log. A próxima leitura completa com os eventos, e o ouvinte do SSE conserta a cópia quando o evento chega pelo Kafka. |
 | Checkpoint | tabela `checkpoint.estados` (`infra/sql/004_checkpoint.sql`) | Quando a versão passa de um múltiplo de N (`leilao.checkpoint.a-cada-eventos`, padrão **50**) e quando o leilão termina. O upsert só avança. | Aviso no log; o lance continua aceito. |
 
 - As duas cópias guardam o `EstadoLeilao` em JSON com o `SCHEMA_VERSION`. Uma cópia de outro formato é ignorada.
@@ -184,11 +184,11 @@ Cada parte tem: **o que é**, **o que entender antes**, **passo a passo** (cada 
 
 **O que é.** O caminho pelo qual escrita e leitura obtêm o estado de um leilão sem reler todo o histórico (ADR-003), e as consultas da leitura em cima dele. Também prova a característica mais impressionante do Event Sourcing: **apagar as cópias e reconstruí-las idênticas a partir dos eventos**.
 
-**Entender antes.** Cópia derivada × fonte da verdade (uma cópia velha é incompleta, nunca errada), cache-aside e write-through, gravação condicional (o script Lua), cache stampede e o que acontece quando o Redis cai.
+**Entender antes.** Cópia derivada × fonte da verdade (uma cópia velha é incompleta, nunca errada), cache-aside e write-through, gravação condicional (comparar a versão antes do `SET`), cache stampede e o que acontece quando o Redis cai.
 
 **Passo a passo** (detalhado em [PLANO_CACHE.md](PLANO_CACHE.md))
 1. `feat(estado)`: módulo `estado` com o `EstadoLeilao` (aplicar eventos) e o teste "continuar de uma cópia = reler tudo".
-2. `feat(estado)`: `LeitorEventos` (eventos posteriores a uma versão), `CacheEstadoLeilao` (Redis, Lua condicional, índice de abertos), `Checkpoint` e `ObterEstado` (Redis → checkpoint → eventos, com single-flight).
+2. `feat(estado)`: `LeitorEventos` (eventos posteriores a uma versão), `CacheEstadoLeilao` (Redis com comandos básicos: GET/SET/MGET e set de abertos), `Checkpoint` e `ObterEstado` (Redis → checkpoint → eventos, com single-flight).
 3. `feat(leitura)`: `GET /leiloes/{id}?versaoMinima=` e o SSE pelo cache, com ouvinte Kafka próprio que conserta a cópia.
 4. `feat(leitura)`: lista pelo índice de abertos e históricos de lances pelo Event Store; remoção do `read_model`.
 5. `feat(estado)`: configurações A/B/C e métricas em `/actuator/metrics`.

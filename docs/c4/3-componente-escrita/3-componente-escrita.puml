@@ -20,7 +20,7 @@ Container_Boundary(escrita, "leilao-escrita") {
   Component(storepg, "EventStorePostgres", "JDBC", "Implementa EventStore; UNIQUE(leilao_id, versao).")
   Component(outbox, "PublicadorOutbox", "Relay", "Publica no Kafka os eventos da tabela outbox.")
   Component(checkpoint, "Checkpoint", "Módulo estado, JDBC", "Grava o estado a cada N eventos e no encerramento, com schema_version. Upsert que só avança.")
-  Component(cache, "CacheEstadoLeilao", "Módulo estado, Spring Data Redis", "Estado e índice de abertos, gravados juntos por um script Lua que só avança a versão. Cache-aside na leitura e write-through após o commit.")
+  Component(cache, "CacheEstadoLeilao", "Módulo estado, Spring Data Redis", "Estado (GET/SET de um JSON) e índice de abertos (SADD/SREM); só grava se a versão for maior. Cache-aside na leitura e write-through após o commit.")
 }
 
 Rel(front, controller, "Comandos", "REST/JSON")

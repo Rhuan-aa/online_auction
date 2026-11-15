@@ -16,7 +16,7 @@ System_Boundary(sistema, "Sistema de Leilão Online") {
   Container(agendador, "agendador-leilao", "Java 21, Spring Boot 4 (:8084)", "Abre e encerra leilões no horário, emitindo comandos.")
   Container(ferramentas, "ferramentas", "Java, CLI", "Reconstrução do cache e dos checkpoints a partir do event store.")
   ContainerDb(postgres, "PostgreSQL 16", "Postgres (:5432)", "event_store (eventos append-only e outbox: fonte da verdade) e checkpoint (derivado).")
-  ContainerDb(redis, "Redis", "Redis (:6379)", "Estado do leilão com versão (gravação condicional por Lua) e índice de leilões abertos. Derivado e descartável.")
+  ContainerDb(redis, "Redis", "Redis (:6379)", "Estado do leilão com versão (JSON por GET/SET) e índice de leilões abertos (set). Derivado e descartável.")
   ContainerQueue(kafka, "Kafka", "Apache Kafka 3.9 KRaft (:9092)", "Tópicos leilao.eventos e leilao.comandos-agendador; 3 partições, chave = id do leilão.")
 }
 
