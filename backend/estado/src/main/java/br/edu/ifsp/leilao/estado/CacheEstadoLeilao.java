@@ -2,6 +2,7 @@ package br.edu.ifsp.leilao.estado;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -144,6 +145,18 @@ public class CacheEstadoLeilao {
             avisar("ler o índice de abertos", e);
             return Optional.empty();
         }
+    }
+
+    /**
+     * Apaga todas as cópias de estado e o índice de abertos. Só para a ferramenta de reconstrução:
+     * KEYS percorre o Redis inteiro, o que é aceitável numa manutenção, não no caminho de um pedido.
+     * Devolve quantas chaves apagou.
+     */
+    public long apagarTudo() {
+        Set<String> chaves = new HashSet<>(redis.keys("leilao:*"));
+        chaves.add(ABERTOS);
+        Long apagadas = redis.delete(chaves);
+        return apagadas == null ? 0 : apagadas;
     }
 
     /**

@@ -8,3 +8,11 @@ spring:
     # As ferramentas refazem os checkpoints, então usam o usuário da escrita (que pode gravá-los).
     username: ${DB_COMMAND_USER:command_svc}
     password: ${DB_COMMAND_PASSWORD:command_svc}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+leilao:
+  cache:
+    # A reconstrução sempre refaz as duas cópias (Redis e checkpoint).
+    configuracao: C

@@ -73,6 +73,11 @@ public class Checkpoint {
         return passouDeUmMultiplo || atual.terminou();
     }
 
+    /** Apaga todos os checkpoints (ferramenta de reconstrução). Devolve quantos apagou. */
+    public int apagarTodos() {
+        return jdbc.sql("DELETE FROM checkpoint.estados").update();
+    }
+
     /** Só avança: um checkpoint mais antigo nunca sobrescreve um mais novo. */
     void gravar(UUID leilaoId, EstadoLeilao estado) {
         jdbc.sql("""
