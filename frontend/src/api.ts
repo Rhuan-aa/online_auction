@@ -55,13 +55,11 @@ export interface Api {
   /** POST /leiloes/{id}/cancelar. Lança ErroHttp (422 se já tem lance, por exemplo). */
   cancelarLeilao(leilaoId: string, motivo: string): Promise<{ versao: number }>
   /**
-   * Acompanha o leilão ao vivo (SSE no real). Manda o estado atual ao assinar e de novo a cada mudança.
+   * Acompanha o leilão ao vivo (SSE). Manda o estado atual ao assinar e de novo a cada mudança.
    * Devolve a função que encerra a assinatura.
    */
   observarLeilao(leilaoId: string, aoMudar: (estado: EstadoLeilao) => void, aoFalhar?: () => void): () => void
 }
-
-// ---------------------------------------------------------------- real
 
 const ESCRITA = import.meta.env.VITE_COMMAND_API ?? 'http://localhost:8081'
 const LEITURA = import.meta.env.VITE_QUERY_API ?? 'http://localhost:8082'
@@ -78,7 +76,7 @@ async function getJson<T>(url: string): Promise<T> {
   return r.json() as Promise<T>
 }
 
-const apiReal: Api = {
+export const api: Api = {
   async criarLeilao(req) {
     const r = await fetch(`${ESCRITA}/leiloes`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(req),
@@ -122,4 +120,3 @@ const apiReal: Api = {
   },
 }
 
-export const api: Api = apiReal
