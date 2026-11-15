@@ -17,11 +17,24 @@ spring:
       connect-timeout: 200ms
 server:
   port: 8082
+leilao:
+  cache:
+    # A = sem cópia (relê todos os eventos), B = só checkpoint, C = Redis + checkpoint (ADR-003).
+    # Use a mesma nos dois serviços. Ex.: CACHE_CONFIGURACAO=A para medir o custo sem cache.
+    configuracao: ${CACHE_CONFIGURACAO:C}
 management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health, metrics
+      # O painel de ADM (front) lê /actuator/metrics direto do navegador.
+      cors:
+        allowed-origins: http://localhost:5173
+        allowed-methods: GET
+  metrics:
+    tags:
+      # Toda métrica sai marcada com a configuração ativa, para o painel de ADM comparar A/B/C.
+      configuracao: ${leilao.cache.configuracao}
   health:
     redis:
       # O Redis é só cache: se ele cair, a leitura continua funcionando (ADR-003).

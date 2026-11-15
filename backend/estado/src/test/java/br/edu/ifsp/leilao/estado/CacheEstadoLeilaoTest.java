@@ -27,7 +27,7 @@ class CacheEstadoLeilaoTest {
         fabrica.afterPropertiesSet();
         fabrica.start();
         StringRedisTemplate redis = new StringRedisTemplate(fabrica);
-        return new CacheEstadoLeilao(redis, json);
+        return new CacheEstadoLeilao(redis, json, Configuracao.C);
     }
 
     @AfterEach

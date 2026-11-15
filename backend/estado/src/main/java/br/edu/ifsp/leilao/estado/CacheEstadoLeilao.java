@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -63,13 +64,20 @@ public class CacheEstadoLeilao {
 
     private final StringRedisTemplate redis;
     private final JsonMapper json;
+    /** Falso nas configurações A e B: todo método se comporta como "Redis sem cópia nenhuma". */
+    private final boolean ligado;
 
-    public CacheEstadoLeilao(StringRedisTemplate redis, JsonMapper json) {
+    public CacheEstadoLeilao(StringRedisTemplate redis, JsonMapper json,
+                             @Value("${leilao.cache.configuracao:C}") Configuracao configuracao) {
         this.redis = redis;
         this.json = json;
+        this.ligado = configuracao.usaRedis();
     }
 
     public Optional<EstadoLeilao> ler(UUID leilaoId) {
+        if (!ligado) {
+            return Optional.empty();
+        }
         try {
             Object guardado = redis.opsForHash().get(chave(leilaoId), CAMPO_JSON);
             return Optional.ofNullable(guardado).map(texto -> json.readValue((String) texto, EstadoLeilao.class));
@@ -84,6 +92,9 @@ public class CacheEstadoLeilao {
      * fora do mapa; com o Redis fora do ar, o mapa vem vazio.
      */
     public Map<UUID, EstadoLeilao> lerVarios(List<UUID> leiloes) {
+        if (!ligado) {
+            return Map.of();
+        }
         try {
             List<Object> jsons = redis.executePipelined((RedisCallback<Object>) conexao -> {
                 leiloes.forEach(id -> conexao.hashCommands().hGet(bytes(chave(id)), bytes(CAMPO_JSON)));
@@ -104,6 +115,9 @@ public class CacheEstadoLeilao {
 
     /** Devolve true se gravou; false se o Redis já tinha uma versão igual ou mais nova (ou falhou). */
     public boolean gravar(UUID leilaoId, EstadoLeilao estado) {
+        if (!ligado) {
+            return false;
+        }
         try {
             Long gravou = redis.execute(GRAVAR_SE_MAIS_NOVO, List.of(chave(leilaoId), ABERTOS),
                     String.valueOf(estado.versao()), json.writeValueAsString(estado), estado.status().name(),
@@ -120,6 +134,9 @@ public class CacheEstadoLeilao {
      * Vazio se o Redis estiver fora do ar (quem chama decide o que fazer).
      */
     public Optional<List<UUID>> abertos() {
+        if (!ligado) {
+            return Optional.empty();
+        }
         try {
             Set<String> ids = redis.opsForZSet().range(ABERTOS, 0, -1);
             return Optional.ofNullable(ids).map(lista -> lista.stream().map(UUID::fromString).toList());

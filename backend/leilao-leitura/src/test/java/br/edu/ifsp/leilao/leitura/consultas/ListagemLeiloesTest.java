@@ -6,9 +6,11 @@ import br.edu.ifsp.leilao.contratos.EventoLeilao.LeilaoCancelado;
 import br.edu.ifsp.leilao.contratos.EventoLeilao.LeilaoCriado;
 import br.edu.ifsp.leilao.contratos.EventoLeilao.LeilaoIniciado;
 import br.edu.ifsp.leilao.estado.CacheEstadoLeilao;
+import br.edu.ifsp.leilao.estado.Configuracao;
 import br.edu.ifsp.leilao.estado.EstadoLeilao;
 import br.edu.ifsp.leilao.estado.LeitorEventos;
 import br.edu.ifsp.leilao.estado.ObterEstado;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -44,7 +46,7 @@ class ListagemLeiloesTest {
     final List<String> idasAoEventStore = new ArrayList<>();
 
     final ListagemLeiloes listagem = new ListagemLeiloes(
-            new ObterEstado(null, null, null) {
+            new ObterEstado(null, null, null, new SimpleMeterRegistry()) {
                 @Override
                 public Map<UUID, EstadoLeilao> obterVariosParaConsulta(List<UUID> leiloes) {
                     Map<UUID, EstadoLeilao> achados = new LinkedHashMap<>();
@@ -52,7 +54,7 @@ class ListagemLeiloesTest {
                     return achados;
                 }
             },
-            new CacheEstadoLeilao(null, null) {
+            new CacheEstadoLeilao(null, null, Configuracao.C) {
                 @Override
                 public Optional<List<UUID>> abertos() {
                     return Optional.of(indice);

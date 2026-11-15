@@ -67,11 +67,6 @@ public class ServicoLeilao {
         executar(leilaoId, obterEstado::obterDaFonte, leilao -> leilao.encerrar(Instant.now()));
     }
 
-    /** Estado relido de todos os eventos (usado só pela rota de experimento do painel de ADM). */
-    public EstadoLeilao consultar(UUID leilaoId) {
-        return obterEstado.obterDaFonte(leilaoId).orElseThrow(() -> new LeilaoNaoEncontradoException(leilaoId));
-    }
-
     /**
      * A primeira tentativa obtém o estado pelo caminho informado. Se dois comandos disputarem a mesma
      * versão, o perdedor relê o estado DA FONTE (sem cache) e decide de novo (o lance pode passar a

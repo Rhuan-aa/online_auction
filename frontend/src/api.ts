@@ -44,10 +44,11 @@ export class ErroHttp extends Error {
 export interface Api {
   criarLeilao(req: CriarLeilaoRequest): Promise<{ leilaoId: string; versao: number }>
   darLance(leilaoId: string, req: DarLanceRequest): Promise<ResultadoLance>
-  /** COM CQRS: lê a projeção pronta (read_model). */
-  consultarComCqrs(leilaoId: string): Promise<EstadoLeilao>
-  /** SEM CQRS: carrega todos os eventos e reconstrói o estado a cada consulta. */
-  consultarSemCqrs(leilaoId: string): Promise<EstadoLeilao>
+  /**
+   * GET /leiloes/{id}: o estado pelo cache. Com versaoMinima (ex.: a versão que o POST do lance
+   * devolveu), a resposta tem pelo menos essa versão.
+   */
+  consultarLeilao(leilaoId: string, versaoMinima?: number): Promise<EstadoLeilao>
   historicoLances(leilaoId: string): Promise<LanceHistorico[]>
   /** GET /leiloes?status= (leitura). Sem status, lista todos. */
   listarLeiloes(status?: EstadoLeilao['status']): Promise<ResumoLeilao[]>
@@ -102,9 +103,8 @@ const apiReal: Api = {
     if (r.status === 409) return { tipo: 'conflito' }
     return { tipo: 'erro', status: r.status }
   },
-  consultarComCqrs: (id) => getJson(`${LEITURA}/leiloes/${id}`),
-  // Rota de experimento no leilao-escrita: carregar(eventos) + reconstituir(). Só existe para a comparação.
-  consultarSemCqrs: (id) => getJson(`${ESCRITA}/experimento/sem-cqrs/leiloes/${id}`),
+  consultarLeilao: (id, versaoMinima) =>
+    getJson(`${LEITURA}/leiloes/${id}${versaoMinima ? `?versaoMinima=${versaoMinima}` : ''}`),
   historicoLances: (id) => getJson(`${LEITURA}/leiloes/${id}/lances`),
   listarLeiloes: (status) => getJson(`${LEITURA}/leiloes${status ? `?status=${status}` : ''}`),
   async cancelarLeilao(leilaoId, motivo) {

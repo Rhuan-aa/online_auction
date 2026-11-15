@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -42,7 +43,7 @@ class ObterEstadoTest {
         final Map<UUID, EstadoLeilao> guardado = new HashMap<>();
 
         CacheFalso() {
-            super(null, null);
+            super(null, null, Configuracao.C);
         }
 
         @Override
@@ -73,7 +74,7 @@ class ObterEstadoTest {
         final Map<UUID, EstadoLeilao> guardado = new HashMap<>();
 
         CheckpointFalso() {
-            super(null, null, 50);
+            super(null, null, 50, Configuracao.C);
         }
 
         @Override
@@ -85,7 +86,8 @@ class ObterEstadoTest {
     final EventStoreFalso eventStore = new EventStoreFalso();
     final CacheFalso cache = new CacheFalso();
     final CheckpointFalso checkpoint = new CheckpointFalso();
-    final ObterEstado obterEstado = new ObterEstado(cache, checkpoint, eventStore);
+    final SimpleMeterRegistry metricas = new SimpleMeterRegistry();
+    final ObterEstado obterEstado = new ObterEstado(cache, checkpoint, eventStore, metricas);
 
     @Test
     void semCopiaLeTodosOsEventosEGuardaNoCache() {
@@ -101,6 +103,34 @@ class ObterEstadoTest {
         assertEquals(Optional.of(ATUAL), obterEstado.obter(ID));
         assertEquals(List.of(4), eventStore.pedidosAPartirDe); // leu só as versões 5 e 6
         assertEquals(6, cache.guardado.get(ID).versao());       // e atualizou a cópia
+    }
+
+    /** As métricas que o painel de ADM lê: de onde veio a cópia e quantos eventos foram lidos. */
+    @Test
+    void metricasContamDeOndeVeioACopiaEQuantosEventosForamLidos() {
+        cache.guardado.put(ID, EstadoLeilao.INICIAL.aplicarTodos(EVENTOS.subList(0, 4))); // cópia na v4
+
+        obterEstado.obter(ID);      // completa a partir do Redis: lê 2 eventos
+        obterEstado.obterDaFonte(ID); // relê tudo: 6 eventos
+
+        var doRedis = metricas.get("leilao.estado.eventos.lidos").tag("base", "redis").summary();
+        var daFonte = metricas.get("leilao.estado.eventos.lidos").tag("base", "fonte").summary();
+        assertEquals(1, doRedis.count());
+        assertEquals(2, doRedis.totalAmount());
+        assertEquals(6, daFonte.totalAmount());
+        assertEquals(1, metricas.get("leilao.estado.obter").tag("caminho", "comando").timer().count());
+    }
+
+    /** Configuração A: Redis e checkpoint desligados se comportam como vazios, e o resultado é o mesmo. */
+    @Test
+    void configuracaoASemCopiasRelêTudoEDaOMesmoEstado() {
+        CacheEstadoLeilao redisDesligado = new CacheEstadoLeilao(null, null, Configuracao.A);
+        Checkpoint checkpointDesligado = new Checkpoint(null, null, 50, Configuracao.A);
+
+        ObterEstado configuracaoA = new ObterEstado(redisDesligado, checkpointDesligado, eventStore, metricas);
+
+        assertEquals(Optional.of(ATUAL), configuracaoA.obter(ID));
+        assertEquals(List.of(0), eventStore.pedidosAPartirDe); // releu desde o início
     }
 
     @Test
@@ -161,7 +191,7 @@ class ObterEstadoTest {
                 return List.of();
             }
         };
-        assertTrue(new ObterEstado(cache, checkpoint, vazio).obter(ID).isEmpty());
+        assertTrue(new ObterEstado(cache, checkpoint, vazio, metricas).obter(ID).isEmpty());
         assertTrue(cache.guardado.isEmpty()); // nada é guardado para um leilão que não existe
     }
 }
