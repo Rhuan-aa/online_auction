@@ -7,6 +7,7 @@ import br.edu.ifsp.leilao.estado.LeitorEventos;
 import br.edu.ifsp.leilao.estado.ObterEstado;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -71,12 +72,15 @@ public class ReconstrutorCache implements CommandLineRunner {
         int checkpoints = checkpoint.apagarTodos();
         System.out.printf("2. Apagados: %d chaves no Redis e %d checkpoints.%n", chaves, checkpoints);
 
+        Map<UUID, EstadoLeilao> refeitos = new LinkedHashMap<>();
         for (UUID leilaoId : leiloes) {
             obterEstado.obterDaFonte(leilaoId).ifPresent(estado -> {
                 cache.gravar(leilaoId, estado);                         // também recoloca no índice de abertos
                 checkpoint.gravarSeNecessario(leilaoId, 0, estado);     // mesma regra de sempre: a partir de N ou se terminou
+                refeitos.put(leilaoId, estado);
             });
         }
+        cache.repovoarAbertos(refeitos);
         System.out.printf("3. Refeitos %d estados a partir do Event Store.%n", leiloes.size());
 
         Map<UUID, EstadoLeilao> depois = obterEstado.obterVariosParaConsulta(leiloes);
