@@ -7,6 +7,8 @@ import br.edu.ifsp.leilao.contratos.EventoLeilao.LeilaoCriado;
 import br.edu.ifsp.leilao.contratos.EventoLeilao.LeilaoEncerrado;
 import br.edu.ifsp.leilao.contratos.EventoLeilao.LeilaoIniciado;
 import br.edu.ifsp.leilao.contratos.EventoLeilao.LeilaoProrrogado;
+import br.edu.ifsp.leilao.estado.EstadoLeilao;
+import br.edu.ifsp.leilao.estado.EstadoLeilao.Status;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -14,11 +16,9 @@ import java.util.List;
 /**
  * Agregado Leilao: o ÚNICO lugar onde as regras do leilão existem.
  *
- * Dois tipos de método:
- *  - DECIDIR (criar, iniciar, darLance, encerrar, cancelar): valida a regra e DEVOLVE eventos. Não muda nada.
- *  - APLICAR (aplicar): muda o estado a partir de um evento. Não valida nada.
+ * Só DECIDE (criar, iniciar, darLance, encerrar, cancelar): valida a regra e DEVOLVE eventos.
+ * Não muda nada. O estado chega pronto (EstadoLeilao); quem aplica os eventos é ele.
  *
- * O estado nunca é salvo: é reconstituído aplicando os eventos em ordem (Event Sourcing).
  * Java puro: sem Spring, sem banco, sem Kafka (garantido pelo ArchitectureTest).
  */
 public final class Leilao {
@@ -26,25 +26,15 @@ public final class Leilao {
     /** Lance a menos de 30 s do fim prorroga o leilão em 30 s. */
     static final Duration ANTI_SNIPING = Duration.ofSeconds(30);
 
-    public enum Status { CRIADO, ABERTO, ENCERRADO, CANCELADO }
+    private final EstadoLeilao estado;
 
-    private Status status;
-    private String vendedorId;
-    private String titulo;
-    private long precoAtual;
-    private long incrementoMinimo;
-    private String liderId;
-    private Instant inicioEm;
-    private Instant fimEm;
-    private int versao;
+    private Leilao(EstadoLeilao estado) {
+        this.estado = estado;
+    }
 
-    private Leilao() {}
-
-    /** Reconstrói o leilão aplicando todos os eventos já gravados, em ordem de versão. */
-    public static Leilao reconstituir(List<EventoLeilao> eventos) {
-        Leilao leilao = new Leilao();
-        eventos.forEach(leilao::aplicar);
-        return leilao;
+    /** O leilão no estado dado, de onde quer que ele tenha vindo (eventos, cache ou checkpoint). */
+    public static Leilao de(EstadoLeilao estado) {
+        return new Leilao(estado);
     }
 
     // ------------------------------------------------------------------ DECIDIR
@@ -62,74 +52,51 @@ public final class Leilao {
 
     /** Chamado pelo agendador. Repetir o comando não gera evento duplicado (idempotente). */
     public List<EventoLeilao> iniciar(Instant agora) {
-        if (status != Status.CRIADO || agora.isBefore(inicioEm)) {
+        if (estado.status() != Status.CRIADO || agora.isBefore(estado.inicioEm())) {
             return List.of();
         }
-        return List.of(new LeilaoIniciado(fimEm));
+        return List.of(new LeilaoIniciado(estado.fimEm()));
     }
 
     public List<EventoLeilao> darLance(String licitanteId, long valor, Instant agora) {
-        if (status != Status.ABERTO || !agora.isBefore(fimEm)) {
+        if (estado.status() != Status.ABERTO || !agora.isBefore(estado.fimEm())) {
             throw new RegraVioladaException("LEILAO_NAO_ABERTO", "O leilão não está aberto para lances");
         }
-        if (vazio(licitanteId) || licitanteId.equals(vendedorId)) {
-            throw new RegraVioladaException("VENDEDOR_NAO_PODE_DAR_LANCE", "O vendedor não pode dar lance no próprio leilão");
+        if (vazio(licitanteId) || licitanteId.equals(estado.vendedorId())) {
+            throw new RegraVioladaException("VENDEDOR_NAO_PODE_DAR_LANCE",
+                    "O vendedor não pode dar lance no próprio leilão");
         }
-        long minimo = (liderId == null) ? precoAtual : precoAtual + incrementoMinimo;
+        boolean semLances = estado.liderId() == null;
+        long minimo = semLances ? estado.precoAtual() : estado.precoAtual() + estado.incrementoMinimo();
         if (valor < minimo) {
             throw new RegraVioladaException("LANCE_ABAIXO_DO_MINIMO", "Lance mínimo é " + minimo);
         }
 
         LanceRegistrado lance = new LanceRegistrado(licitanteId, valor);
-        boolean faltaPouco = Duration.between(agora, fimEm).compareTo(ANTI_SNIPING) < 0;
+        boolean faltaPouco = Duration.between(agora, estado.fimEm()).compareTo(ANTI_SNIPING) < 0;
         if (faltaPouco) {
-            return List.of(lance, new LeilaoProrrogado(fimEm.plus(ANTI_SNIPING)));
+            return List.of(lance, new LeilaoProrrogado(estado.fimEm().plus(ANTI_SNIPING)));
         }
         return List.of(lance);
     }
 
     /** Chamado pelo agendador. Se o prazo foi prorrogado, ainda não encerra (idempotente). */
     public List<EventoLeilao> encerrar(Instant agora) {
-        if (status != Status.ABERTO || agora.isBefore(fimEm)) {
+        if (estado.status() != Status.ABERTO || agora.isBefore(estado.fimEm())) {
             return List.of();
         }
-        Long valorVencedor = (liderId == null) ? null : precoAtual;
-        return List.of(new LeilaoEncerrado(liderId, valorVencedor));
+        Long valorVencedor = (estado.liderId() == null) ? null : estado.precoAtual();
+        return List.of(new LeilaoEncerrado(estado.liderId(), valorVencedor));
     }
 
     public List<EventoLeilao> cancelar(String motivo) {
-        if (status == Status.ENCERRADO || status == Status.CANCELADO) {
+        if (estado.terminou()) {
             throw new RegraVioladaException("LEILAO_NAO_ABERTO", "O leilão já terminou");
         }
-        if (liderId != null) {
+        if (estado.liderId() != null) {
             throw new RegraVioladaException("LEILAO_COM_LANCES", "Leilão com lances não pode ser cancelado");
         }
         return List.of(new LeilaoCancelado(motivo));
-    }
-
-    // ------------------------------------------------------------------ APLICAR
-
-    private void aplicar(EventoLeilao evento) {
-        versao++;
-        switch (evento) {
-            case LeilaoCriado e -> {
-                status = Status.CRIADO;
-                vendedorId = e.vendedorId();
-                titulo = e.titulo();
-                precoAtual = e.precoInicial();
-                incrementoMinimo = e.incrementoMinimo();
-                inicioEm = e.inicioEm();
-                fimEm = e.fimEm();
-            }
-            case LeilaoIniciado e -> status = Status.ABERTO;
-            case LanceRegistrado e -> {
-                precoAtual = e.valor();
-                liderId = e.licitanteId();
-            }
-            case LeilaoProrrogado e -> fimEm = e.novoFimEm();
-            case LeilaoEncerrado e -> status = Status.ENCERRADO;
-            case LeilaoCancelado e -> status = Status.CANCELADO;
-        }
     }
 
     private static boolean vazio(String texto) {
@@ -138,11 +105,8 @@ public final class Leilao {
 
     // ------------------------------------------------------------------ LEITURA DO ESTADO
 
+    public EstadoLeilao estado() { return estado; }
+
     /** Quantos eventos o leilão tem (1, 2, 3...). É a "versão esperada" na próxima gravação. */
-    public int versao() { return versao; }
-    public Status status() { return status; }
-    public String titulo() { return titulo; }
-    public long precoAtual() { return precoAtual; }
-    public String liderId() { return liderId; }
-    public Instant fimEm() { return fimEm; }
+    public int versao() { return estado.versao(); }
 }

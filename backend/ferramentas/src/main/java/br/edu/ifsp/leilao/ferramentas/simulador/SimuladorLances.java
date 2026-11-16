@@ -14,7 +14,7 @@ import tools.jackson.databind.json.JsonMapper;
  *
  * Cada bot roda em uma virtual thread (barata: 50 ou 5000 bots não pesam).
  * Os lances disputam a mesma versão do leilão; o event store garante que só um vence cada
- * disputa (UNIQUE aggregate_id + version) e o ServicoLeilao reavalia os perdedores.
+ * disputa (UNIQUE leilao_id + versao) e o ServicoLeilao reavalia os perdedores.
  * No fim, o resultado é conferido no serviço de leitura: o líder é um só.
  */
 public class SimuladorLances {
@@ -22,7 +22,6 @@ public class SimuladorLances {
     private static final String URL_ESCRITA = System.getenv().getOrDefault("URL_ESCRITA", "http://localhost:8081");
     private static final String URL_LEITURA = System.getenv().getOrDefault("URL_LEITURA", "http://localhost:8082");
     private static final long INCREMENTO_PADRAO = 100;
-    private static final long ESPERA_DA_PROJECAO_MS = 1500;
 
     /** Tudo que define uma simulação. O valor de cada lance sai daqui. */
     record Cenario(String leilaoId, int bots, int lancesPorBot, long precoInicial, long incremento) {
@@ -68,7 +67,6 @@ public class SimuladorLances {
         System.out.printf("%d bots x %d lances em %d ms%n", cenario.bots(), cenario.lancesPorBot(), duracao);
         System.out.println(placar.resumo());
 
-        Thread.sleep(ESPERA_DA_PROJECAO_MS); // dá tempo da projeção alcançar o último evento
         System.out.println("Estado final na leitura: " + buscar(URL_LEITURA + "/leiloes/" + cenario.leilaoId()));
     }
 

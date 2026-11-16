@@ -18,6 +18,11 @@ CREATE TABLE event_store.outbox (
 
 CREATE INDEX idx_outbox_pendentes ON event_store.outbox (id) WHERE publicado_em IS NULL;
 
+-- "lances do licitante" (GET /licitantes/{id}/lances): índice só sobre os eventos de lance,
+-- pelo campo licitanteId de dentro do JSON.
+CREATE INDEX eventos_lances_por_licitante ON event_store.eventos ((dados->>'licitanteId'))
+  WHERE tipo = 'LanceRegistrado.v1';
+
 -- append-only
 CREATE OR REPLACE FUNCTION event_store.proibir_mutacao() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN

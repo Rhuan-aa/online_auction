@@ -1,16 +1,15 @@
 # Plano — Painel de ADM (simulação e desempenho)
 
-> Status: **planejado, implementação pausada.** Branch `d/painel-adm`. Rascunho já criado: `frontend/src/api.ts`.
+> Status: **planejado, implementação pausada.** O backend já tem tudo o que o painel precisa (configurações A/B/C e métricas); falta a tela.
 
 ## 1. Objetivo
 
-Uma única tela de administração para **demonstrar a arquitetura**, não o "dar lance". O ADM configura uma simulação de leilão, o painel dispara lances aleatórios e mostra, medido de verdade:
+Uma tela de administração para **demonstrar a arquitetura**, ao lado das telas de usuário (lista, detalhe, criar leilão). O ADM configura uma simulação de leilão, o painel dispara lances e mostra, medido de verdade:
 
 - **Integridade:** um único vencedor e nenhum lance aceito perdido.
-- **Desempenho:** latência da escrita e da leitura, **com CQRS × sem CQRS**.
-- **Consistência eventual:** quanto tempo a leitura leva para alcançar a escrita.
+- **Desempenho:** tempo para obter o estado e eventos lidos por pedido, **nas configurações A, B e C** do cache (ADR-003).
 
-Não existem telas de usuário (lista, detalhe ou botão de lance).
+Não há mais métrica de "consistência eventual": sem banco de leitura separado, a leitura usa o mesmo estado da escrita (ver PLANO.md, seção 1).
 
 ## 2. A tela
 
@@ -19,14 +18,13 @@ Não existem telas de usuário (lista, detalhe ou botão de lance).
 │ Licitantes [20]  Lances por licitante [10]  Lances simultâneos [6]     │
 │ Preço inicial [R$ 100]  Incremento aleatório [R$ 1 a R$ 50]            │
 │ Leitores (consultas simultâneas) [10]  Semente [42]     [▶ Executar]   │
-├─ RESULTADO ────────────────────────────────────────────────────────────┤
+├─ RESULTADO (configuração ativa: C) ────────────────────────────────────┤
 │ INTEGRIDADE   aceitos · recusados · conflitos | 1 vencedor ✓ | trilha ✓│
-│ ESCRITA       p50 · p95 · lances/s                                     │
-│ LEITURA       com CQRS p95  ×  sem CQRS p95  (N× mais lento)           │
-│ CONSISTÊNCIA  a leitura alcançou a escrita em X ms                     │
-│ GRÁFICO       tempo da consulta × nº de eventos (duas linhas)          │
+│ ESCRITA       p50 · p95 · lances/s · eventos lidos por lance           │
+│ LEITURA       p50 · p95 · eventos lidos por consulta · acerto do cache │
+│ GRÁFICO       tempo × nº de eventos do leilão (uma linha por config.)  │
 ├─ HISTÓRICO ────────────────────────────────────────────────────────────┤
-│ execuções anteriores, para comparar                                    │
+│ execuções anteriores (A, B, C), para comparar lado a lado              │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -38,72 +36,67 @@ Não existem telas de usuário (lista, detalhe ou botão de lance).
 | Lances simultâneos | Quantos POSTs ao mesmo tempo; é o que gera conflitos de versão |
 | Preço inicial / faixa de incremento | O incremento mínimo do leilão = início da faixa |
 | Leitores | Consultas rodando **durante** os lances (o domínio tem muito mais leitura que escrita) |
-| Semente | Mesma semente = mesma simulação (para ensaiar a apresentação) |
+| Semente | Mesma semente = mesma simulação (para ensaiar a apresentação e comparar configurações) |
 
 ### Como cada execução funciona
-1. `POST /leiloes` com início = agora e fim = agora + 10 min (longe do anti-sniping).
-2. Espera o status `ABERTO` (o agendador abre o leilão). Sem isso em 15 s, mostra "o agendador está rodando?".
-3. Dispara os lances com o número de simultâneos escolhido, mantendo a ordem de cada licitante.
-4. Em paralelo, os leitores alternam consulta **com CQRS** e **sem CQRS**, guardando (tempo, nº de eventos).
-5. Ao fim, consulta a leitura até ela mostrar a versão do último lance aceito → **atraso da consistência eventual**.
-6. Checagens:
+1. Lê a configuração ativa em `GET /actuator/metrics/leilao.estado.obter` (tag `configuracao`).
+2. `POST /leiloes` com início = agora e fim = agora + 10 min (longe do anti-sniping).
+3. Espera o status `ABERTO` (o agendador abre o leilão). Sem isso em 15 s, mostra "o agendador está rodando?".
+4. Dispara os lances com o número de simultâneos escolhido, mantendo a ordem de cada licitante.
+5. Em paralelo, os leitores fazem `GET /leiloes/{id}`, guardando (tempo, nº de eventos do leilão).
+6. Ao fim, lê as métricas dos dois serviços (seção 3) e faz as checagens:
    - **Um vencedor:** líder e preço finais = autor e valor do último lance aceito.
    - **Trilha completa:** nº de lances em `GET /leiloes/{id}/lances` = nº de respostas `200`.
    - **Ordem:** versões e valores do histórico estritamente crescentes.
 
-## 3. Com CQRS × sem CQRS (medição real)
+## 3. Configurações A, B e C (medição real)
 
-| | Como consulta | Comportamento esperado |
+| | Cópias ligadas | Como obtém o estado | Esperado |
+|---|---|---|---|
+| **A** | nenhuma | relê todos os eventos do leilão | tempo e eventos lidos **crescem** com o nº de lances |
+| **B** | checkpoint | checkpoint + no máximo N eventos | eventos lidos limitados por N |
+| **C** | Redis + checkpoint | cópia do Redis + 0 ou 1 evento | eventos lidos quase **constantes** |
+
+A configuração é escolhida ao subir os serviços: `CACHE_CONFIGURACAO=A|B|C`, **a mesma na escrita e na leitura**. Para comparar, roda-se a mesma simulação (mesma semente) uma vez em cada configuração; o histórico guarda as três. O código é o mesmo nas três: uma cópia desligada se comporta como vazia.
+
+Métricas lidas pelo painel (as duas portas, `GET /actuator/metrics/<nome>?tag=...`, com CORS liberado para `http://localhost:5173`):
+
+| Métrica | Tag | Uso no painel |
 |---|---|---|
-| **Com CQRS** | `GET leilao-leitura/leiloes/{id}`: uma linha de `catalogo_leiloes` | Tempo **constante** |
-| **Sem CQRS** | `GET leilao-escrita/experimento/sem-cqrs/leiloes/{id}`: carrega todos os eventos e reconstitui o estado | Tempo **cresce** com o nº de eventos |
+| `leilao.estado.obter` | `caminho:comando` (8081), `caminho:consulta` (8082) | tempo médio e máximo para obter o estado |
+| `leilao.estado.eventos.lidos` | `base:redis`, `base:checkpoint`, `base:inicio`, `base:fonte` | eventos lidos por pedido; **acerto do cache** = `count(base:redis) / total` |
 
-É exatamente a alternativa descrita no ADR-003 ("Event Sourcing sem CQRS obrigaria a reconstruir agregados a cada consulta"). **Nenhum número é inventado.**
+As métricas acumulam desde que o serviço subiu: o painel lê antes e depois da execução e usa a diferença.
 
-## 4. Mudanças no backend (mínimas)
+**Resultado de uma medição manual (para calibrar a expectativa):** num leilão de ~100 eventos com 20 bots, C leu ~0,7 evento por lance contra ~50 em A, mas A teve menor tempo médio, porque reler 100 eventos é barato e, sem cópia, pedidos simultâneos dividem a mesma reconstrução. Como o ADR-003 prevê, o ganho de tempo do cache aparece em **leilões longos** (milhares de eventos), muito lidos ou após reinícios. Na demo, use um leilão longo e mostre também os **eventos lidos**, que separam as configurações em qualquer tamanho.
 
-Só o que o painel precisa além do que o PLANO.md já prevê:
+## 4. Backend (pronto)
 
 | Onde | O quê |
 |---|---|
-| `leilao-escrita/api` | `GET /experimento/sem-cqrs/leiloes/{id}`: chama `eventStore.carregar(id)` + `Leilao.reconstituir(eventos)` e devolve o mesmo JSON de `GET /leiloes/{id}`. ~15 linhas, reaproveita código que já vai existir. |
-| `leilao-escrita` e `leilao-leitura` | CORS liberado para `http://localhost:5173` (já previsto no PLANO.md). |
+| módulo `estado` | `Configuracao` (A/B/C) e métricas no `ObterEstado` |
+| `leilao-escrita` e `leilao-leitura` | `/actuator/metrics` exposto, tag `configuracao` em toda métrica, CORS do actuator para o front |
 
-Rotas usadas (todas já no PLANO.md): `POST /leiloes`, `POST /leiloes/{id}/lances`, `GET /leiloes/{id}`, `GET /leiloes/{id}/lances`. O SSE **não** é necessário para o painel.
-
-A rota de experimento é isolada e serve só para a comparação; ela não fere a regra "a leitura nunca chama a escrita".
+Rotas usadas: `POST /leiloes`, `POST /leiloes/{id}/lances`, `GET /leiloes/{id}`, `GET /leiloes/{id}/lances` e `/actuator/metrics`. O SSE **não** é necessário para o painel. A antiga rota de experimento "sem CQRS" saiu: a comparação agora é trocar a configuração.
 
 ## 5. Frontend (o mais simples possível)
 
-Sem bibliotecas novas. React puro, CSS próprio, gráfico em SVG. Uma página.
+Sem bibliotecas novas. React puro, CSS próprio, gráfico em SVG. Uma tela a mais (`#/adm`).
 
 | Arquivo | Conteúdo | Status |
 |---|---|---|
-| `src/api.ts` | Interface `Api` com duas implementações: **real** (fetch 8081/8082) e **simulada** (em memória: versão otimista, conflitos, projeção atrasada, leitura sem CQRS que relê os eventos) | ✅ rascunho pronto (compila) |
+| `src/api.ts` | `criarLeilao`, `darLance`, `consultarLeilao` (com `versaoMinima`), `historicoLances`; falta uma função para ler `/actuator/metrics` | ✅ quase pronto |
 | `src/simulacao.ts` | Gera os lances com semente, executa com N simultâneos, roda os leitores, calcula p50/p95 e as checagens | a fazer |
-| `src/App.tsx` | Formulário, resultado, gráfico e histórico | a fazer |
-| `src/index.css` | Estilo | a fazer |
+| `src/PainelAdm.tsx` | Formulário, resultado, gráfico e histórico | a fazer |
 
-Modo escolhido por variável em `frontend/.env`:
-```
-VITE_MODO=simulado   # padrão: testa a tela sem backend (mostra o selo "MODO SIMULADO")
-VITE_MODO=real       # usa o backend de verdade
-```
-**Na apresentação, só o modo real.** No simulado os tempos são artificiais: servem para desenvolver a tela, não provam nada.
+## 6. Limites (dizer se a banca perguntar)
 
-## 6. O que sai do plano original
+- Os tempos do painel são medidos **no navegador** e incluem a rede local; as métricas do backend medem só o tempo para obter o estado. As duas visões juntas mostram onde o tempo está.
+- O navegador abre ~6 conexões por porta. Basta para gerar conflitos reais em demo, mas não é teste de carga de produção (para carga, use o `SimuladorLances`).
+- Trocar de configuração exige reiniciar escrita e leitura.
 
-- Telas de usuário (lista, detalhe, criar leilão, botão de lance).
-- `SimuladorLances` do módulo `ferramentas`: o painel faz esse papel.
+## 7. Próximos passos
 
-## 7. Limites (dizer se a banca perguntar)
-
-- Os tempos são medidos **no navegador** e incluem a rede local; a comparação é justa porque os dois lados passam pelo mesmo caminho.
-- O navegador abre ~6 conexões por porta. Basta para gerar conflitos reais em demo, mas não é teste de carga de produção.
-- As consultas sem CQRS vão para a mesma porta dos lances (8081) e disputam conexões com eles. Isso também mostra o custo de ler pelo lado da escrita.
-
-## 8. Próximos passos
-
-1. Testar o sistema atual (infra + serviços + build).
-2. Retomar: `simulacao.ts`, `App.tsx`, `index.css` no modo simulado.
-3. Quando A/B/C entregarem as rotas: implementar a rota de experimento e trocar para `VITE_MODO=real`.
+1. Função de métricas no `api.ts`.
+2. `simulacao.ts` e `PainelAdm.tsx`.
+3. Ensaiar com um leilão longo nas três configurações.

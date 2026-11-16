@@ -1,32 +1,41 @@
 package br.edu.ifsp.leilao.leitura.api;
 
-import br.edu.ifsp.leilao.leitura.projecoes.ConsultaLeiloes;
-import br.edu.ifsp.leilao.leitura.projecoes.LeilaoAtualizado;
+import br.edu.ifsp.leilao.contratos.Topicos;
+import br.edu.ifsp.leilao.estado.ObterEstado;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import org.springframework.context.event.EventListener;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Mantém as telas abertas (uma conexão SSE por navegador) e empurra o estado novo
- * sempre que a projeção de um leilão muda. É assim que o valor atualiza "ao vivo".
+ * Mantém as telas abertas (uma conexão SSE por navegador) e empurra o estado novo a cada evento
+ * do leilão que chega pelo Kafka. É assim que o valor atualiza "ao vivo".
+ *
+ * De quebra, conserta o cache: para cada evento, pede o estado com versão mínima igual à do
+ * evento. Se a escrita não conseguiu gravar a cópia no Redis (Redis fora, por exemplo), a cópia
+ * fica atrás, e este pedido completa com o Event Store e regrava. Por isso faz isso mesmo quando
+ * ninguém está assistindo ao leilão.
  */
 @Component
 public class TransmissorSse {
 
     private static final long SEM_TIMEOUT = 0L;
 
-    private final ConsultaLeiloes consulta;
+    private final ObterEstado obterEstado;
+    private final JsonMapper json;
     /** leilão -> conexões abertas olhando para ele. */
     private final Map<UUID, List<SseEmitter>> conexoes = new ConcurrentHashMap<>();
 
-    public TransmissorSse(ConsultaLeiloes consulta) {
-        this.consulta = consulta;
+    public TransmissorSse(ObterEstado obterEstado, JsonMapper json) {
+        this.obterEstado = obterEstado;
+        this.json = json;
     }
 
     /** Abre a conexão e já manda o estado atual, para a tela não começar vazia. */
@@ -40,25 +49,32 @@ public class TransmissorSse {
         emissor.onTimeout(() -> doLeilao.remove(emissor));
         emissor.onError(erro -> doLeilao.remove(emissor));
 
-        enviar(leilaoId, emissor);
+        obterEstado.obterParaConsulta(leilaoId, 0).ifPresent(estado -> enviar(emissor, LeilaoDetalhe.de(leilaoId, estado)));
         return emissor;
     }
 
-    /** Chamado pela projeção (via evento do Spring) depois de gravar um evento no banco. */
-    @EventListener
-    public void aoAtualizar(LeilaoAtualizado aviso) {
-        for (SseEmitter emissor : conexoes.getOrDefault(aviso.leilaoId(), List.of())) {
-            enviar(aviso.leilaoId(), emissor);
-        }
+    /**
+     * Um group novo por instância (random.uuid): cada instância da leitura recebe TODOS os eventos,
+     * porque cada uma tem as próprias conexões abertas. Começa do fim do tópico (padrão do Kafka
+     * para um group novo): só interessa o que acontece daqui para frente.
+     */
+    @KafkaListener(topics = Topicos.EVENTOS_LEILAO, groupId = "leilao-leitura-sse-${random.uuid}")
+    public void aoReceberEvento(String mensagem) {
+        JsonNode envelope = json.readTree(mensagem);
+        UUID leilaoId = UUID.fromString(envelope.get("leilaoId").asString());
+        int versaoDoEvento = envelope.get("versao").asInt();
+
+        obterEstado.obterParaConsulta(leilaoId, versaoDoEvento).ifPresent(estado -> {
+            LeilaoDetalhe detalhe = LeilaoDetalhe.de(leilaoId, estado);
+            conexoes.getOrDefault(leilaoId, List.of()).forEach(emissor -> enviar(emissor, detalhe));
+        });
     }
 
-    private void enviar(UUID leilaoId, SseEmitter emissor) {
-        consulta.buscar(leilaoId).ifPresent(estado -> {
-            try {
-                emissor.send(SseEmitter.event().name("leilao").data(estado));
-            } catch (IOException | IllegalStateException e) {
-                emissor.completeWithError(e); // conexão já morreu; o onError remove da lista
-            }
-        });
+    private void enviar(SseEmitter emissor, LeilaoDetalhe detalhe) {
+        try {
+            emissor.send(SseEmitter.event().name("leilao").data(detalhe));
+        } catch (IOException | IllegalStateException e) {
+            emissor.completeWithError(e); // conexão já morreu; o onError remove da lista
+        }
     }
 }

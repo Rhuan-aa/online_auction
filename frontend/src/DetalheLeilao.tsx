@@ -29,14 +29,14 @@ export default function DetalheLeilao({ leilaoId, usuario }: { leilaoId: string;
       (novo) => { setEstado(novo); setNaoEncontrado(false); setConexaoCaiu(false) },
       () => setConexaoCaiu(true),
     )
-    // O SSE fica mudo se o leilão não existe; uma consulta avisa. Logo após criar, o 404 pode ser só a projeção atrasada.
-    api.consultarComCqrs(leilaoId).catch((e) => { if (e instanceof ErroHttp && e.status === 404) setNaoEncontrado(true) })
+    // O SSE fica mudo se o leilão não existe; uma consulta avisa.
+    api.consultarLeilao(leilaoId).catch((e) => { if (e instanceof ErroHttp && e.status === 404) setNaoEncontrado(true) })
     return parar
   }, [leilaoId])
 
   const agora = useAgora(estado?.status === 'ABERTO')
 
-  // O histórico vem da mesma projeção: recarrega quando a versão do leilão muda.
+  // O histórico vem do Event Store: recarrega quando a versão do leilão muda.
   const versao = estado?.versao
   useEffect(() => {
     if (versao === undefined) return
@@ -50,7 +50,7 @@ export default function DetalheLeilao({ leilaoId, usuario }: { leilaoId: string;
       <p><a className="voltar" href={irPara.lista()}>← Voltar para os leilões</a></p>
 
       {naoEncontrado && !estado && (
-        <p className="erro" role="alert">Leilão não encontrado (ou ainda sendo processado). Se você acabou de criar, aguarde um instante.</p>
+        <p className="erro" role="alert">Leilão não encontrado.</p>
       )}
       {!estado && !naoEncontrado && <p className="suave">Carregando…</p>}
       {conexaoCaiu && <p className="erro" role="status">Conexão ao vivo perdida. Tentando reconectar…</p>}

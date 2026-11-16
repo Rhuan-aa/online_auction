@@ -10,6 +10,7 @@ import br.edu.ifsp.leilao.contratos.EventoLeilao.LeilaoCriado;
 import br.edu.ifsp.leilao.contratos.EventoLeilao.LeilaoEncerrado;
 import br.edu.ifsp.leilao.contratos.EventoLeilao.LeilaoIniciado;
 import br.edu.ifsp.leilao.contratos.EventoLeilao.LeilaoProrrogado;
+import br.edu.ifsp.leilao.estado.EstadoLeilao;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,11 @@ class LeilaoTest {
         return eventos;
     }
 
+    /** O Leilao no estado de quem aplicou todos os eventos desde o início. */
+    static Leilao reconstituir(List<EventoLeilao> eventos) {
+        return Leilao.de(EstadoLeilao.INICIAL.aplicarTodos(eventos));
+    }
+
     static String codigoDoErro(Runnable acao) {
         return assertThrows(RegraVioladaException.class, acao::run).codigo();
     }
@@ -49,14 +55,14 @@ class LeilaoTest {
 
     @Test
     void primeiroLancePodeSerIgualAoPrecoInicial() {
-        Leilao leilao = Leilao.reconstituir(aberto());
+        Leilao leilao = reconstituir(aberto());
         assertEquals(List.of(new LanceRegistrado("licitante-1", 10_000)),
                 leilao.darLance("licitante-1", 10_000, DURANTE));
     }
 
     @Test
     void lanceAbaixoDoAtualMaisIncrementoEhRecusado() {
-        Leilao leilao = Leilao.reconstituir(aberto(new LanceRegistrado("licitante-1", 12_000)));
+        Leilao leilao = reconstituir(aberto(new LanceRegistrado("licitante-1", 12_000)));
         // mínimo = 12.000 + 1.000 = 13.000
         assertEquals("LANCE_ABAIXO_DO_MINIMO", codigoDoErro(() -> leilao.darLance("licitante-2", 12_500, DURANTE)));
         assertEquals(List.of(new LanceRegistrado("licitante-2", 13_000)),
@@ -65,19 +71,19 @@ class LeilaoTest {
 
     @Test
     void vendedorNaoPodeDarLance() {
-        Leilao leilao = Leilao.reconstituir(aberto());
+        Leilao leilao = reconstituir(aberto());
         assertEquals("VENDEDOR_NAO_PODE_DAR_LANCE", codigoDoErro(() -> leilao.darLance("vendedor-1", 50_000, DURANTE)));
     }
 
     @Test
     void leilaoQueNaoAbriuRecusaLance() {
-        Leilao leilao = Leilao.reconstituir(List.of(new LeilaoCriado("vendedor-1", "Notebook", 10_000, 1_000, INICIO, FIM)));
+        Leilao leilao = reconstituir(List.of(new LeilaoCriado("vendedor-1", "Notebook", 10_000, 1_000, INICIO, FIM)));
         assertEquals("LEILAO_NAO_ABERTO", codigoDoErro(() -> leilao.darLance("licitante-1", 10_000, DURANTE)));
     }
 
     @Test
     void lanceNosUltimos30SegundosProrrogaOPrazo() {
-        Leilao leilao = Leilao.reconstituir(aberto());
+        Leilao leilao = reconstituir(aberto());
         Instant faltando10s = FIM.minusSeconds(10);
         assertEquals(List.of(new LanceRegistrado("licitante-1", 10_000), new LeilaoProrrogado(FIM.plusSeconds(30))),
                 leilao.darLance("licitante-1", 10_000, faltando10s));
@@ -85,41 +91,41 @@ class LeilaoTest {
 
     @Test
     void leilaoComLancesNaoPodeSerCancelado() {
-        Leilao leilao = Leilao.reconstituir(aberto(new LanceRegistrado("licitante-1", 10_000)));
+        Leilao leilao = reconstituir(aberto(new LanceRegistrado("licitante-1", 10_000)));
         assertEquals("LEILAO_COM_LANCES", codigoDoErro(() -> leilao.cancelar("desisti")));
     }
 
     @Test
     void leilaoSemLancesPodeSerCancelado() {
-        assertEquals(List.of(new LeilaoCancelado("desisti")), Leilao.reconstituir(aberto()).cancelar("desisti"));
+        assertEquals(List.of(new LeilaoCancelado("desisti")), reconstituir(aberto()).cancelar("desisti"));
     }
 
     @Test
     void encerrarSemLancesNaoTemVencedor() {
-        assertEquals(List.of(new LeilaoEncerrado(null, null)), Leilao.reconstituir(aberto()).encerrar(FIM));
+        assertEquals(List.of(new LeilaoEncerrado(null, null)), reconstituir(aberto()).encerrar(FIM));
     }
 
     @Test
     void encerrarComLancesTemVencedor() {
-        Leilao leilao = Leilao.reconstituir(aberto(new LanceRegistrado("licitante-2", 15_000)));
+        Leilao leilao = reconstituir(aberto(new LanceRegistrado("licitante-2", 15_000)));
         assertEquals(List.of(new LeilaoEncerrado("licitante-2", 15_000L)), leilao.encerrar(FIM));
     }
 
     @Test
     void encerrarAntesDoPrazoNaoFazNada() {
-        assertEquals(List.of(), Leilao.reconstituir(aberto()).encerrar(DURANTE));
+        assertEquals(List.of(), reconstituir(aberto()).encerrar(DURANTE));
     }
 
     @Test
     void iniciarDuasVezesNaoRepeteOEvento() {
-        Leilao leilao = Leilao.reconstituir(aberto());
+        Leilao leilao = reconstituir(aberto());
         assertEquals(List.of(), leilao.iniciar(DURANTE));
     }
 
     @Test
     void versaoEhONumeroDeEventosAplicados() {
-        Leilao leilao = Leilao.reconstituir(aberto(new LanceRegistrado("licitante-1", 10_000)));
+        Leilao leilao = reconstituir(aberto(new LanceRegistrado("licitante-1", 10_000)));
         assertEquals(3, leilao.versao());
-        assertEquals("licitante-1", leilao.liderId());
+        assertEquals("licitante-1", leilao.estado().liderId());
     }
 }

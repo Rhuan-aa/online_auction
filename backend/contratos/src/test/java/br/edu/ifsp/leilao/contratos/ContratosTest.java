@@ -17,4 +17,10 @@ class ContratosTest {
         assertEquals("leilao.eventos", Topicos.EVENTOS_LEILAO);
     }
 
+    /** Todo tipo das constantes tem uma classe, e o caminho de ida e volta devolve o mesmo nome. */
+    @Test
+    void cadaTipoTemUmaClasseEIdaEVoltaBatem() {
+        TiposEvento.TODOS.forEach(tipo -> assertNotNull(TiposEvento.classeDe(tipo), tipo));
+        assertEquals(TiposEvento.LANCE_REGISTRADO, TiposEvento.de(new EventoLeilao.LanceRegistrado("licitante-1", 100)));
+    }
 }

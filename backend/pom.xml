@@ -20,6 +20,7 @@
 
   <modules>
     <module>contratos</module>
+    <module>estado</module>
     <module>leilao-escrita</module>
     <module>leilao-leitura</module>
     <module>agendador-leilao</module>
@@ -31,6 +32,11 @@
       <dependency>
         <groupId>br.edu.ifsp.leilao</groupId>
         <artifactId>contratos</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>br.edu.ifsp.leilao</groupId>
+        <artifactId>estado</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

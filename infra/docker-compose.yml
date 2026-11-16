@@ -17,6 +17,19 @@ services:
       timeout: 3s
       retries: 10
 
+  # Cache do estado dos leilões (ADR-003): cópia derivada e descartável, por isso sem volume.
+  # A memória é limitada e, quando enche, o Redis descarta as chaves menos usadas (allkeys-lru).
+  redis:
+    image: redis:7-alpine
+    command: [ "redis-server", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru",
+               "--save", "", "--appendonly", "no" ]
+    ports: [ "6379:6379" ]
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   # Redpanda é alternativa se o Kafka pesar.
   kafka:
     image: apache/kafka:3.9.1

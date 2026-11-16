@@ -5,13 +5,11 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Onde os eventos ficam guardados. A aplicação só conhece esta interface;
+ * Onde os eventos são gravados. A aplicação só conhece esta interface;
  * quem implementa (Postgres) fica em infrastructure.
+ * A leitura dos eventos fica no LeitorEventos (módulo estado), compartilhado com a leitura.
  */
 public interface EventStore {
-
-    /** Todos os eventos do leilão, em ordem de versão. Lista vazia se o leilão não existe. */
-    List<EventoLeilao> carregar(UUID leilaoId);
 
     /**
      * Grava os novos eventos com as versões versaoEsperada+1, versaoEsperada+2...

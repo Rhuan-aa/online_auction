@@ -8,11 +8,9 @@
   </parent>
   <artifactId>ferramentas</artifactId>
   <dependencies>
-    <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-kafka</artifactId></dependency>
-    <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-jdbc</artifactId></dependency>
-    <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-jackson</artifactId></dependency>
+    <!-- estado traz JDBC, Jackson, Redis e o ObterEstado (o mesmo código da escrita e da leitura) -->
+    <dependency><groupId>br.edu.ifsp.leilao</groupId><artifactId>estado</artifactId></dependency>
     <dependency><groupId>org.postgresql</groupId><artifactId>postgresql</artifactId></dependency>
-    <dependency><groupId>br.edu.ifsp.leilao</groupId><artifactId>contratos</artifactId></dependency>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
   </dependencies>
   <build>
@@ -20,6 +18,10 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <!-- o módulo tem dois main (simulador e reconstrutor); o jar executável roda o reconstrutor -->
+          <mainClass>br.edu.ifsp.leilao.ferramentas.reconstrutor.ReconstrutorCache</mainClass>
+        </configuration>
       </plugin>
     </plugins>
   </build>

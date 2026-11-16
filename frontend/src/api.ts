@@ -44,23 +44,22 @@ export class ErroHttp extends Error {
 export interface Api {
   criarLeilao(req: CriarLeilaoRequest): Promise<{ leilaoId: string; versao: number }>
   darLance(leilaoId: string, req: DarLanceRequest): Promise<ResultadoLance>
-  /** COM CQRS: lê a projeção pronta (read_model). */
-  consultarComCqrs(leilaoId: string): Promise<EstadoLeilao>
-  /** SEM CQRS: carrega todos os eventos e reconstrói o estado a cada consulta. */
-  consultarSemCqrs(leilaoId: string): Promise<EstadoLeilao>
+  /**
+   * GET /leiloes/{id}: o estado pelo cache. Com versaoMinima (ex.: a versão que o POST do lance
+   * devolveu), a resposta tem pelo menos essa versão.
+   */
+  consultarLeilao(leilaoId: string, versaoMinima?: number): Promise<EstadoLeilao>
   historicoLances(leilaoId: string): Promise<LanceHistorico[]>
   /** GET /leiloes?status= (leitura). Sem status, lista todos. */
   listarLeiloes(status?: EstadoLeilao['status']): Promise<ResumoLeilao[]>
   /** POST /leiloes/{id}/cancelar. Lança ErroHttp (422 se já tem lance, por exemplo). */
   cancelarLeilao(leilaoId: string, motivo: string): Promise<{ versao: number }>
   /**
-   * Acompanha o leilão ao vivo (SSE no real). Manda o estado atual ao assinar e de novo a cada mudança.
+   * Acompanha o leilão ao vivo (SSE). Manda o estado atual ao assinar e de novo a cada mudança.
    * Devolve a função que encerra a assinatura.
    */
   observarLeilao(leilaoId: string, aoMudar: (estado: EstadoLeilao) => void, aoFalhar?: () => void): () => void
 }
-
-// ---------------------------------------------------------------- real
 
 const ESCRITA = import.meta.env.VITE_COMMAND_API ?? 'http://localhost:8081'
 const LEITURA = import.meta.env.VITE_QUERY_API ?? 'http://localhost:8082'
@@ -77,7 +76,7 @@ async function getJson<T>(url: string): Promise<T> {
   return r.json() as Promise<T>
 }
 
-const apiReal: Api = {
+export const api: Api = {
   async criarLeilao(req) {
     const r = await fetch(`${ESCRITA}/leiloes`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(req),
@@ -102,9 +101,8 @@ const apiReal: Api = {
     if (r.status === 409) return { tipo: 'conflito' }
     return { tipo: 'erro', status: r.status }
   },
-  consultarComCqrs: (id) => getJson(`${LEITURA}/leiloes/${id}`),
-  // Rota de experimento no leilao-escrita: carregar(eventos) + reconstituir(). Só existe para a comparação.
-  consultarSemCqrs: (id) => getJson(`${ESCRITA}/experimento/sem-cqrs/leiloes/${id}`),
+  consultarLeilao: (id, versaoMinima) =>
+    getJson(`${LEITURA}/leiloes/${id}${versaoMinima ? `?versaoMinima=${versaoMinima}` : ''}`),
   historicoLances: (id) => getJson(`${LEITURA}/leiloes/${id}/lances`),
   listarLeiloes: (status) => getJson(`${LEITURA}/leiloes${status ? `?status=${status}` : ''}`),
   async cancelarLeilao(leilaoId, motivo) {
@@ -122,4 +120,3 @@ const apiReal: Api = {
   },
 }
 
-export const api: Api = apiReal

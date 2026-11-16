@@ -3,17 +3,39 @@ spring:
     name: leilao-leitura
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/leilao}
-    username: ${DB_PROJECTOR_USER:projector_svc}
-    password: ${DB_PROJECTOR_PASSWORD:projector_svc}
+    # Só leitura: SELECT nos eventos e no checkpoint (infra/sql/003_roles.sql e 004_checkpoint.sql).
+    username: ${DB_QUERY_USER:query_svc}
+    password: ${DB_QUERY_PASSWORD:query_svc}
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      # Curtos de propósito: com o Redis fora do ar, a consulta desiste logo e segue pelo banco.
+      timeout: 200ms
+      connect-timeout: 200ms
 server:
   port: 8082
+leilao:
+  cache:
+    # A = sem cópia (relê todos os eventos), B = só checkpoint, C = Redis + checkpoint (ADR-003).
+    # Use a mesma nos dois serviços. Ex.: CACHE_CONFIGURACAO=A para medir o custo sem cache.
+    configuracao: ${CACHE_CONFIGURACAO:C}
 management:
   endpoints:
     web:
       exposure:
-        include: health
-  endpoint:
-    health:
-      show-details: always # mostra o lag da projeção
+        include: health, metrics
+      # O painel de ADM (front) lê /actuator/metrics direto do navegador.
+      cors:
+        allowed-origins: http://localhost:5173
+        allowed-methods: GET
+  metrics:
+    tags:
+      # Toda métrica sai marcada com a configuração ativa, para o painel de ADM comparar A/B/C.
+      configuracao: ${leilao.cache.configuracao}
+  health:
+    redis:
+      # O Redis é só cache: se ele cair, a leitura continua funcionando (ADR-003).
+      enabled: false
