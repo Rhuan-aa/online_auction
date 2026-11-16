@@ -68,14 +68,14 @@ public class ServicoLeilao {
     }
 
     /**
-     * A primeira tentativa obtém o estado pelo caminho informado. Se dois comandos disputarem a mesma
-     * versão, o perdedor relê o estado DA FONTE (sem cache) e decide de novo (o lance pode passar a
-     * ser recusado por estar abaixo do novo mínimo). Devolve a nova versão.
+     * Obtém o estado pela leitura informada, decide e grava. Se dois comandos disputarem a mesma
+     * versão, o perdedor lê de novo PELA MESMA LEITURA e decide outra vez (o lance pode passar a ser
+     * recusado por estar abaixo do novo mínimo). Nos comandos é o obter: ele já completa a cópia com
+     * os eventos que o vencedor gravou, sem reler o histórico inteiro. Devolve a nova versão.
      */
-    private int executar(UUID leilaoId, Function<UUID, Optional<EstadoLeilao>> primeiraLeitura,
+    private int executar(UUID leilaoId, Function<UUID, Optional<EstadoLeilao>> leitura,
                          Function<Leilao, List<EventoLeilao>> decisao) {
         for (int tentativa = 1; ; tentativa++) {
-            Function<UUID, Optional<EstadoLeilao>> leitura = (tentativa == 1) ? primeiraLeitura : obterEstado::obterDaFonte;
             EstadoLeilao estado = leitura.apply(leilaoId)
                     .orElseThrow(() -> new LeilaoNaoEncontradoException(leilaoId));
             List<EventoLeilao> novos = decisao.apply(Leilao.de(estado));
