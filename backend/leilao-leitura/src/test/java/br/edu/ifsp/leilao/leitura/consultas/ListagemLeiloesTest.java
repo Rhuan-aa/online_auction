@@ -40,10 +40,11 @@ class ListagemLeiloesTest {
             ABERTO_CEDO, aberto("Cedo", INICIO.plusSeconds(3600)),
             CANCELADO, aberto("Cancelado", INICIO.plusSeconds(60)).aplicar(new LeilaoCancelado("x")));
 
-    /** O que o índice de abertos tem no Redis (pode estar vazio ou com sobra). */
-    List<UUID> indice = List.of();
+
+    Optional<List<UUID>> indice = Optional.empty();
     /** Anota quem foi perguntado ao Event Store. */
     final List<String> idasAoEventStore = new ArrayList<>();
+    final List<Map<UUID, EstadoLeilao>> repovoamentos = new ArrayList<>();
 
     final ListagemLeiloes listagem = new ListagemLeiloes(
             new ObterEstado(null, null, null, new SimpleMeterRegistry()) {
@@ -57,7 +58,12 @@ class ListagemLeiloesTest {
             new CacheEstadoLeilao(null, null, Configuracao.C) {
                 @Override
                 public Optional<List<UUID>> abertos() {
-                    return Optional.of(indice);
+                    return indice;
+                }
+
+                @Override
+                public void repovoarAbertos(Map<UUID, EstadoLeilao> estadosDeTodos) {
+                    repovoamentos.add(estadosDeTodos);
                 }
             },
             new LeitorEventos(null, null) {
@@ -74,22 +80,31 @@ class ListagemLeiloesTest {
 
     @Test
     void abertosVemDoIndiceSemIrAoEventStoreEOrdenadosPeloFim() {
-        indice = List.of(ABERTO_TARDE, ABERTO_CEDO);
+        indice = Optional.of(List.of(ABERTO_TARDE, ABERTO_CEDO));
         assertEquals(List.of("Cedo", "Tarde"), titulos(listagem.listar("ABERTO")));
         assertEquals(List.of(), idasAoEventStore);
+        assertEquals(List.of(), repovoamentos);
     }
 
     @Test
     void entradaVelhaNoIndiceNaoApareceNaLista() {
-        indice = List.of(ABERTO_CEDO, CANCELADO); // o cancelado ficou no índice por engano
+        indice = Optional.of(List.of(ABERTO_CEDO, CANCELADO)); // o cancelado ficou no índice por engano
         assertEquals(List.of("Cedo"), titulos(listagem.listar("ABERTO")));
     }
 
     @Test
-    void indiceVazioCaiParaOEventStore() {
-        indice = List.of(); // Redis reiniciado
+    void indiceIncompletoCaiParaOEventStoreERefazOIndice() {
+        indice = Optional.empty(); // sem o marcador: Redis reiniciado, LRU ou fora do ar
         assertEquals(List.of("Cedo", "Tarde"), titulos(listagem.listar("ABERTO")));
         assertEquals(List.of("idsDosLeiloes"), idasAoEventStore);
+        assertEquals(List.of(estados.keySet()), repovoamentos.stream().map(Map::keySet).toList());
+    }
+
+    @Test
+    void indiceCompletoSemNenhumAbertoNaoVaiAoEventStore() {
+        indice = Optional.of(List.of()); // só o marcador: de fato não há leilão aberto
+        assertEquals(List.of(), listagem.listar("ABERTO"));
+        assertEquals(List.of(), idasAoEventStore);
     }
 
     @Test
