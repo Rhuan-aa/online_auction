@@ -122,13 +122,13 @@ Há três jeitos de pedir o estado:
 
 | Quem | Método | Comportamento |
 |---|---|---|
-| Comandos (escrita) | `obter` | Sempre completa a cópia com os eventos posteriores: decide sobre o estado mais recente. |
-| Encerramento e nova tentativa após conflito | `obterDaFonte` | Ignora as cópias e relê todos os eventos. |
+| Comandos (escrita), inclusive a nova tentativa após conflito | `obter` | Sempre completa a cópia com os eventos posteriores: decide sobre o estado mais recente. |
+| Encerramento | `obterDaFonte` | Ignora as cópias e relê todos os eventos. |
 | Consultas (leitura) | `obterParaConsulta(id, versaoMinima)` | Confia na cópia do Redis se ela tiver pelo menos a versão mínima, sem ir ao banco; se estiver atrás, completa pelo Event Store e conserta a cópia. |
 
 | Cópia | Onde | Quando é gravada | Se falhar |
 |---|---|---|---|
-| Redis | texto `leilao:{id}:estado:v1` (JSON do estado, com a versão) e o índice `leiloes:abertos` (set de ids) | A cada evento, logo depois do commit, e quando uma leitura completa uma cópia atrasada. Comandos básicos: `GET` a cópia, compara a versão, `SET` se for maior e `SADD`/`SREM` no índice. | Aviso no log. A próxima leitura completa com os eventos, e o ouvinte do SSE conserta a cópia quando o evento chega pelo Kafka. |
+| Redis | texto `leilao:{id}:estado:v1` (JSON do estado, com a versão) e o índice `leiloes:abertos` (set de ids + o membro `__completo__`; sem ele, a listagem busca os ids no Event Store e refaz o índice) | A cada evento, logo depois do commit, e quando uma leitura completa uma cópia atrasada. Comandos básicos: `GET` a cópia, compara a versão, `SET` se for maior e `SADD`/`SREM` no índice. | Aviso no log. A próxima leitura completa com os eventos, e o ouvinte do SSE conserta a cópia quando o evento chega pelo Kafka. |
 | Checkpoint | tabela `checkpoint.estados` (`infra/sql/004_checkpoint.sql`) | Quando a versão passa de um múltiplo de N (`leilao.checkpoint.a-cada-eventos`, padrão **50**) e quando o leilão termina. O upsert só avança. | Aviso no log; o lance continua aceito. |
 
 - As duas cópias guardam o `EstadoLeilao` em JSON com o `SCHEMA_VERSION`. Uma cópia de outro formato é ignorada.
@@ -239,7 +239,7 @@ Se um marco atrasar, avise no grupo **no mesmo dia**: os seguintes dependem dele
 | 2 | Criar leilão e dar lances pela tela, em duas abas | Comando → evento → estado atual nas duas telas | A, C, D |
 | 3 | Mostrar a tabela `eventos` e o Kafka UI | Event Sourcing e broker | B |
 | 4 | `SimuladorLances` com 50 bots | Concorrência otimista e um único vencedor | B |
-| 5 | Mostrar a cópia no Redis (`HGETALL leilao:{id}:estado:v1`) com a mesma versão do Event Store | Cache versionado | C |
+| 5 | Mostrar a cópia no Redis (`GET leilao:{id}:estado:v1`) com a mesma versão do Event Store | Cache versionado | C |
 | 6 | Derrubar o Redis e continuar dando lances | O cache é otimização: o sistema continua correto, só mais lento | C |
 | 7 | Rodar o `ReconstrutorCache` | Cópias descartáveis: refeitas idênticas a partir dos eventos | C |
 | 8 | Comparar as configurações A/B/C nas métricas (leilão longo) | Custo de reler o histórico × cache | C, D |
