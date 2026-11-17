@@ -41,23 +41,28 @@ export class ErroHttp extends Error {
   }
 }
 
+export type Servico = 'escrita' | 'leitura'
+
+
+export interface Metrica {
+  name: string
+  baseUnit?: string
+  measurements: { statistic: string; value: number }[]
+  availableTags: { tag: string; values: string[] }[]
+}
+
 export interface Api {
+  /** GET /actuator/metrics/{nome}?tag=chave:valor no serviço escolhido. Lança ErroHttp. */
+  lerMetrica(servico: Servico, nome: string, tag?: string): Promise<Metrica>
   criarLeilao(req: CriarLeilaoRequest): Promise<{ leilaoId: string; versao: number }>
   darLance(leilaoId: string, req: DarLanceRequest): Promise<ResultadoLance>
-  /**
-   * GET /leiloes/{id}: o estado pelo cache. Com versaoMinima (ex.: a versão que o POST do lance
-   * devolveu), a resposta tem pelo menos essa versão.
-   */
+ 
   consultarLeilao(leilaoId: string, versaoMinima?: number): Promise<EstadoLeilao>
   historicoLances(leilaoId: string): Promise<LanceHistorico[]>
-  /** GET /leiloes?status= (leitura). Sem status, lista todos. */
+
   listarLeiloes(status?: EstadoLeilao['status']): Promise<ResumoLeilao[]>
-  /** POST /leiloes/{id}/cancelar. Lança ErroHttp (422 se já tem lance, por exemplo). */
   cancelarLeilao(leilaoId: string, motivo: string): Promise<{ versao: number }>
-  /**
-   * Acompanha o leilão ao vivo (SSE). Manda o estado atual ao assinar e de novo a cada mudança.
-   * Devolve a função que encerra a assinatura.
-   */
+  
   observarLeilao(leilaoId: string, aoMudar: (estado: EstadoLeilao) => void, aoFalhar?: () => void): () => void
 }
 
@@ -77,6 +82,8 @@ async function getJson<T>(url: string): Promise<T> {
 }
 
 export const api: Api = {
+  lerMetrica: (servico, nome, tag) =>
+    getJson(`${servico === 'escrita' ? ESCRITA : LEITURA}/actuator/metrics/${nome}${tag ? `?tag=${encodeURIComponent(tag)}` : ''}`),
   async criarLeilao(req) {
     const r = await fetch(`${ESCRITA}/leiloes`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(req),
