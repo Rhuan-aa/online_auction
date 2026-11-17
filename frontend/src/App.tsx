@@ -2,6 +2,7 @@ import { useState } from 'react'
 import CriarLeilao from './CriarLeilao.tsx'
 import DetalheLeilao from './DetalheLeilao.tsx'
 import ListaLeiloes from './ListaLeiloes.tsx'
+import PainelAdm from './PainelAdm.tsx'
 import { irPara, useRota } from './rota.ts'
 import { isVendedor, salvarUsuario, usuarioSalvo, USUARIOS, type UsuarioId } from './usuarios.ts'
 
@@ -23,6 +24,7 @@ export default function App() {
           {isVendedor(usuario) && (
             <a href={irPara.criar()} aria-current={rota.tela === 'criar' ? 'page' : undefined}>Criar leilão</a>
           )}
+          <a href={irPara.adm()} aria-current={rota.tela === 'adm' ? 'page' : undefined}>Painel ADM</a>
         </nav>
         <label className="usuario">
           Estou como:
@@ -35,6 +37,7 @@ export default function App() {
         {rota.tela === 'lista' && <ListaLeiloes usuario={usuario} />}
         {rota.tela === 'criar' && <CriarLeilao usuario={usuario} />}
         {rota.tela === 'detalhe' && <DetalheLeilao key={rota.leilaoId} leilaoId={rota.leilaoId} usuario={usuario} />}
+        {rota.tela === 'adm' && <PainelAdm />}
       </main>
     </>
   )

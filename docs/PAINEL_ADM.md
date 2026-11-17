@@ -1,6 +1,6 @@
 # Plano — Painel de ADM (simulação e desempenho)
 
-> Status: **planejado, implementação pausada.** O backend já tem tudo o que o painel precisa (configurações A/B/C e métricas); falta a tela.
+> Status: **implementado** em `#/adm` (`src/PainelAdm.tsx`, `src/simulacao.ts`, `src/historico.ts`, `src/Grafico.tsx`). Falta o ensaio com um leilão longo nas três configurações.
 
 ## 1. Objetivo
 
@@ -17,7 +17,7 @@ Não há mais métrica de "consistência eventual": sem banco de leitura separad
 ┌─ SIMULAÇÃO ────────────────────────────────────────────────────────────┐
 │ Licitantes [20]  Lances por licitante [10]  Lances simultâneos [6]     │
 │ Preço inicial [R$ 100]  Incremento aleatório [R$ 1 a R$ 50]            │
-│ Leitores (consultas simultâneas) [10]  Semente [42]     [▶ Executar]   │
+│ Leitores (consultas simultâneas) [4]   Semente [42]     [▶ Executar]   │
 ├─ RESULTADO (configuração ativa: C) ────────────────────────────────────┤
 │ INTEGRIDADE   aceitos · recusados · conflitos | 1 vencedor ✓ | trilha ✓│
 │ ESCRITA       p50 · p95 · lances/s · eventos lidos por lance           │
@@ -33,18 +33,19 @@ Não há mais métrica de "consistência eventual": sem banco de leitura separad
 |---|---|
 | Licitantes | `licitante-1` … `licitante-N` |
 | Lances por licitante | Cada licitante dá lances **crescentes** (passeio aleatório próprio), para haver aceitos e recusados |
-| Lances simultâneos | Quantos POSTs ao mesmo tempo; é o que gera conflitos de versão |
+| Lances simultâneos (1–6) | Quantos POSTs ao mesmo tempo; é o que gera conflitos de versão. Limite: ver seção 6 |
 | Preço inicial / faixa de incremento | O incremento mínimo do leilão = início da faixa |
-| Leitores | Consultas rodando **durante** os lances (o domínio tem muito mais leitura que escrita) |
-| Semente | Mesma semente = mesma simulação (para ensaiar a apresentação e comparar configurações) |
+| Leitores (1–6) | Consultas rodando **durante** os lances (o domínio tem muito mais leitura que escrita) |
+| Lance acompanha o preço (padrão: ligado) | Envia o maior entre o valor planejado e o último preço conhecido (das respostas e dos leitores) + o incremento sorteado do lance. Desligado, o licitante que sobe mais rápido deixa os outros abaixo do mínimo, quase tudo é recusado e o leilão fica curto |
+| Semente | Mesma semente = mesmos valores e mesma ordem dos lances. Aceitos e recusados dependem do tempo de resposta, então variam um pouco entre execuções |
 
 ### Como cada execução funciona
-1. Lê a configuração ativa em `GET /actuator/metrics/leilao.estado.obter` (tag `configuracao`).
-2. `POST /leiloes` com início = agora e fim = agora + 10 min (longe do anti-sniping).
+1. Lê a configuração ativa em `GET /actuator/metrics/leilao.estado.obter` (`availableTags` → `configuracao`) **nas duas portas**; se forem diferentes ou uma não responder, não executa.
+2. `POST /leiloes` com início = agora − 2 s (absorve diferença de relógio com o servidor) e fim = agora + 10 min (longe do anti-sniping).
 3. Espera o status `ABERTO` (o agendador abre o leilão). Sem isso em 15 s, mostra "o agendador está rodando?".
 4. Dispara os lances com o número de simultâneos escolhido, mantendo a ordem de cada licitante.
 5. Em paralelo, os leitores fazem `GET /leiloes/{id}`, guardando (tempo, nº de eventos do leilão).
-6. Ao fim, lê as métricas dos dois serviços (seção 3) e faz as checagens:
+6. Ao fim, espera a contagem da leitura parar de mudar (o ouvinte Kafka ainda está obtendo o estado; até 5 s), lê as métricas dos dois serviços (seção 3) e faz as checagens:
    - **Um vencedor:** líder e preço finais = autor e valor do último lance aceito.
    - **Trilha completa:** nº de lances em `GET /leiloes/{id}/lances` = nº de respostas `200`.
    - **Ordem:** versões e valores do histórico estritamente crescentes.
@@ -66,9 +67,18 @@ Métricas lidas pelo painel (as duas portas, `GET /actuator/metrics/<nome>?tag=.
 | `leilao.estado.obter` | `caminho:comando` (8081), `caminho:consulta` (8082) | tempo médio e máximo para obter o estado |
 | `leilao.estado.eventos.lidos` | `base:redis`, `base:checkpoint`, `base:inicio`, `base:fonte` | eventos lidos por pedido; **acerto do cache** = `count(base:redis) / total` |
 
-As métricas acumulam desde que o serviço subiu: o painel lê antes e depois da execução e usa a diferença.
+As métricas acumulam desde que o serviço subiu: o painel lê antes e depois da execução e usa a diferença (`ΔTOTAL / ΔCOUNT`). O `MAX` não entra, porque o Micrometer o calcula numa janela recente e ele não pode ser subtraído. Na leitura, as obtenções incluem as do ouvinte Kafka (uma por evento), além das consultas; o painel mostra as duas contagens.
 
-**Resultado de uma medição manual (para calibrar a expectativa):** num leilão de ~100 eventos com 20 bots, C leu ~0,7 evento por lance contra ~50 em A, mas A teve menor tempo médio, porque reler 100 eventos é barato e, sem cópia, pedidos simultâneos dividem a mesma reconstrução. Como o ADR-003 prevê, o ganho de tempo do cache aparece em **leilões longos** (milhares de eventos), muito lidos ou após reinícios. Na demo, use um leilão longo e mostre também os **eventos lidos**, que separam as configurações em qualquer tamanho.
+**Expectativa (a confirmar no ensaio, ainda não medida nas três configurações):** os **eventos lidos** devem separar A, B e C em qualquer tamanho de leilão. O **tempo** só deve separá-las em leilões longos, como prevê o ADR-003: com poucos eventos, reler tudo é barato. Os números entram aqui depois do ensaio.
+
+Primeiras execuções ao vivo (16/11, só configuração C, 20 × 10 lances, 6 simultâneos, 4 leitores, semente 42), as três checagens ✓ em todas:
+
+| Lance acompanha o preço | Aceitos | Recusados | Conflitos (409) | Escrita p50 / p95 | Leitura p50 / p95 | Eventos lidos por obtenção (escrita) |
+|---|---|---|---|---|---|---|
+| desligado | 22 | 177 | 1 | 60 / 341 ms | 22 / 72 ms | 0,32 |
+| ligado | 60 | 123 | 17 | 197 / 524 ms | 20 / 64 ms | 0,30 |
+
+São leilões curtos (até ~60 eventos) e não servem de comparação entre configurações. Para um leilão longo, aumente os lances por licitante (com a opção ligada, cerca de 30% dos lances viram eventos).
 
 ## 4. Backend (pronto)
 
@@ -83,20 +93,24 @@ Rotas usadas: `POST /leiloes`, `POST /leiloes/{id}/lances`, `GET /leiloes/{id}`,
 
 Sem bibliotecas novas. React puro, CSS próprio, gráfico em SVG. Uma tela a mais (`#/adm`).
 
-| Arquivo | Conteúdo | Status |
-|---|---|---|
-| `src/api.ts` | `criarLeilao`, `darLance`, `consultarLeilao` (com `versaoMinima`), `historicoLances`; falta uma função para ler `/actuator/metrics` | ✅ quase pronto |
-| `src/simulacao.ts` | Gera os lances com semente, executa com N simultâneos, roda os leitores, calcula p50/p95 e as checagens | a fazer |
-| `src/PainelAdm.tsx` | Formulário, resultado, gráfico e histórico | a fazer |
+| Arquivo | Conteúdo |
+|---|---|
+| `src/api.ts` | `lerMetrica(servico, nome, tag)` para `/actuator/metrics`, além das rotas de sempre |
+| `src/simulacao.ts` | Gerador com semente (mulberry32), plano de lances, disparo com N simultâneos sem dois do mesmo licitante ao mesmo tempo, leitores, p50/p95, checagens e diferença das métricas |
+| `src/historico.ts` | Até 20 execuções no `localStorage` deste navegador; "mesma simulação" = mesmos parâmetros e semente |
+| `src/Grafico.tsx` | Linhas em SVG: mediana do tempo no navegador por faixa de nº de eventos, uma por configuração (a última de cada uma com a mesma simulação) |
+| `src/PainelAdm.tsx` | Formulário, resultado, gráfico (consultas ou lances) e histórico para comparar lado a lado |
+| `test/simulacao.test.ts` | `npm test` (`node --test`, sem biblioteca): percentil, semente e checagens |
 
 ## 6. Limites (dizer se a banca perguntar)
 
 - Os tempos do painel são medidos **no navegador** e incluem a rede local; as métricas do backend medem só o tempo para obter o estado. As duas visões juntas mostram onde o tempo está.
-- O navegador abre ~6 conexões por porta. Basta para gerar conflitos reais em demo, mas não é teste de carga de produção (para carga, use o `SimuladorLances`).
+- O navegador abre ~6 conexões por porta, **somando todas as abas**. Escrita (8081) e leitura (8082) são portas diferentes, por isso os dois campos vão até 6: acima disso os pedidos esperariam na fila do navegador e o tempo medido incluiria a espera. Uma aba de detalhe aberta prende uma conexão SSE na 8082. Basta para gerar conflitos reais em demo, mas não é teste de carga de produção (para carga, use o `SimuladorLances`).
+- As métricas são do serviço inteiro: outras abas, o agendador ou outro leilão rodando ao mesmo tempo entram na diferença. Rode o painel sozinho.
 - Trocar de configuração exige reiniciar escrita e leitura.
+- O histórico fica só no navegador em que as execuções foram feitas.
+- Cada execução cria um leilão de 10 min, que aparece na lista e é encerrado pelo agendador.
 
 ## 7. Próximos passos
 
-1. Função de métricas no `api.ts`.
-2. `simulacao.ts` e `PainelAdm.tsx`.
-3. Ensaiar com um leilão longo nas três configurações.
+1. Ensaiar com um leilão longo nas três configurações e registrar os números na seção 3.
