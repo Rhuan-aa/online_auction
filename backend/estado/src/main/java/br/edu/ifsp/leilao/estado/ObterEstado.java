@@ -148,10 +148,14 @@ public class ObterEstado {
         return estado.existe() ? Optional.of(estado) : Optional.empty();
     }
 
-    /** Cache-aside: se a cópia estava atrás (ou não existia), guarda a versão completa para o próximo. */
+    /**
+     * Cache-aside: guarda a versão completa para o próximo se a cópia do Redis estava atrás ou se
+     * não havia cópia no Redis (base do checkpoint). Sem a segunda condição, um leilão encerrado
+     * (checkpoint já na versão final) nunca voltaria ao Redis e toda leitura iria ao Postgres.
+     */
     private Optional<EstadoLeilao> completarEGuardar(UUID leilaoId, EstadoLeilao base, Base origem) {
         Optional<EstadoLeilao> completo = completar(leilaoId, base, origem);
-        completo.filter(estado -> estado.versao() > base.versao())
+        completo.filter(estado -> origem != Base.REDIS || estado.versao() > base.versao())
                 .ifPresent(estado -> cache.gravar(leilaoId, estado));
         return completo;
     }

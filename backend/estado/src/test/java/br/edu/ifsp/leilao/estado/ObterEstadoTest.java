@@ -143,6 +143,17 @@ class ObterEstadoTest {
     }
 
     @Test
+    void semRedisComCheckpointEmDiaRegravaACopiaNoRedis() {
+        checkpoint.guardado.put(ID, ATUAL); // checkpoint já na v6: não há evento posterior
+
+        assertEquals(Optional.of(ATUAL), obterEstado.obterParaConsulta(ID, 0));
+        assertEquals(ATUAL, cache.guardado.get(ID)); // a próxima leitura já acha a cópia no Redis
+
+        obterEstado.obterParaConsulta(ID, 0);
+        assertEquals(List.of(6), eventStore.pedidosAPartirDe); // só a primeira foi ao banco
+    }
+
+    @Test
     void consultaConfiaNaCopiaQueTemAVersaoMinimaSemIrAoEventStore() {
         EstadoLeilao copiaV4 = EstadoLeilao.INICIAL.aplicarTodos(EVENTOS.subList(0, 4));
         cache.guardado.put(ID, copiaV4);

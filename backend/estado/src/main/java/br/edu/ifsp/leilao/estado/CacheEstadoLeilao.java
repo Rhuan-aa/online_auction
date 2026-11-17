@@ -21,6 +21,12 @@ import tools.jackson.databind.json.JsonMapper;
  *
  *   leilao:{id}:estado:v1  → texto com o JSON do estado     (GET, SET, MGET)
  *   leiloes:abertos        → conjunto com os ids abertos     (SADD, SREM, SMEMBERS)
+ *                            + o membro "__completo__"
+ *
+ * O índice só é confiável se tiver o marcador "__completo__", que significa "todos os abertos
+ * estão aqui". O marcador mora DENTRO do conjunto: se o Redis reiniciar ou o LRU descartar o
+ * conjunto, o marcador some junto, e a listagem refaz o índice pelo Event Store. Cada gravação
+ * faz SADD/SREM do seu id mesmo sem o marcador; um conjunto parcial é só ignorado até ser refeito.
  *
  * Regra de ouro: o Redis nunca derruba o pedido. Qualquer falha vira um aviso no log e o método
  * se comporta como "não tenho cópia". O sistema continua correto, só mais lento.
@@ -32,6 +38,8 @@ public class CacheEstadoLeilao {
 
     /** Conjunto (SET do Redis) com os ids dos leilões abertos. A ordem da tela é feita em Java. */
     static final String ABERTOS = "leiloes:abertos";
+    /** Membro especial do conjunto de abertos: presente = o índice está completo. */
+    static final String MARCADOR = "__completo__";
 
     private final StringRedisTemplate redis;
     private final JsonMapper json;
@@ -121,22 +129,51 @@ public class CacheEstadoLeilao {
         }
     }
 
-    /** SMEMBERS leiloes:abertos. Vazio se o Redis estiver fora do ar (quem chama decide o que fazer). */
+    /**
+     * SMEMBERS leiloes:abertos. Devolve os ids só se o índice estiver completo (tem o marcador).
+     * Vazio se não houver marcador ou se o Redis estiver fora do ar: aí quem chama vai ao Event
+     * Store e chama repovoarAbertos.
+     */
     public Optional<List<UUID>> abertos() {
         if (!ligado) {
             return Optional.empty();
         }
         try {
-            Set<String> ids = redis.opsForSet().members(ABERTOS);
-            return Optional.ofNullable(ids).map(lista -> lista.stream().map(UUID::fromString).toList());
+            Set<String> membros = redis.opsForSet().members(ABERTOS);
+            if (membros == null || !membros.contains(MARCADOR)) {
+                return Optional.empty();
+            }
+            return Optional.of(membros.stream()
+                    .filter(membro -> !MARCADOR.equals(membro))
+                    .map(UUID::fromString)
+                    .toList());
         } catch (RuntimeException e) {
             avisar("ler o índice de abertos", e);
             return Optional.empty();
         }
     }
 
+
+    public void repovoarAbertos(Map<UUID, EstadoLeilao> estados) {
+        if (!ligado) {
+            return;
+        }
+        List<String> membros = new ArrayList<>();
+        estados.forEach((id, estado) -> {
+            if (estado.status() == EstadoLeilao.Status.ABERTO) {
+                membros.add(id.toString());
+            }
+        });
+        membros.add(MARCADOR);
+        try {
+            redis.opsForSet().add(ABERTOS, membros.toArray(String[]::new));
+        } catch (RuntimeException e) {
+            avisar("refazer o índice de abertos", e);
+        }
+    }
+
     /**
-     * KEYS leilao:* e DEL: apaga todas as cópias e o índice. Só para a ferramenta de reconstrução
+     * KEYS leilao:* e DEL: apaga todas as cópias e o índice (com o marcador). Só para a ferramenta de reconstrução
      * (KEYS percorre o Redis inteiro: aceitável numa manutenção, não no caminho de um pedido).
      * Devolve quantas chaves apagou.
      */

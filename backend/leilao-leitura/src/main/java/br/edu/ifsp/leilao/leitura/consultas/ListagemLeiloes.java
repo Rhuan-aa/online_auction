@@ -7,6 +7,8 @@ import br.edu.ifsp.leilao.estado.ObterEstado;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 
@@ -37,20 +39,24 @@ public class ListagemLeiloes {
 
     /** status = null lista todos. Ordenada pelo fim do leilão. */
     public List<LeilaoResumo> listar(String status) {
-        return obterEstado.obterVariosParaConsulta(candidatos(status)).entrySet().stream()
+        return estados(status).entrySet().stream()
                 .filter(item -> status == null || status.equals(item.getValue().status().name()))
                 .map(item -> resumo(item.getKey(), item.getValue()))
                 .sorted(Comparator.comparing(LeilaoResumo::fimEm))
                 .toList();
     }
 
-    private List<UUID> candidatos(String status) {
+    private Map<UUID, EstadoLeilao> estados(String status) {
         if (EstadoLeilao.Status.ABERTO.name().equals(status)) {
-            return cache.abertos()
-                    .filter(ids -> !ids.isEmpty())
-                    .orElseGet(eventos::idsDosLeiloes);
+            Optional<List<UUID>> indice = cache.abertos();
+            if (indice.isPresent()) {
+                return obterEstado.obterVariosParaConsulta(indice.get());
+            }
+            Map<UUID, EstadoLeilao> todos = obterEstado.obterVariosParaConsulta(eventos.idsDosLeiloes());
+            cache.repovoarAbertos(todos);
+            return todos;
         }
-        return eventos.idsDosLeiloes();
+        return obterEstado.obterVariosParaConsulta(eventos.idsDosLeiloes());
     }
 
     private static LeilaoResumo resumo(UUID leilaoId, EstadoLeilao estado) {
