@@ -1,14 +1,17 @@
 package br.edu.ifsp.leilao.estado;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
 class TrocaDeConfiguracaoTest {
 
-    /** Cache que só conta quantas vezes foi apagado. */
+    /** Cache que guarda chaves de mentira e conta quantas vezes foi apagado. */
     static class CacheContador extends CacheEstadoLeilao {
         int apagamentos;
+        final java.util.Set<String> chaves = new java.util.HashSet<>(java.util.Set.of("leiloes:abertos"));
+        boolean falha;
 
         CacheContador(ConfiguracaoAtiva configuracao) {
             super(null, null, configuracao);
@@ -17,7 +20,12 @@ class TrocaDeConfiguracaoTest {
         @Override
         public long apagarTudo() {
             apagamentos++;
-            return 0;
+            if (falha) {
+                throw new IllegalStateException("Redis fora do ar");
+            }
+            long apagadas = chaves.size();
+            chaves.clear();
+            return apagadas;
         }
     }
 
@@ -28,6 +36,24 @@ class TrocaDeConfiguracaoTest {
         assertEquals(para, new TrocaDeConfiguracao(configuracao, cache).trocar(para));
         assertEquals(para, configuracao.atual());
         return cache.apagamentos;
+    }
+
+    @Test
+    void deAParaCApagaDeFatoAsChaves() {
+        var configuracao = new ConfiguracaoAtiva(Configuracao.A);
+        var cache = new CacheContador(configuracao);
+        new TrocaDeConfiguracao(configuracao, cache).trocar(Configuracao.C);
+        assertEquals(java.util.Set.of(), cache.chaves);
+    }
+
+    @Test
+    void seALimpezaFalharNaoTrocaDeConfiguracao() {
+        var configuracao = new ConfiguracaoAtiva(Configuracao.A);
+        var cache = new CacheContador(configuracao);
+        cache.falha = true;
+        assertThrows(IllegalStateException.class,
+                () -> new TrocaDeConfiguracao(configuracao, cache).trocar(Configuracao.C));
+        assertEquals(Configuracao.A, configuracao.atual());
     }
 
     @Test

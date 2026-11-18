@@ -9,8 +9,12 @@ import org.springframework.stereotype.Component;
  * tinha antes. Ao voltar para C, essas cópias velhas seriam confiadas pelas consultas sem
  * versaoMinima e pelo índice de abertos (que ainda teria o marcador "__completo__"): a listagem
  * poderia omitir leilões criados durante A/B ou mostrar leilões já encerrados. Por isso, ao passar
- * de uma configuração sem Redis para uma com Redis, apagamos tudo; o cache volta a se formar sozinho
- * (cache-aside), e a correção não depende da configuração.
+ * de uma configuração sem Redis para uma com Redis, apagamos tudo ANTES de trocar; o cache volta a
+ * se formar sozinho (cache-aside), e a correção não depende da configuração.
+ *
+ * Apagar antes é seguro porque, em A/B, nada grava no Redis, e evita uma janela em que um leitor
+ * em C confiaria numa cópia velha. Se o Redis estiver fora do ar e apagarTudo falhar, a exceção
+ * sobe e a configuração NÃO muda: ligar o Redis com cópias velhas violaria a correção.
  */
 @Component
 public class TrocaDeConfiguracao {
@@ -23,13 +27,15 @@ public class TrocaDeConfiguracao {
         this.cache = cache;
     }
 
-    /** Devolve a configuração em vigor depois da troca. Limpa o Redis só ao ligá-lo (A/B para C). */
+    /**
+     * Devolve a configuração em vigor depois da troca. Limpa o Redis só ao ligá-lo (A/B para C);
+     * se a limpeza falhar, lança a exceção e deixa a configuração como estava.
+     */
     public Configuracao trocar(Configuracao nova) {
         boolean religaRedis = !configuracao.atual().usaRedis() && nova.usaRedis();
-        Configuracao agora = configuracao.trocar(nova);
         if (religaRedis) {
-            cache.apagarTudo(); // depois da troca: apagarTudo não depende da configuração
+            cache.apagarTudo(); // antes da troca: se falhar, a configuração não muda
         }
-        return agora;
+        return configuracao.trocar(nova);
     }
 }
