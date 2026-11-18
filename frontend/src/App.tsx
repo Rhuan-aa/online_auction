@@ -10,9 +10,12 @@ import GavetaNovoLeilao from './palco/GavetaNovoLeilao.tsx'
 import Palco from './palco/Palco.tsx'
 import { useAgora } from './palco/useAgora.ts'
 import { usePalco } from './palco/usePalco.ts'
-import { ABAS, hrefDe, useRota } from './rota.ts'
-import Aba from './shell/Aba.tsx'
+import { hrefDe, useRota } from './rota.ts'
+import { secaoDe } from './secoes.ts'
+import { SlideContexto } from './shell/contexto.ts'
+import Navegacao from './shell/Navegacao.tsx'
 import Topo from './shell/Topo.tsx'
+import { useTeclasSlides } from './shell/useTeclasSlides.ts'
 import { salvarUsuario, usuarioSalvo, type UsuarioId } from './usuarios.ts'
 
 type Gaveta = 'leiloes' | 'novo' | null
@@ -35,6 +38,7 @@ export default function App() {
   const gavetaAberta: Gaveta = gaveta ?? (precisaEscolher && !dispensouLista ? 'leiloes' : null)
 
   const fechar = useCallback(() => { setGaveta(null); setDispensouLista(true) }, [])
+  useTeclasSlides(rota.aba, rota.passo, rota.leilaoId, gavetaAberta === null)
 
   function trocarUsuario(novo: UsuarioId) {
     setUsuario(novo)
@@ -46,38 +50,42 @@ export default function App() {
     fechar()
   }
 
-  const aba = ABAS.find((a) => a.id === rota.aba) ?? ABAS[0]
+  const { pergunta } = secaoDe(rota.aba)
+  const vivo = { agora, estado: palco.estado, incrementoMinimo: palco.incrementoMinimo }
 
   return (
-    <>
+    <div className="app">
       <Topo rota={rota} usuario={usuario} aoTrocarUsuario={trocarUsuario} />
-      <div className="corpo">
-        <Palco
-          leilaoId={rota.leilaoId}
-          palco={palco}
-          agora={agora}
-          usuario={usuario}
-          aoAbrirLeiloes={() => setGaveta('leiloes')}
-          aoAbrirNovo={() => setGaveta('novo')}
-        />
-        <main className="conteudo">
+      <SlideContexto value={{ aba: rota.aba, passo: 1 }}>
+        <main className="area-slide">
           {rota.aba === 'integridade'
-            ? <AbaIntegridade pergunta={aba.pergunta} agora={agora} estado={palco.estado} incrementoMinimo={palco.incrementoMinimo} />
+            ? <AbaIntegridade pergunta={pergunta} passo={rota.passo} {...vivo} />
             : rota.aba === 'desempenho'
-              ? <AbaDesempenho pergunta={aba.pergunta} />
+              ? <AbaDesempenho pergunta={pergunta} />
               : rota.aba === 'rede'
-                ? <AbaRede pergunta={aba.pergunta} agora={agora} estado={palco.estado} incrementoMinimo={palco.incrementoMinimo} usuario={usuario} />
+                ? <AbaRede pergunta={pergunta} {...vivo} usuario={usuario} />
                 : rota.aba === 'auditoria'
-                  ? <AbaAuditoria pergunta={aba.pergunta} estado={palco.estado} />
+                  ? <AbaAuditoria pergunta={pergunta} estado={palco.estado} />
                   : rota.aba === 'arquitetura'
-                    ? <AbaArquitetura key={rota.leilaoId ?? ''} pergunta={aba.pergunta} agora={agora} estado={palco.estado} incrementoMinimo={palco.incrementoMinimo} usuario={usuario} ultimoEvento={palco.ultimoEvento} leilaoId={rota.leilaoId} />
-                    : rota.aba === 'e-se-fosse'
-                      ? <AbaESeFosse pergunta={aba.pergunta} leilaoId={rota.leilaoId} versao={palco.estado?.versao ?? null} />
-                      : <Aba pergunta={aba.pergunta} porQue={null} />}
+                    ? <AbaArquitetura key={rota.leilaoId ?? ''} pergunta={pergunta} {...vivo} usuario={usuario} ultimoEvento={palco.ultimoEvento} leilaoId={rota.leilaoId} />
+                    : <AbaESeFosse pergunta={pergunta} leilaoId={rota.leilaoId} versao={palco.estado?.versao ?? null} />}
         </main>
-      </div>
+      </SlideContexto>
+      <footer className="rodape">
+        <Navegacao rota={rota} />
+        <div className="rodape-vivo">
+          <Palco
+            leilaoId={rota.leilaoId}
+            palco={palco}
+            agora={agora}
+            usuario={usuario}
+            aoAbrirLeiloes={() => setGaveta('leiloes')}
+            aoAbrirNovo={() => setGaveta('novo')}
+          />
+        </div>
+      </footer>
       {gavetaAberta === 'leiloes' && <GavetaLeiloes aba={rota.aba} passo={rota.passo} aoFechar={fechar} />}
       {gavetaAberta === 'novo' && <GavetaNovoLeilao usuario={usuario} aoCriar={aoCriar} aoFechar={fechar} />}
-    </>
+    </div>
   )
 }

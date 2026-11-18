@@ -61,6 +61,11 @@ export function anterior(r: Rota): Rota {
   return previa ? { ...r, aba: previa.id, passo: passosVisiveis(previa.id) } : r
 }
 
+/** Vai para outra tela trocando o hash (entra no histórico: o "voltar" do navegador volta um slide). */
+export function irPara(r: Rota): void {
+  window.location.hash = hrefDe(r)
+}
+
 export function useRota(): Rota {
   const [hash, setHash] = useState(window.location.hash)
   useEffect(() => {

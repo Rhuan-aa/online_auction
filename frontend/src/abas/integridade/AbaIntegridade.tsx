@@ -6,7 +6,7 @@ import EscadaVersoes from './EscadaVersoes.tsx'
 import { MAX_RAJADA, MIN_RAJADA, planejarRajada, resumirRajada, type ResultadoRajada } from './rajada.ts'
 import SimulacaoCompleta from './SimulacaoCompleta.tsx'
 
-interface Props { pergunta: string; agora: number; estado: EstadoLeilao | null; incrementoMinimo: number | null }
+interface Props { pergunta: string; passo: number; agora: number; estado: EstadoLeilao | null; incrementoMinimo: number | null }
 
 const PORQUE = (
   <p>
