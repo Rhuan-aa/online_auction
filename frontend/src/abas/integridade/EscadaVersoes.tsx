@@ -1,6 +1,6 @@
 import type { ResultadoLance } from '../../api.ts'
 import { dinheiro } from '../../formato.ts'
-import type { ResultadoRajada } from './rajada.ts'
+import { agruparAceitos, type ResultadoRajada } from './rajada.ts'
 
 interface Props { versao: number; resultados: ResultadoRajada[] }
 
@@ -22,17 +22,25 @@ function Ficha({ r }: { r: ResultadoRajada }) {
   )
 }
 
-/** Dois degraus: a versão em que todos mediram e a seguinte. Só um lance sobe; os outros ficam embaixo. */
+/** Um degrau por versão gravada (os aceitos, do mais alto para o mais baixo) e, embaixo, a versão em que todos mediram. */
 export default function EscadaVersoes({ versao, resultados }: Props) {
-  const venceu = resultados.filter((r) => r.resultado.tipo === 'aceito')
+  const degraus = agruparAceitos(resultados).reverse()
   const ficaram = resultados.filter((r) => r.resultado.tipo !== 'aceito')
+  const resumo = degraus.length === 0 ? `nenhum lance subiu da versão ${versao}` : `${degraus.length} versões gravadas a partir da ${versao}`
   return (
-    <div className="escada" role="group" aria-label={`Lances disputando a versão ${versao + 1}`}>
-      <div className="degrau degrau-alto">
-        <span className="degrau-versao">v{versao + 1}</span>
-        <ul>{venceu.map((r, i) => <Ficha key={i} r={r} />)}</ul>
-        {venceu.length === 0 && <span className="suave">ninguém chegou aqui</span>}
-      </div>
+    <div className="escada" role="group" aria-label={`Lances a partir da versão ${versao}: ${resumo}`}>
+      {degraus.length === 0 && (
+        <div className="degrau degrau-alto">
+          <span className="degrau-versao">v{versao + 1}</span>
+          <span className="suave">ninguém chegou aqui</span>
+        </div>
+      )}
+      {degraus.map((d) => (
+        <div className="degrau degrau-alto" key={d.versao}>
+          <span className="degrau-versao">v{d.versao}</span>
+          <ul>{d.resultados.map((r, i) => <Ficha key={i} r={r} />)}</ul>
+        </div>
+      ))}
       <div className="degrau">
         <span className="degrau-versao">v{versao}</span>
         <ul>{ficaram.map((r, i) => <Ficha key={i} r={r} />)}</ul>

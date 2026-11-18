@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import type { EstadoLeilao, EventoGravado, ResultadoLance } from '../../api.ts'
-import { planejarRajada, resumirRajada, versoesContiguas, type ResultadoRajada } from './rajada.ts'
+import { agruparAceitos, planejarRajada, resumirRajada, versoesContiguas, type ResultadoRajada } from './rajada.ts'
 
 const estado: EstadoLeilao = {
   leilaoId: 'x', titulo: 't', status: 'ABERTO', precoAtual: 1000, liderId: 'a', fimEm: '2099-01-01T00:00:00Z', versao: 3,
@@ -35,4 +35,17 @@ test('versões repetidas falham', () => expect(versoesContiguas([ev(1), ev(2), e
 test('versões 1..n passam, mesmo fora de ordem', () => {
   expect(versoesContiguas([ev(2), ev(1), ev(3)])).toBe(true)
   expect(versoesContiguas([])).toBe(true)
+})
+
+test('três aceitos em versões diferentes viram três degraus, em ordem', () => {
+  const a = (versao: number) => r({ tipo: 'aceito', versao, tentativas: versao })
+  const grupos = agruparAceitos([a(6), recusado(1), a(4), a(5)])
+  expect(grupos.map((g) => g.versao)).toEqual([4, 5, 6])
+  expect(grupos.every((g) => g.resultados.length === 1)).toBe(true)
+})
+test('aceitos na mesma versão ficam juntos e os que não foram aceitos ficam de fora', () => {
+  const a = (versao: number) => r({ tipo: 'aceito', versao, tentativas: 1 })
+  const grupos = agruparAceitos([a(4), a(4), recusado(1)])
+  expect(grupos).toHaveLength(1)
+  expect(grupos[0].resultados).toHaveLength(2)
 })

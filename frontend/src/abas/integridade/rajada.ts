@@ -37,3 +37,13 @@ export function versoesContiguas(eventos: EventoGravado[]): boolean {
   const versoes = eventos.map((e) => e.versao).sort((a, b) => a - b)
   return versoes.every((v, i) => v === i + 1)
 }
+
+/** Lances aceitos agrupados pela versão que gravaram (v+1, v+2, …), da menor para a maior. */
+export function agruparAceitos(rs: ResultadoRajada[]): { versao: number; resultados: ResultadoRajada[] }[] {
+  const porVersao = new Map<number, ResultadoRajada[]>()
+  for (const r of rs) {
+    if (r.resultado.tipo !== 'aceito') continue
+    porVersao.set(r.resultado.versao, [...(porVersao.get(r.resultado.versao) ?? []), r])
+  }
+  return [...porVersao].sort((a, b) => a[0] - b[0]).map(([versao, resultados]) => ({ versao, resultados }))
+}
