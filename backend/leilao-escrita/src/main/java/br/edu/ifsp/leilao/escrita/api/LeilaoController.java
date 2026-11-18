@@ -2,6 +2,7 @@ package br.edu.ifsp.leilao.escrita.api;
 
 import br.edu.ifsp.leilao.contratos.CriarLeilaoRequest;
 import br.edu.ifsp.leilao.contratos.DarLanceRequest;
+import br.edu.ifsp.leilao.escrita.application.Resultado;
 import br.edu.ifsp.leilao.escrita.application.ServicoLeilao;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,7 @@ public class LeilaoController {
 
     record LeilaoCriadoResponse(UUID leilaoId, int versao) {}
     record VersaoResponse(int versao) {}
+    record LanceResponse(int versao, int tentativas) {}
     record CancelarRequest(String motivo) {}
 
     private final ServicoLeilao servico;
@@ -36,12 +38,13 @@ public class LeilaoController {
     }
 
     @PostMapping("/{id}/lances")
-    public VersaoResponse darLance(@PathVariable UUID id, @RequestBody DarLanceRequest request) {
-        return new VersaoResponse(servico.darLance(id, request.licitanteId(), request.valor()));
+    public LanceResponse darLance(@PathVariable UUID id, @RequestBody DarLanceRequest request) {
+        Resultado r = servico.darLance(id, request.licitanteId(), request.valor());
+        return new LanceResponse(r.versao(), r.tentativas());
     }
 
     @PostMapping("/{id}/cancelar")
     public VersaoResponse cancelar(@PathVariable UUID id, @RequestBody CancelarRequest request) {
-        return new VersaoResponse(servico.cancelar(id, request.motivo()));
+        return new VersaoResponse(servico.cancelar(id, request.motivo()).versao());
     }
 }

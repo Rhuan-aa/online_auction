@@ -3,6 +3,7 @@ package br.edu.ifsp.leilao.escrita.application;
 import br.edu.ifsp.leilao.contratos.CriarLeilaoRequest;
 import br.edu.ifsp.leilao.contratos.EventoLeilao;
 import br.edu.ifsp.leilao.escrita.domain.Leilao;
+import br.edu.ifsp.leilao.escrita.domain.RegraVioladaException;
 import br.edu.ifsp.leilao.estado.CacheEstadoLeilao;
 import br.edu.ifsp.leilao.estado.Checkpoint;
 import br.edu.ifsp.leilao.estado.EstadoLeilao;
@@ -50,11 +51,11 @@ public class ServicoLeilao {
         return leilaoId;
     }
 
-    public int darLance(UUID leilaoId, String licitanteId, long valor) {
+    public Resultado darLance(UUID leilaoId, String licitanteId, long valor) {
         return executar(leilaoId, obterEstado::obter, leilao -> leilao.darLance(licitanteId, valor, Instant.now()));
     }
 
-    public int cancelar(UUID leilaoId, String motivo) {
+    public Resultado cancelar(UUID leilaoId, String motivo) {
         return executar(leilaoId, obterEstado::obter, leilao -> leilao.cancelar(motivo));
     }
 
@@ -71,24 +72,30 @@ public class ServicoLeilao {
      * Obtém o estado pela leitura informada, decide e grava. Se dois comandos disputarem a mesma
      * versão, o perdedor lê de novo PELA MESMA LEITURA e decide outra vez (o lance pode passar a ser
      * recusado por estar abaixo do novo mínimo). Nos comandos é o obter: ele já completa a cópia com
-     * os eventos que o vencedor gravou, sem reler o histórico inteiro. Devolve a nova versão.
+     * os eventos que o vencedor gravou, sem reler o histórico inteiro. Devolve a nova versão e o número
+     * de tentativas; uma regra violada sai como LanceRecusadoException com a tentativa em que ocorreu.
      */
-    private int executar(UUID leilaoId, Function<UUID, Optional<EstadoLeilao>> leitura,
+    private Resultado executar(UUID leilaoId, Function<UUID, Optional<EstadoLeilao>> leitura,
                          Function<Leilao, List<EventoLeilao>> decisao) {
         for (int tentativa = 1; ; tentativa++) {
             EstadoLeilao estado = leitura.apply(leilaoId)
                     .orElseThrow(() -> new LeilaoNaoEncontradoException(leilaoId));
-            List<EventoLeilao> novos = decisao.apply(Leilao.de(estado));
+            List<EventoLeilao> novos;
+            try {
+                novos = decisao.apply(Leilao.de(estado));
+            } catch (RegraVioladaException recusa) {
+                throw new LanceRecusadoException(recusa, tentativa);
+            }
             try {
                 eventStore.anexar(leilaoId, estado.versao(), novos);
             } catch (ConflitoDeVersaoException conflito) {
                 if (tentativa == TENTATIVAS) {
-                    throw conflito;
+                    throw new ConflitoDeVersaoException(conflito, tentativa);
                 }
                 continue;
             }
             atualizarCopia(leilaoId, estado, novos);
-            return estado.versao() + novos.size();
+            return new Resultado(estado.versao() + novos.size(), tentativa);
         }
     }
 
