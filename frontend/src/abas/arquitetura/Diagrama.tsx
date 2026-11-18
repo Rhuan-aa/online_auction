@@ -2,8 +2,8 @@ import type { CSSProperties, RefObject } from 'react'
 import { useLargura } from '../../graficos/useLargura.ts'
 import { PASSO_MS, type No } from './caminho.ts'
 
-const LARGURA_MIN = 760
-const NO_L = 124
+const LARGURA_MIN = 950 // 5 colunas de 190 px: nó de 150 px e 40 px para a seta
+const NO_L = 150
 const NO_A = 60
 const ROTULOS: Record<No, [string, string]> = {
   front: ['Front', 'React'],
@@ -33,7 +33,7 @@ interface Props {
 export default function Diagrama({ chave, luz, gravacaoMs, propagacaoMs }: Props) {
   const [ref, medida] = useLargura()
   const W = Math.max(medida, LARGURA_MIN)
-  const H = 250
+  const H = 290
   const centro = (n: No) => ({ x: (W / 5) * (POS[n][0] + 0.5), y: 70 + POS[n][1] * 130 })
   const estilo = (id: string) => ({ '--atraso': `${(luz[id] ?? 0) * PASSO_MS}ms` }) as CSSProperties
 
