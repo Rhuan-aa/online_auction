@@ -43,3 +43,13 @@
 .historico-comparacoes button[aria-pressed='true'] { background: var(--tinta); color: var(--fundo); border-color: var(--tinta); }
 .ao-vivo { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; }
 .ao-vivo-porta h3 { margin: 0 0 0.5rem; font-size: 1rem; }
+
+/* Aba Rede */
+.aviso-fixo { margin: 0 0 1.5rem; padding: 0.5rem 0.75rem; border-left: 4px solid var(--aviso); background: var(--superficie); color: var(--tinta); font-size: 0.9rem; }
+.tabela-rede { width: 100%; font-size: 0.9rem; }
+.tabela-rede th, .tabela-rede td { padding: 0.3rem 0.6rem; text-align: right; border-bottom: var(--borda-largura) solid var(--borda); }
+.tabela-rede th:first-child, .tabela-rede td:first-child { text-align: left; font-family: var(--fonte-mono); }
+.waterfall { display: flex; align-items: flex-start; border: var(--borda-largura) solid var(--borda); border-radius: var(--raio); background: var(--superficie); }
+.waterfall svg { flex: 1; min-width: 0; }
+.waterfall-rotulos { flex: 0 0 15rem; margin: 0; padding: 0; list-style: none; font-family: var(--fonte-mono); font-size: 0.75rem; color: var(--tinta-suave); }
+.waterfall-rotulos li { display: flex; align-items: center; padding: 0 0.5rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
