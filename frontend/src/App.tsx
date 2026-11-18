@@ -5,9 +5,9 @@ import AbaESeFosse from './abas/eSeFosse/AbaESeFosse.tsx'
 import AbaDesempenho from './abas/desempenho/AbaDesempenho.tsx'
 import AbaIntegridade from './abas/integridade/AbaIntegridade.tsx'
 import AbaRede from './abas/rede/AbaRede.tsx'
+import CartaoAoVivo from './palco/CartaoAoVivo.tsx'
 import GavetaLeiloes from './palco/GavetaLeiloes.tsx'
 import GavetaNovoLeilao from './palco/GavetaNovoLeilao.tsx'
-import Palco from './palco/Palco.tsx'
 import { useAgora } from './palco/useAgora.ts'
 import { usePalco } from './palco/usePalco.ts'
 import { hrefDe, useRota } from './rota.ts'
@@ -73,16 +73,14 @@ export default function App() {
       </SlideContexto>
       <footer className="rodape">
         <Navegacao rota={rota} />
-        <div className="rodape-vivo">
-          <Palco
-            leilaoId={rota.leilaoId}
-            palco={palco}
-            agora={agora}
-            usuario={usuario}
-            aoAbrirLeiloes={() => setGaveta('leiloes')}
-            aoAbrirNovo={() => setGaveta('novo')}
-          />
-        </div>
+        <CartaoAoVivo
+          leilaoId={rota.leilaoId}
+          palco={palco}
+          agora={agora}
+          usuario={usuario}
+          aoAbrirLeiloes={() => setGaveta('leiloes')}
+          aoAbrirNovo={() => setGaveta('novo')}
+        />
       </footer>
       {gavetaAberta === 'leiloes' && <GavetaLeiloes aba={rota.aba} passo={rota.passo} aoFechar={fechar} />}
       {gavetaAberta === 'novo' && <GavetaNovoLeilao usuario={usuario} aoCriar={aoCriar} aoFechar={fechar} />}
