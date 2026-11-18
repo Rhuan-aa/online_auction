@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { avancar } from './cenarios.ts'
+import { avancar, limitar } from './cenarios.ts'
 
 const INTERVALO_MS = 1200
 
@@ -13,13 +13,16 @@ interface Props {
   alternativa: (passo: number) => ReactNode
   /** Quando preenchido, o cartão mostra o aviso no lugar dos lados e trava os controles. */
   indisponivel?: string
+  /** Observação curta sob o título (ex.: janela de lances truncada). */
+  nota?: string
 }
 
 /** Cartão com o selo "ilustração", os dois lados e os controles ▶ ⏸ ⏭ ↺. */
-export default function Cenario({ titulo, legendas, conclusao, nosso, alternativa, indisponivel }: Props) {
+export default function Cenario({ titulo, legendas, conclusao, nosso, alternativa, indisponivel, nota }: Props) {
   const total = legendas.length
-  const [passo, setPasso] = useState(0)
+  const [passoBruto, setPasso] = useState(0)
   const [tocando, setTocando] = useState(false)
+  const passo = limitar(passoBruto, total)
   const desabilitado = indisponivel != null || total === 0
   const fim = passo >= total
 
@@ -43,6 +46,7 @@ export default function Cenario({ titulo, legendas, conclusao, nosso, alternativ
       <header className="cenario-topo">
         <span className="selo-ilustracao">ilustração</span>
         <h2>{titulo}</h2>
+        {nota && <small className="suave">{nota}</small>}
       </header>
       {indisponivel != null ? <p className="suave cenario-vazio">{indisponivel}</p> : (
         <>

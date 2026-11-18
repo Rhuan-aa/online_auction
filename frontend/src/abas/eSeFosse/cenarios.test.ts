@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { EventoGravado } from '../../api.ts'
-import { avancar, cqrsAtrasado, crud, ROTEIRO_KAFKA, ROTEIRO_REST, ultimosLances } from './cenarios.ts'
+import { avancar, chaveJanela, cqrsAtrasado, crud, limitar, notaRecorte, ROTEIRO_KAFKA, ROTEIRO_REST, ultimosLances } from './cenarios.ts'
 
 const ev = (versao: number, tipo: string, dados: unknown): EventoGravado =>
   ({ versao, tipo, dados, criadoEm: '2026-11-18T12:00:00Z' })
@@ -37,6 +37,12 @@ describe('cqrsAtrasado', () => {
     expect(p[3]).toEqual({ passo: 4, escrita: 2000, replica: 1500, precoVelho: true })
     expect(p[0].replica).toBeNull()
   })
+  test('sem réplica ainda não é preço velho; defasada é', () => {
+    const p = cqrsAtrasado(eventosReais, 2)
+    expect(p[0].precoVelho).toBe(false)
+    expect(p[1].precoVelho).toBe(false)
+    expect(p[2].precoVelho).toBe(true)
+  })
 })
 
 test('ultimosLances mantém só lances e limita a quantidade', () => {
@@ -59,4 +65,22 @@ describe('roteiros fixos', () => {
     }
     expect(r.conclusao.length).toBeGreaterThan(0)
   })
+})
+
+test('limitar mantém o passo dentro de 0..total', () => {
+  expect(limitar(5, 3)).toBe(3)
+  expect(limitar(-1, 3)).toBe(0)
+  expect(limitar(2, 3)).toBe(2)
+  expect(limitar(4, 0)).toBe(0)
+})
+
+test('chaveJanela muda com o leilão e com a janela', () => {
+  const l = ultimosLances(eventosReais)
+  expect(chaveJanela('a', l)).not.toBe(chaveJanela('b', l))
+  expect(chaveJanela('a', l)).not.toBe(chaveJanela('a', l.slice(1)))
+})
+
+test('notaRecorte só aparece quando há truncamento', () => {
+  expect(notaRecorte(eventosReais, 4)).toBeUndefined()
+  expect(notaRecorte(eventosReais, 3)).toBe('mostrando os últimos 3 de 4 lances')
 })

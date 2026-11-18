@@ -39,12 +39,26 @@ export function cqrsAtrasado(eventos: EventoGravado[], atrasoPassos = 2): PassoC
   const valores = eventos.filter(ehLance).map((e) => comoLance(e).valor)
   return valores.map((escrita, i) => {
     const replica = i - atrasoPassos >= 0 ? valores[i - atrasoPassos] : null
-    return { passo: i + 1, escrita, replica, precoVelho: replica !== escrita }
+    return { passo: i + 1, escrita, replica, precoVelho: replica != null && replica !== escrita }
   })
 }
 
 /** Passo seguinte do player; para no último. */
 export const avancar = (passo: number, total: number) => Math.min(total, passo + 1)
+
+/** Mantém o passo dentro de 0..total (rede de segurança se os dados mudarem sob o player). */
+export const limitar = (passo: number, total: number) => Math.max(0, Math.min(total, passo))
+
+/** Identidade da janela de lances: muda com o leilão ou com os lances mostrados, e reinicia o player. */
+export function chaveJanela(leilaoId: string | null, lances: EventoGravado[]): string {
+  return `${leilaoId ?? ''}:${lances[0]?.versao ?? 0}-${lances.at(-1)?.versao ?? 0}`
+}
+
+/** Aviso quando só os últimos lances são mostrados; vazio se todos cabem. */
+export function notaRecorte(eventos: EventoGravado[], mostrados: number): string | undefined {
+  const total = eventos.filter(ehLance).length
+  return total > mostrados ? `mostrando os últimos ${mostrados} de ${total} lances` : undefined
+}
 
 // ---- Roteiros fixos (cartões 3 e 4) ----
 
@@ -61,20 +75,21 @@ export const ROTEIRO_REST: Roteiro = {
       alternativa: [{ texto: 'cliente → escrita: POST /lances' }],
     },
     {
-      legenda: 'A escrita valida o lance e o grava no Event Store.',
-      nosso: [{ texto: 'cliente → escrita: POST /lances' }, { texto: 'lance gravado no Event Store', tom: 'ok' }],
-      alternativa: [{ texto: 'cliente → escrita: POST /lances' }, { texto: 'lance gravado no banco', tom: 'ok' }],
+      legenda: 'A escrita valida o lance. Nosso sistema grava o lance e o evento da outbox na mesma transação.',
+      nosso: [{ texto: 'lance gravado + outbox, na mesma transação', tom: 'ok' }, { texto: 'lance aceito: o cliente recebe 200', tom: 'ok' }],
+      alternativa: [{ texto: 'a escrita chama notificações (REST) antes de confirmar o lance' }],
     },
     {
-      legenda: 'O serviço de notificações está fora do ar. Quem espera por ele quebra; quem publica no broker segue.',
+      legenda: 'O serviço de notificações está fora do ar. Quem espera por ele quebra; quem publica depois do commit segue.',
       nosso: [
-        { texto: 'evento publicado no Kafka', tom: 'ok' },
+        { texto: 'lance gravado + outbox, na mesma transação', tom: 'ok' },
         { texto: 'lance aceito: o cliente recebe 200', tom: 'ok' },
-        { texto: 'notificações fora do ar: o evento fica esperando no log', tom: 'aviso' },
+        { texto: 'o relay publica no Kafka depois do commit', tom: 'ok' },
+        { texto: 'notificações fora do ar: o evento espera no log', tom: 'aviso' },
       ],
       alternativa: [
         { texto: 'escrita → notificações (REST): sem resposta', tom: 'erro' },
-        { texto: 'o lance devolve erro ao cliente', tom: 'erro' },
+        { texto: 'lance não confirmado: o cliente recebe erro', tom: 'erro' },
       ],
     },
     {
@@ -83,7 +98,7 @@ export const ROTEIRO_REST: Roteiro = {
         { texto: 'notificações voltam e leem o que perderam do log', tom: 'ok' },
         { texto: 'quem foi superado é avisado, só um pouco depois', tom: 'ok' },
       ],
-      alternativa: [{ texto: 'o cliente já viu o erro e precisa tentar de novo', tom: 'erro' }],
+      alternativa: [{ texto: 'o cliente precisa tentar de novo, e o lance já pode ter sido perdido para outro', tom: 'erro' }],
     },
   ],
   conclusao: 'Com o broker, a escrita não depende de quem consome: um serviço lento ou fora do ar não derruba o lance (ADR-004).',
