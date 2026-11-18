@@ -113,11 +113,16 @@ async function medir(url: string, init?: RequestInit): Promise<Response> {
     registrar({ quando: Date.now(), metodo, rota, status: 0, ms: performance.now() - inicio, bytes: 0, tipo: 'http' })
     throw e
   }
-  const bytes = (await r.clone().arrayBuffer().catch(() => new ArrayBuffer(0))).byteLength
-  registrar({ quando: Date.now(), metodo, rota, status: r.status, ms: performance.now() - inicio, bytes, tipo: 'http' })
+  // ms termina quando os cabeçalhos chegam; os bytes são contados depois, sem atrasar quem chamou.
+  const ms = performance.now() - inicio
+  const quando = Date.now()
+  const status = r.status
+  r.clone().arrayBuffer().then((b) => b.byteLength, () => 0)
+    .then((bytes) => registrar({ quando, metodo, rota, status, ms, bytes, tipo: 'http' }))
   return r
 }
 
+const CODIFICADOR = new TextEncoder()
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
 
 /** Lê {erro, mensagem}; o 404 da leitura vem no formato padrão do Spring, então o corpo é opcional. */
@@ -189,7 +194,7 @@ export const api: Api = {
     const fonte = new EventSource(url)
     fonte.addEventListener('leilao', (ev) => {
       const dados = (ev as MessageEvent).data as string
-      registrar({ quando: Date.now(), metodo: 'SSE', rota, status: 200, ms: 0, bytes: new TextEncoder().encode(dados).length, tipo: 'sse' })
+      registrar({ quando: Date.now(), metodo: 'SSE', rota, status: 200, ms: 0, bytes: CODIFICADOR.encode(dados).length, tipo: 'sse' })
       aoMudar(JSON.parse(dados))
     })
     fonte.onerror = () => aoFalhar?.() // o EventSource reconecta sozinho; a tela só avisa
@@ -208,8 +213,11 @@ export const api: Api = {
   },
   saudeInfra: () => getJson(`${LEITURA}/infra/saude`),
   async saudeServico(s) {
+    // Só falha de rede lança: um 503 com corpo é um serviço DOWN, não um erro.
     const inicio = performance.now()
-    const corpo = await getJson<{ status: string }>(`${base(s)}/actuator/health`)
-    return { status: corpo.status, ms: performance.now() - inicio }
+    const r = await medir(`${base(s)}/actuator/health`)
+    const ms = performance.now() - inicio
+    const corpo = await r.json().catch(() => null) as { status?: string } | null
+    return { status: corpo?.status ?? (r.ok ? 'UP' : 'DOWN'), ms }
   },
 }

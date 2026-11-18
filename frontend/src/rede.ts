@@ -47,16 +47,16 @@ export function limpar(): void {
 
 /** Agrupa por "METODO /rota" (ex.: "GET /leiloes/{id}/lances"), do que mais pesou para o que menos. */
 export function resumoPorRota(rs: Registro[]): { rota: string; requisicoes: number; bytes: number; msMedio: number }[] {
-  const grupos = new Map<string, { requisicoes: number; bytes: number; ms: number }>()
+  const grupos = new Map<string, { requisicoes: number; bytes: number; ms: number; comTempo: number }>()
   for (const r of rs) {
     const chave = `${r.metodo} ${r.rota}`
-    const g = grupos.get(chave) ?? { requisicoes: 0, bytes: 0, ms: 0 }
+    const g = grupos.get(chave) ?? { requisicoes: 0, bytes: 0, ms: 0, comTempo: 0 }
     g.requisicoes++
     g.bytes += r.bytes
-    g.ms += r.ms
+    if (r.tipo !== 'sse') { g.ms += r.ms; g.comTempo++ } // SSE não tem tempo de resposta
     grupos.set(chave, g)
   }
   return [...grupos.entries()]
-    .map(([rota, g]) => ({ rota, requisicoes: g.requisicoes, bytes: g.bytes, msMedio: g.ms / g.requisicoes }))
+    .map(([rota, g]) => ({ rota, requisicoes: g.requisicoes, bytes: g.bytes, msMedio: g.comTempo ? g.ms / g.comTempo : 0 }))
     .sort((a, b) => b.bytes - a.bytes)
 }

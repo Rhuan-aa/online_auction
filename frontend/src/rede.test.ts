@@ -32,3 +32,11 @@ test('registros guarda só os últimos 500 e assinar notifica e cancela', () => 
   expect(registros()).toHaveLength(500)
   expect(vistos).toHaveLength(502)
 })
+
+test('msMedio ignora SSE', () => {
+  const rs = [
+    { ...base, id: 1, rota: '/s', metodo: 'SSE', tipo: 'sse' as const, ms: 0, bytes: 5 },
+    { ...base, id: 2, rota: '/s', metodo: 'SSE', tipo: 'sse' as const, ms: 0, bytes: 5 },
+  ]
+  expect(resumoPorRota(rs)[0]).toMatchObject({ requisicoes: 2, bytes: 10, msMedio: 0 })
+})
