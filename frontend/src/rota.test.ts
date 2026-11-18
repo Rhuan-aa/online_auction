@@ -27,7 +27,7 @@ test('lê o passo do caminho', () => expect(lerRota('#/integridade/2?leilao=abc'
 test('passo inválido cai no 1', () => {
   for (const p of ['0', '-1', 'abc', '1.5', '99', '']) expect(lerRota(`#/integridade/${p}`).passo).toBe(1)
 })
-test('seção ainda não convertida só tem o passo 1', () => expect(lerRota('#/arquitetura/2').passo).toBe(1))
+test('seção convertida aceita passo até o último', () => expect(lerRota('#/arquitetura/2').passo).toBe(2))
 test('passo entra no href só quando passa de 1', () => {
   expect(hrefDe({ aba: 'integridade', passo: 1, leilaoId: null })).toBe('#/integridade')
   expect(hrefDe({ aba: 'integridade', passo: 3, leilaoId: 'a b' })).toBe('#/integridade/3?leilao=a%20b')
@@ -74,5 +74,5 @@ test('percorrer tudo com próximo e voltar com anterior passa por todos os slide
 })
 test('kicker com número da pergunta, passo e título do passo', () => {
   expect(kickerDe('integridade', 2)).toBe('Pergunta 1 · passo 2/3 · Simulação completa')
-  expect(kickerDe('arquitetura', 1)).toBe('Pergunta 5 · passo 1/1')
+  expect(kickerDe('arquitetura', 1)).toBe('Pergunta 5 · passo 1/3 · Caminho de um lance')
 })

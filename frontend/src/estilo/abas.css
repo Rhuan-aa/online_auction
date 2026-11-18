@@ -78,7 +78,7 @@
 .viagem--carregando .viagem-estado, .viagem--carregando .viagem-mudancas { opacity: 0.5; }
 
 /* Aba Arquitetura */
-.diagrama { overflow-x: auto; border: var(--borda-largura) solid var(--borda); border-radius: var(--raio); background: var(--superficie); }
+.diagrama { width: 100%; overflow-x: auto; border: var(--borda-largura) solid var(--borda); border-radius: var(--raio); background: var(--superficie); }
 .diagrama svg { display: block; }
 .aresta line { stroke: var(--borda); stroke-width: 3; transition: stroke var(--transicao-longa); }
 .aresta polygon { fill: var(--borda); transition: fill var(--transicao-longa); }
@@ -89,11 +89,13 @@
 @keyframes acender-traco { from { stroke: var(--borda); } }
 @keyframes acender-preenchimento { from { fill: var(--borda); } }
 @keyframes acender-no { from { fill: var(--superficie-2); stroke: var(--borda); } }
-.no-nome { fill: var(--tinta); font-size: 14px; font-weight: 700; font-family: var(--fonte-mono); }
+.no-nome { fill: var(--tinta); font-size: 15px; font-weight: 700; font-family: var(--fonte-mono); }
 .no-detalhe { fill: var(--tinta-suave); font-size: 14px; }
 .tempo { fill: var(--tinta); font-size: 16px; font-weight: 700; }
-.saude-grade, .adr-grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; }
-.saude-cartao { padding: 0.75rem; border: var(--borda-largura) solid var(--borda); border-radius: var(--raio); background: var(--superficie); }
+.saude-grade { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; width: 100%; }
+.adr-grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; width: 100%; }
+@media (max-width: 900px) { .saude-grade, .adr-grade { grid-template-columns: 1fr; } }
+.saude-cartao { padding: 1rem; border: var(--borda-largura) solid var(--borda); border-radius: var(--raio); background: var(--superficie); }
 .saude-cartao h3 { margin: 0 0 0.25rem; font-size: 1rem; font-family: var(--fonte-mono); }
 .saude-cartao p { margin: 0; }
 .saude-status { font-size: var(--texto-kpi); font-weight: 700; line-height: 1.1; }
@@ -101,7 +103,7 @@
 .saude-cartao--up .saude-status { color: var(--sucesso); }
 .saude-cartao--down { border-color: var(--perigo); background: var(--perigo-fundo); }
 .saude-cartao--down .saude-status { color: var(--perigo); }
-.adr-cartao { display: flex; flex-direction: column; gap: 0.35rem; padding: 0.75rem; border: var(--borda-largura) solid var(--borda); border-radius: var(--raio); background: var(--superficie); color: var(--tinta); text-decoration: none; font-size: 0.95rem; }
+.adr-cartao { display: flex; flex-direction: column; gap: 0.35rem; padding: 1rem; border: var(--borda-largura) solid var(--borda); border-radius: var(--raio); background: var(--superficie); color: var(--tinta); text-decoration: none; font-size: 1rem; }
 .adr-cartao:hover, .adr-cartao:focus-visible { border-color: var(--tinta); }
 
 /* Aba E se fosse…? */

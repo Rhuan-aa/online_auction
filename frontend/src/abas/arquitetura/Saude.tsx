@@ -1,11 +1,12 @@
+import Slide from '../../shell/Slide.tsx'
 import { useSaude } from './useSaude.ts'
 
+/** Passo 2: os cartões de saúde numa grade que cabe na tela. */
 export default function Saude() {
   const cartoes = useSaude()
   return (
-    <section className="bloco-aba">
-      <h2>Saúde dos serviços e da infraestrutura</h2>
-      {!cartoes && <p className="suave">Consultando…</p>}
+    <Slide layout="largo" titulo="Saúde dos serviços e da infraestrutura">
+      {!cartoes && <p className="slide-vazio">Consultando…</p>}
       {cartoes && (
         <div className="saude-grade">
           {cartoes.map((c) => (
@@ -17,6 +18,6 @@ export default function Saude() {
           ))}
         </div>
       )}
-    </section>
+    </Slide>
   )
 }

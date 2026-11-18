@@ -55,7 +55,7 @@ export const SECOES: Secao[] = [
     ],
   },
   {
-    id: 'arquitetura', rotulo: 'Arquitetura', pergunta: 'Por onde passa um lance?', convertida: false,
+    id: 'arquitetura', rotulo: 'Arquitetura', pergunta: 'Por onde passa um lance?', convertida: true,
     passos: [
       { id: 'caminho', titulo: 'Caminho de um lance' },
       { id: 'saude', titulo: 'Saúde dos serviços' },
