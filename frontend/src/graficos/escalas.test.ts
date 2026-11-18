@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest'
 import { descreverBarras, escalaLinear, finito, marcas, mensagemVazia, truncar } from './escalas.ts'
+import { posicao } from './escalas.ts'
 import { larguraEfetiva, proximaLargura } from './useLargura.ts'
 
 test('escala mapeia extremos', () => {
@@ -45,4 +46,13 @@ test('gráfico vazio: sem grupos, tudo null, ou com dados', () => {
   expect(mensagemVazia([])).toBe('Sem dados ainda')
   expect(mensagemVazia([{ rotulo: '', valores: [{ serie: 'A', valor: null }, { serie: 'B', valor: Number.NaN }] }])).toMatch(/Sem medições/)
   expect(mensagemVazia([{ rotulo: '', valores: [{ serie: 'A', valor: null }, { serie: 'B', valor: 0 }] }])).toBeNull()
+})
+
+test('posição no ranking e distância até o melhor', () => {
+  const vs = [{ serie: 'A', valor: 10 }, { serie: 'B', valor: 14 }, { serie: 'C', valor: null }]
+  const f = (v: number) => `${v} ms`
+  expect(posicao(vs, 'A', 'menor', f)).toBe('1º de 2 · o melhor')
+  expect(posicao(vs, 'B', 'menor', f)).toBe('2º de 2 · 40% acima do melhor, A (10 ms)')
+  expect(posicao(vs, 'A', 'maior', f)).toBe('2º de 2 · 29% abaixo do melhor, B (14 ms)')
+  expect(posicao(vs, 'C', 'menor', f)).toBeNull()
 })

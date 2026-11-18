@@ -73,3 +73,24 @@ export function mensagemVazia(grupos: GrupoBarras[]): string | null {
   }
   return null
 }
+
+const PCT = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 })
+
+/** "1º de 6 · o melhor" ou "3º de 6 · 40% acima do melhor (ES + cache)". */
+export function posicao(valores: { serie: string; valor: number | null }[], serie: string, sentido: 'menor' | 'maior',
+  fmt: (v: number) => string): string | null {
+  const validos = valores.filter((v): v is { serie: string; valor: number } => v.valor !== null)
+  const ordem = [...validos].sort((a, b) => (sentido === 'menor' ? a.valor - b.valor : b.valor - a.valor))
+  const i = ordem.findIndex((v) => v.serie === serie)
+  if (i < 0 || ordem.length < 2) return null
+  const lugar = `${i + 1}º de ${ordem.length}`
+  const melhor = ordem[0]
+  if (i === 0 || ordem[i].valor === melhor.valor) return `${lugar} · o melhor`
+  const v = ordem[i].valor
+  const dif = melhor.valor === 0 ? null : Math.abs((v - melhor.valor) / melhor.valor) * 100
+  const lado = sentido === 'menor' ? 'acima' : 'abaixo'
+  return dif === null
+    ? `${lugar} · o melhor é ${melhor.serie} (${fmt(melhor.valor)})`
+    : `${lugar} · ${PCT.format(dif)}% ${lado} do melhor, ${melhor.serie} (${fmt(melhor.valor)})`
+}
+

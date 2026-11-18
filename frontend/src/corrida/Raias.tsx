@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react'
 import Ms from './Ms.tsx'
-import { decimal, inteiro, pct, pctDesatualizadas, progresso, segundos, temEscrita, textoStatus } from './medidas.ts'
+import { decimal, inteiro, ms, pct, pctDesatualizadas, progresso, segundos, temEscrita, textoStatus } from './medidas.ts'
 import { ARQUITETURAS, corDe, NOTA_CRUD, type ArqFoto, type Foto } from './tipos.ts'
 import type { Fase } from './useCorrida.ts'
 
@@ -15,7 +15,7 @@ export default function Raias({ foto, fase }: Props) {
     <div className="raias">
       <div className="raia raias-cabecalho" aria-hidden="true">
         {COLUNAS.map((c, i) => (
-          <span key={c}>{c}{i === 2 && <small>típico (pior caso embaixo)</small>}{i === 3 && <small>lances a cada 1 segundo</small>}</span>
+          <span key={c}>{c}{i === 2 && <small>típico (pior caso embaixo)</small>}{i === 3 && <small>e o intervalo médio em ms</small>}</span>
         ))}
       </div>
       <ol className="raias-lista" aria-label="Arquiteturas na corrida">
@@ -60,7 +60,7 @@ function Raia({ a }: { a: ArqFoto }) {
       <Metrica rotulo="Tempo para registrar um lance (típico · pior caso)">
         {temEscrita(a) ? <><Ms v={a.escrita.p50} /><small className="quebra">pior caso <Ms v={a.escrita.p95} /></small></> : '—'}
       </Metrica>
-      <Metrica rotulo="Lances por segundo">{a.enviados > 0 ? <>{decimal(a.lancesPorSegundo)}<small className="quebra">lances/s</small></> : '—'}</Metrica>
+      <Metrica rotulo="Lances por segundo">{a.enviados > 0 ? <>{decimal(a.lancesPorSegundo)} <small>lances/s</small>{a.lancesPorSegundo > 0 && <small className="quebra" title="intervalo médio entre dois lances">1 a cada {ms(1000 / a.lancesPorSegundo)}</small>}</> : '—'}</Metrica>
       <Metrica rotulo="Conflitos">
         {inteiro(a.conflitos)}
         {a.retentativas > 0 && <small className="quebra" title="retentativas">{inteiro(a.retentativas)} ret.</small>}

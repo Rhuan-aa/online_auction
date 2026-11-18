@@ -72,7 +72,7 @@
 .raias { display: flex; flex-direction: column; gap: 0.5rem; }
 .raias-lista { display: flex; flex-direction: column; gap: 0.6rem; margin: 0; padding: 0; list-style: none; }
 .raia {
-  --colunas: minmax(11rem, 1.4fr) minmax(8rem, 1fr) 11rem 7.5rem 6.5rem 8rem 8.5rem;
+  --colunas: minmax(10rem, 1.4fr) minmax(7rem, 1fr) 11rem 8.5rem 6rem 8rem 8.5rem;
   display: grid;
   grid-template-columns: var(--colunas);
   align-items: center;
@@ -115,7 +115,7 @@
 .estado { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 700; color: var(--tinta-suave); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .estado--rodando { color: var(--tinta); }
 .estado--rodando::before { content: ''; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--cor); animation: piscar 1s ease-in-out infinite alternate; }
-.estado--terminou { color: var(--sucesso); overflow: visible; }
+.estado--terminou { color: var(--sucesso); overflow: visible; white-space: normal; flex-wrap: wrap; row-gap: 0.1rem; }
 .estado--parada { color: var(--aviso); }
 .estado--erro { color: var(--perigo); white-space: normal; }
 @keyframes piscar { from { opacity: 1; } to { opacity: 0.25; } }
@@ -141,7 +141,8 @@
 
 /* gráficos de comparação: 2 colunas; tempo de registro, curva e espaço ocupam a linha inteira */
 .graficos-corrida { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; align-items: start; }
-.grafico-largo { grid-column: 1 / -1; }
+.grafico-largo, .graficos-dica { grid-column: 1 / -1; }
+.graficos-dica { margin: 0; }
 .grafico-nota { margin: 0.5rem 0 0; }
 @media (max-width: 860px) { .graficos-corrida { grid-template-columns: minmax(0, 1fr); } }
 
