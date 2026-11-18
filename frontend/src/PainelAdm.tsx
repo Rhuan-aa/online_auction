@@ -7,8 +7,8 @@ import { dataHora, dinheiro } from './formato.ts'
 import Grafico, { type Serie } from './Grafico.tsx'
 import { carregarHistorico, chaveSimulacao, MAXIMO_HISTORICO, rotuloSimulacao, salvarHistorico } from './historico.ts'
 import { hrefDe } from './rota.ts'
-import { type Base, BASES, lerConfiguracao, type ResumoBackend } from './metricas.ts'
-import { ErroSimulacao, executar, type Execucao, type Progresso } from './simulacao.ts'
+import { type Base, BASES, type ResumoBackend } from './metricas.ts'
+import { ErroSimulacao, executar, lerConfiguracaoAtiva, type Execucao, type Progresso } from './simulacao.ts'
 
 const CONFIGURACOES = ['A', 'B', 'C'] as const
 type Configuracao = typeof CONFIGURACOES[number]
@@ -122,14 +122,17 @@ export default function PainelAdm() {
   const controle = useRef<AbortController | null>(null)
 
   // Relida ao abrir, após cada execução e no botão: o ADM pode ter reiniciado com outra configuração.
-  const atualizarConfig = useCallback(() => { lerConfiguracao(api).then(setConfig) }, [])
+  const atualizarConfig = useCallback(() => {
+    const ler = (s: Servico) => api.lerConfiguracaoCache(s).catch(() => null)
+    Promise.all([ler('escrita'), ler('leitura')]).then(([escrita, leitura]) => setConfig({ escrita, leitura }))
+  }, [])
   useEffect(atualizarConfig, [atualizarConfig])
   useEffect(() => () => controle.current?.abort(), []) // sair da tela interrompe a simulação
 
   const configOk = config?.escrita != null && config.escrita === config.leitura
   const avisoConfig = !config ? null
     : !config.escrita || !config.leitura
-      ? `Sem resposta de /actuator/metrics na ${!config.escrita ? 'escrita (8081)' : 'leitura (8082)'}. O serviço está no ar?`
+      ? `Sem resposta de /admin/cache/configuracao na ${!config.escrita ? 'escrita (8081)' : 'leitura (8082)'}. O serviço está no ar?`
       : config.escrita !== config.leitura
         ? `A escrita está em ${config.escrita} e a leitura em ${config.leitura}. Reinicie as duas com o mesmo CACHE_CONFIGURACAO.`
         : null
@@ -143,7 +146,7 @@ export default function PainelAdm() {
     const ctrl = new AbortController()
     controle.current = ctrl
     try {
-      const execucao = await executar(api, p, setProgresso, ctrl.signal)
+      const execucao = await executar(api, p, await lerConfiguracaoAtiva(api), setProgresso, ctrl.signal)
       setHistorico((h) => {
         const nova = [execucao, ...h].slice(0, MAXIMO_HISTORICO)
         salvarHistorico(nova)

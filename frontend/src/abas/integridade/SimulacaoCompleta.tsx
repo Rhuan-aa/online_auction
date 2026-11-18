@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { api } from '../../api.ts'
 import Raias from '../../graficos/Raias.tsx'
 import { hrefDe } from '../../rota.ts'
-import { ErroSimulacao, executar, type Execucao, type Progresso } from '../../simulacao.ts'
+import { ErroSimulacao, executar, lerConfiguracaoAtiva, type Execucao, type Progresso } from '../../simulacao.ts'
 import FormSimulacao, { PADRAO, validar, type Campos } from './FormSimulacao.tsx'
 
 const CHECAGENS: { chave: 'umVencedor' | 'trilhaCompleta' | 'ordem' | 'versoesContiguas'; rotulo: string }[] = [
@@ -43,7 +43,7 @@ export default function SimulacaoCompleta() {
     const ctrl = new AbortController()
     controle.current = ctrl
     try {
-      setExecucao(await executar(api, p, aoProgredir, ctrl.signal))
+      setExecucao(await executar(api, p, await lerConfiguracaoAtiva(api), aoProgredir, ctrl.signal))
     } catch (err) {
       if (ctrl.signal.aborted && !(err instanceof ErroSimulacao)) return
       setErro(err instanceof Error && err.name !== 'TypeError' ? err.message : 'Não foi possível falar com o servidor.')

@@ -2,9 +2,9 @@
 // simultâneos, roda leitores em paralelo, mede no navegador e compara com /actuator/metrics
 // (as métricas ficam em metricas.ts). A parte pura (gerador, plano, percentil, checagens) é
 // testada em test/simulacao.test.ts; a api entra por parâmetro, para os testes não dependerem do navegador.
-import type { Api, EstadoLeilao, LanceHistorico, ResultadoLance } from './api.ts'
+import type { Api, ConfiguracaoCache, EstadoLeilao, LanceHistorico, ResultadoLance } from './api.ts'
 import { versoesContiguas } from './abas/integridade/rajada.ts'
-import { diferenca, esperarLeituraAssentar, fotografarServicos, lerConfiguracao, type ResumoBackend } from './metricas.ts'
+import { diferenca, esperarLeituraAssentar, fotografarServicos, type ResumoBackend } from './metricas.ts'
 
 /** Parâmetros da simulação. Dinheiro em centavos. */
 export interface Parametros {
@@ -209,6 +209,13 @@ export function checar(
 
 // ---------------------------------------------------------------- execução
 
+/** Configuração ativa, lida da rota nova dos dois serviços. Erro se escrita e leitura divergem. */
+export async function lerConfiguracaoAtiva(api: Api): Promise<ConfiguracaoCache> {
+  const [escrita, leitura] = await Promise.all([api.lerConfiguracaoCache('escrita'), api.lerConfiguracaoCache('leitura')])
+  if (escrita !== leitura) throw new ErroSimulacao('Escrita e leitura com configurações diferentes')
+  return escrita
+}
+
 export class ErroSimulacao extends Error {
   leilaoId?: string
   constructor(mensagem: string, leilaoId?: string) {
@@ -232,7 +239,7 @@ export interface Progresso {
 export interface Execucao {
   id: string
   quando: string
-  configuracao: string
+  configuracao: ConfiguracaoCache
   parametros: Parametros
   leilaoId: string
   integridade: {
@@ -243,8 +250,8 @@ export interface Execucao {
   }
   /** Cada lance enviado, com `t` em ms desde o início do disparo (alimenta as raias). */
   lances: { t: number; licitanteId: string; resultado: ResultadoLance['tipo'] }[]
-  escrita: { p50: number | null; p95: number | null; lancesPorSegundo: number; backend: ResumoBackend }
-  leitura: { p50: number | null; p95: number | null; consultas: number; errosConsulta: number; backend: ResumoBackend }
+  escrita: { p50: number | null; p95: number | null; p99: number | null; lancesPorSegundo: number; backend: ResumoBackend }
+  leitura: { p50: number | null; p95: number | null; p99: number | null; consultas: number; errosConsulta: number; backend: ResumoBackend }
   /** Mediana do tempo no navegador por faixa de versão (nº de eventos do leilão). */
   grafico: { escrita: Ponto[]; leitura: Ponto[] }
 }
@@ -272,11 +279,11 @@ async function esperarAbrir(api: Api, leilaoId: string, interrompido: (leilaoId?
  * é chamado a cada 200 ms; o `sinal` interrompe lances e leitores.
  */
 export async function executar(
-  api: Api, p: Parametros, aoProgredir: (progresso: Progresso) => void, sinal: AbortSignal,
+  api: Api, p: Parametros, configuracao: ConfiguracaoCache, aoProgredir: (progresso: Progresso) => void, sinal: AbortSignal,
 ): Promise<Execucao> {
   const plano = planejarLances(p)
   const progresso: Progresso = {
-    fase: 'Lendo a configuração', enviados: 0, total: p.licitantes * p.lancesPorLicitante,
+    fase: 'Fotografando as métricas', enviados: 0, total: p.licitantes * p.lancesPorLicitante,
     aceitos: 0, recusados: 0, conflitos: 0, erros: 0, consultas: 0,
   }
   const avisar = () => aoProgredir({ ...progresso })
@@ -286,23 +293,16 @@ export async function executar(
   }
 
   try {
-    // 1. Configuração ativa, igual nos dois serviços.
+    // 1. Foto das métricas da configuração da vez (quem chama já garantiu que os dois serviços estão nela).
     avisar()
-    const config = await lerConfiguracao(api)
-    if (!config.escrita || !config.leitura) {
-      throw new ErroSimulacao(`Sem resposta de /actuator/metrics na ${!config.escrita ? 'escrita (8081)' : 'leitura (8082)'}.`)
-    }
-    if (config.escrita !== config.leitura) {
-      throw new ErroSimulacao(`A escrita está em ${config.escrita} e a leitura em ${config.leitura}. Reinicie as duas com o mesmo CACHE_CONFIGURACAO.`)
-    }
-    const antes = await fotografarServicos(api)
+    const antes = await fotografarServicos(api, configuracao)
 
     // 2. Leilão longe do anti-sniping. O início 2 s atrás absorve diferença de relógio com o servidor.
     progresso.fase = 'Criando o leilão'
     const agora = Date.now()
     const { leilaoId } = await api.criarLeilao({
       vendedorId: 'vendedor-1',
-      titulo: `Simulação ${config.escrita} · semente ${p.semente}`,
+      titulo: `Simulação ${configuracao} · semente ${p.semente}`,
       precoInicial: p.precoInicial,
       incrementoMinimo: p.incrementoMin,
       inicioEm: new Date(agora - 2_000).toISOString(),
@@ -375,18 +375,29 @@ export async function executar(
     const ultimaVersao = aceitos.reduce((m, a) => Math.max(m, a.versao), 0)
     const final = await api.consultarLeilao(leilaoId, ultimaVersao || undefined)
     const historico = await api.historicoLances(leilaoId)
-    const eventos = await api.eventos(leilaoId)
-    const checagens = checar(final, historico, aceitos, versoesContiguas(eventos))
+    let contiguas = true
+    let falhaEventos = false
+    try {
+      contiguas = versoesContiguas(await api.eventos(leilaoId))
+    } catch {
+      contiguas = false
+      falhaEventos = true
+    }
+    const checagens = checar(final, historico, aceitos, contiguas)
+    if (falhaEventos) {
+      checagens.problemas = checagens.problemas.filter((x) => !x.startsWith('As versões do Event Store'))
+      checagens.problemas.push('não foi possível ler os eventos')
+    }
 
     progresso.fase = 'Lendo as métricas'
-    await esperarLeituraAssentar(api)
-    const depois = await fotografarServicos(api)
+    await esperarLeituraAssentar(api, configuracao)
+    const depois = await fotografarServicos(api, configuracao)
 
     const ms = (a: Amostra[]) => a.map((x) => x.ms)
     return {
       id: `${Date.now()}`,
       quando: new Date().toISOString(),
-      configuracao: config.escrita,
+      configuracao,
       parametros: p,
       leilaoId,
       integridade: {
@@ -397,12 +408,14 @@ export async function executar(
       escrita: {
         p50: percentil(ms(tempoEscrita), 50),
         p95: percentil(ms(tempoEscrita), 95),
+        p99: percentil(ms(tempoEscrita), 99),
         lancesPorSegundo: duracaoS > 0 ? progresso.enviados / duracaoS : 0,
         backend: diferenca(antes.escrita, depois.escrita),
       },
       leitura: {
         p50: percentil(ms(tempoLeitura), 50),
         p95: percentil(ms(tempoLeitura), 95),
+        p99: percentil(ms(tempoLeitura), 99),
         consultas: progresso.consultas,
         errosConsulta,
         backend: diferenca(antes.leitura, depois.leitura),
