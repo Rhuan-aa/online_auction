@@ -1,16 +1,12 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
-import { api, type ConfiguracaoCache, type Servico } from '../../api.ts'
-import { dataHora } from '../../formato.ts'
-import { carregarComparacoes, rotuloSimulacao, salvarComparacoes } from '../../historico.ts'
-import Aba from '../../shell/Aba.tsx'
-import FormSimulacao, { PADRAO, validar, type Campos } from '../integridade/FormSimulacao.tsx'
-import AoVivo from './AoVivo.tsx'
+import { api, type ConfiguracaoCache } from '../../api.ts'
+import { carregarComparacoes, salvarComparacoes } from '../../historico.ts'
+import Passos from '../../shell/Passos.tsx'
+import PorQue from '../../shell/PorQue.tsx'
+import { PADRAO, validar, type Campos } from '../integridade/FormSimulacao.tsx'
 import { compararABC, type AndamentoComparacao, type Comparacao } from './comparacao.ts'
-import ComparacaoAoVivo from './ComparacaoAoVivo.tsx'
+import { PassoComparar, PassoPorDentro, PassoResultado, PassoTempoVersao, type Ativa } from './PassosComparacao.tsx'
 import type { Progresso } from '../../simulacao.ts'
-import GraficosComparacao from './GraficosComparacao.tsx'
-
-type Ativa = Record<Servico, ConfiguracaoCache>
 
 const PORQUE = (
   <p>
@@ -25,7 +21,7 @@ async function lerAtiva(): Promise<Ativa> {
   return { escrita, leitura }
 }
 
-export default function AbaDesempenho({ pergunta }: { pergunta: string }) {
+export default function AbaDesempenho({ pergunta, passo }: { pergunta: string; passo: number }) {
   const [campos, setCampos] = useState<Campos>(PADRAO)
   const [ativa, setAtiva] = useState<Ativa | null>(null)
   const [erroAtiva, setErroAtiva] = useState<string | null>(null)
@@ -93,54 +89,20 @@ export default function AbaDesempenho({ pergunta }: { pergunta: string }) {
   const divergem = ativa !== null && ativa.escrita !== ativa.leitura
 
   return (
-    <Aba pergunta={pergunta} adr="ADR-003" porQue={PORQUE}>
-      <section className="bloco-aba">
-        <h2>Configuração ativa</h2>
-        {ativa && <p className="config-grande">Escrita: {ativa.escrita} · Leitura: {ativa.leitura}</p>}
-        {divergem && <p className="aviso" role="alert">Escrita e leitura com configurações diferentes</p>}
-        {erroAtiva && <p className="erro" role="alert">{erroAtiva}</p>}
-      </section>
-
-      <section className="bloco-aba">
-        <h2>Comparar</h2>
-        <p className="suave">Roda a mesma simulação em A, depois B, depois C, sem reiniciar nada, e devolve a configuração anterior.</p>
-        <form className="simulacao" onSubmit={comparar}>
-          <FormSimulacao valor={campos} onChange={setCampos} desabilitado={rodando} />
-          <div className="simulacao-botoes">
-            {!rodando && <button type="submit" className="botao botao--destaque">▶ Comparar A × B × C</button>}
-          </div>
-        </form>
-        {rodando && <ComparacaoAoVivo andamento={andamento} finais={finais} aoInterromper={() => controle.current?.abort()} />}
-        {erro && <p className="erro" role="alert">{erro}</p>}
-        {aviso && <p className="aviso" role="alert">{aviso}</p>}
-      </section>
-
-      {!rodando && selecionada && (
-        <section className="bloco-aba">
-          <h2>Resultado: {rotuloSimulacao(selecionada.parametros)}</h2>
-          <p className="suave">{dataHora(selecionada.quando)}{!selecionada.completa && ' · incompleta'}</p>
-          <GraficosComparacao comparacao={selecionada} />
-        </section>
-      )}
-
-      <section className="bloco-aba">
-        <h2>Histórico de comparações</h2>
-        {historico.length === 0
-          ? <p className="suave">Nenhuma comparação ainda neste navegador.</p>
-          : (
-            <ul className="historico-comparacoes">
-              {historico.map((c) => (
-                <li key={c.id}>
-                  <button type="button" aria-pressed={c.id === selecionadaId} disabled={rodando} onClick={() => setSelecionadaId(c.id)}>
-                    {dataHora(c.quando)} · {rotuloSimulacao(c.parametros)}{!c.completa && ' (incompleta)'}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-      </section>
-
-      <AoVivo configuracao={ativa && !divergem ? ativa : null} pausado={rodando} />
-    </Aba>
+    <Passos passo={passo}>
+      <PassoComparar
+        pergunta={pergunta} ativa={ativa} divergem={divergem} erroAtiva={erroAtiva}
+        campos={campos} aoMudarCampos={setCampos} rodando={rodando} andamento={andamento} finais={finais}
+        erro={erro} aviso={aviso} aoComparar={comparar} aoInterromper={() => controle.current?.abort()}
+        temResultado={selecionada !== null}
+      />
+      <PassoResultado selecionada={selecionada} rodando={rodando} />
+      <PassoPorDentro selecionada={selecionada} rodando={rodando} />
+      <PassoTempoVersao
+        selecionada={selecionada} rodando={rodando} historico={historico} selecionadaId={selecionadaId}
+        aoSelecionar={setSelecionadaId} configuracao={ativa && !divergem ? ativa : null}
+      />
+      <PorQue adr="ADR-003">{PORQUE}</PorQue>
+    </Passos>
   )
 }

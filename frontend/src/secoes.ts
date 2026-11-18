@@ -27,7 +27,7 @@ export const SECOES: Secao[] = [
     ],
   },
   {
-    id: 'desempenho', rotulo: 'Desempenho', pergunta: 'O cache ajuda mesmo?', convertida: false,
+    id: 'desempenho', rotulo: 'Desempenho', pergunta: 'O cache ajuda mesmo?', convertida: true,
     passos: [
       { id: 'comparar', titulo: 'Comparar A×B×C' },
       { id: 'resultado', titulo: 'Resultado' },
