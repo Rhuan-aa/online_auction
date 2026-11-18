@@ -64,3 +64,72 @@
   .campo .dica { left: 0; right: auto; }
   .campo:nth-child(2n) .dica { left: auto; right: 0; }
 }
+
+/* raias: uma linha por arquitetura, colunas alinhadas com o cabeçalho */
+.raias { display: flex; flex-direction: column; gap: 0.5rem; }
+.raias-lista { display: flex; flex-direction: column; gap: 0.6rem; margin: 0; padding: 0; list-style: none; }
+.raia {
+  --colunas: minmax(12rem, 1.5fr) minmax(9rem, 1.2fr) 10rem 6.5rem 6rem 7.5rem 9rem;
+  display: grid;
+  grid-template-columns: var(--colunas);
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1.1rem 0.85rem 1.25rem;
+  background: var(--superficie);
+  border: var(--borda-largura) solid var(--borda);
+  border-left: 6px solid var(--cor, var(--borda));
+  border-radius: var(--raio);
+  font-variant-numeric: tabular-nums;
+}
+.raias-cabecalho {
+  padding-top: 0;
+  padding-bottom: 0;
+  background: none;
+  border-color: transparent;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
+  line-height: 1.25;
+}
+.raias-cabecalho small { display: block; font-weight: 500; text-transform: none; letter-spacing: 0; }
+.raia-nome { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.raia-nome strong { font-size: 1.05rem; display: flex; align-items: center; gap: 0.5rem; }
+.raia-nome strong::before { content: ''; flex: none; width: 0.7rem; height: 0.7rem; border-radius: 50%; background: var(--cor); }
+.raia-nome span { font-size: 0.8rem; color: var(--tinta-suave); line-height: 1.3; }
+.raia-progresso { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
+.barra { height: 10px; border-radius: 999px; background: var(--superficie-2); overflow: hidden; }
+.barra span { display: block; height: 100%; border-radius: inherit; background: var(--cor, var(--destaque)); transition: width 250ms linear; }
+.raia-contagem { font-family: var(--fonte-mono); font-size: 0.8rem; color: var(--tinta-suave); }
+.raia-metrica { display: flex; flex-direction: column; min-width: 0; }
+.raia-valor { font-family: var(--fonte-mono); font-size: 1.05rem; font-weight: 700; white-space: nowrap; }
+.raia-valor small { font-size: 0.8rem; font-weight: 500; color: var(--tinta-suave); }
+.raia-rotulo { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.raia-status { min-width: 0; }
+.estado { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 700; color: var(--tinta-suave); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.estado--rodando { color: var(--tinta); }
+.estado--rodando::before { content: ''; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--cor); animation: piscar 1s ease-in-out infinite alternate; }
+.estado--terminou { color: var(--sucesso); }
+.estado--parada { color: var(--aviso); }
+.estado--erro { color: var(--perigo); white-space: normal; }
+@keyframes piscar { from { opacity: 1; } to { opacity: 0.25; } }
+.raia--vazia .raia-valor, .raia--vazia .raia-contagem { color: var(--tinta-suave); }
+.raia[data-status='terminou'] .barra span, .raia[data-status='parada'] .barra span { opacity: 0.75; }
+
+.corrida-topo { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1.5rem; margin-bottom: 1rem; }
+.resumo-corrida { margin: 0; font-variant-numeric: tabular-nums; }
+.corrida-alertas { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
+
+/* telas médias e estreitas: cada raia vira um cartão com os rótulos visíveis */
+@media (max-width: 1080px) {
+  .raias-cabecalho { display: none; }
+  .raia { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem 1rem; }
+  .raia-nome { grid-column: 1 / 3; }
+  .raia-progresso { grid-column: 3 / -1; }
+  .raia-rotulo { position: static; width: auto; height: auto; overflow: visible; clip-path: none; white-space: normal; font-size: 0.72rem; color: var(--tinta-suave); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; }
+}
+@media (max-width: 560px) {
+  .raia { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .raia-nome, .raia-progresso { grid-column: 1 / -1; }
+}
