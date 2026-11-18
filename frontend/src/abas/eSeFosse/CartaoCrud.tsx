@@ -12,6 +12,7 @@ export default function CartaoCrud({ eventos, erro }: { eventos: EventoGravado[]
       titulo="CRUD × Event Sourcing"
       nota={notaRecorte(eventos, lances.length)}
       indisponivel={pouco ? (erro ? 'não foi possível carregar os eventos' : SEM_LANCES) : undefined}
+      alerta={erro ? 'não foi possível carregar os eventos' : undefined}
       legendas={passos.map((p) => (p.apagado ? `O UPDATE sobrescreve a linha e apaga o ${p.apagado}.` : 'Lance mais antigo mostrado: a linha é preenchida.'))}
       conclusao="No CRUD só sobra o estado de agora. Guardando os fatos, qualquer versão do leilão pode ser refeita e auditada (ADR-002)."
       nosso={(n) => (

@@ -1,7 +1,6 @@
 // Registro das seções (as 6 perguntas) e dos passos de cada uma, no modo apresentação.
 // Cada passo é um slide; `titulo` aparece no kicker ("PERGUNTA 1 · PASSO 2/3 · SIMULAÇÃO COMPLETA").
-// Enquanto uma seção não é convertida em slides, ela inteira cabe num slide largo só (passo 1):
-// a lista de passos já fica aqui, mas a navegação expõe só o passo 1 até `convertida` virar true.
+// `convertida: false` faz a navegação expor só o passo 1 (hoje as 6 seções estão convertidas).
 
 export type Aba = 'integridade' | 'desempenho' | 'rede' | 'auditoria' | 'arquitetura' | 'e-se-fosse'
 
@@ -63,7 +62,7 @@ export const SECOES: Secao[] = [
     ],
   },
   {
-    id: 'e-se-fosse', rotulo: 'E se fosse…?', pergunta: 'Por que não do jeito comum?', convertida: false,
+    id: 'e-se-fosse', rotulo: 'E se fosse…?', pergunta: 'Por que não do jeito comum?', convertida: true,
     passos: [
       { id: 'crud', titulo: 'CRUD × Event Sourcing' },
       { id: 'cqrs', titulo: 'CQRS × cache' },

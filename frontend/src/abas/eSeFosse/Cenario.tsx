@@ -1,7 +1,6 @@
-import { useEffect, useState, type ReactNode } from 'react'
-import { avancar, limitar } from './cenarios.ts'
-
-const INTERVALO_MS = 1200
+import type { ReactNode } from 'react'
+import Slide from '../../shell/Slide.tsx'
+import { usePlayer, type Player } from './usePlayer.ts'
 
 interface Props {
   titulo: string
@@ -11,67 +10,63 @@ interface Props {
   /** Conteúdo de cada lado no passo atual (0 = antes de começar). */
   nosso: (passo: number) => ReactNode
   alternativa: (passo: number) => ReactNode
-  /** Quando preenchido, o cartão mostra o aviso no lugar dos lados e trava os controles. */
+  /** Quando preenchido, o visual mostra o aviso no lugar dos lados e trava os controles. */
   indisponivel?: string
   /** Observação curta sob o título (ex.: janela de lances truncada). */
   nota?: string
+  /** Erro de carga a mostrar como alerta. */
+  alerta?: string
 }
 
-/** Cartão com o selo "ilustração", os dois lados e os controles ▶ ⏸ ⏭ ↺. */
-export default function Cenario({ titulo, legendas, conclusao, nosso, alternativa, indisponivel, nota }: Props) {
+function Controles({ p }: { p: Player }) {
+  const { desabilitado, tocando, fim, passo } = p
+  return (
+    <div className="cenario-controles" role="group" aria-label="Controles da ilustração (não trocam de slide)">
+      <span className="cenario-controles-rotulo">Ilustração</span>
+      <button type="button" className="botao botao--destaque" disabled={desabilitado || tocando} onClick={p.tocar} aria-label="Tocar a ilustração">▶</button>
+      <button type="button" className="botao" disabled={desabilitado || !tocando} onClick={p.pausar} aria-label="Pausar a ilustração">⏸</button>
+      <button type="button" className="botao" disabled={desabilitado || fim} onClick={p.proximo} aria-label="Próximo passo da ilustração">⏭</button>
+      <button type="button" className="botao" disabled={desabilitado || passo === 0} onClick={p.reiniciar} aria-label="Reiniciar a ilustração">↺</button>
+    </div>
+  )
+}
+
+/** Um slide dividido: à esquerda título, selo, legenda e controles; à direita "Nosso sistema | Alternativa". */
+export default function Cenario({ titulo, legendas, conclusao, nosso, alternativa, indisponivel, nota, alerta }: Props) {
   const total = legendas.length
-  const [passoBruto, setPasso] = useState(0)
-  const [tocando, setTocando] = useState(false)
-  const passo = limitar(passoBruto, total)
-  const desabilitado = indisponivel != null || total === 0
-  const fim = passo >= total
-
-  // Um passo a cada intervalo; o timer é limpo ao pausar, ao chegar no fim e ao desmontar.
-  useEffect(() => {
-    if (!tocando || fim) return
-    const t = setTimeout(() => {
-      setPasso((p) => avancar(p, total))
-      if (passo + 1 >= total) setTocando(false)
-    }, INTERVALO_MS)
-    return () => clearTimeout(t)
-  }, [tocando, passo, fim, total])
-
-  function tocar() {
-    if (fim) setPasso(0)
-    setTocando(true)
-  }
+  const p = usePlayer(total, indisponivel != null || total === 0)
+  const { passo, fim, desabilitado } = p
 
   return (
-    <article className="cenario">
-      <header className="cenario-topo">
-        <span className="selo-ilustracao">ilustração</span>
-        <h2>{titulo}</h2>
-        {nota && <small className="suave">{nota}</small>}
-      </header>
-      {indisponivel != null ? <p className="suave cenario-vazio">{indisponivel}</p> : (
+    <Slide
+      titulo={titulo}
+      texto={(
         <>
-          <div className="cenario-lados">
-            <section className="cenario-lado cenario-lado--nosso" aria-label="Nosso sistema">
-              <h3>Nosso sistema</h3>
-              {nosso(passo)}
-            </section>
-            <section className="cenario-lado" aria-label="Alternativa">
-              <h3>Alternativa</h3>
-              {alternativa(passo)}
-            </section>
-          </div>
-          <p className="cenario-legenda" aria-live="polite">
-            {passo === 0 ? 'Aperte ▶ para começar.' : `${passo}/${total}. ${legendas[passo - 1]}`}
-          </p>
+          <span className="selo-ilustracao">ilustração</span>
+          {nota && <small className="suave cenario-nota-topo">{nota}</small>}
+          {alerta && <p role="alert" className="erro">{alerta}</p>}
+          {indisponivel == null && (
+            <p className="cenario-legenda" aria-live="polite">
+              {passo === 0 ? 'Aperte ▶ para começar.' : `${passo}/${total}. ${legendas[passo - 1]}`}
+            </p>
+          )}
           {fim && !desabilitado && <p className="cenario-conclusao">{conclusao}</p>}
         </>
       )}
-      <div className="cenario-controles">
-        <button type="button" className="botao botao--destaque" disabled={desabilitado || tocando} onClick={tocar} aria-label="Tocar">▶</button>
-        <button type="button" className="botao" disabled={desabilitado || !tocando} onClick={() => setTocando(false)} aria-label="Pausar">⏸</button>
-        <button type="button" className="botao" disabled={desabilitado || fim} onClick={() => { setTocando(false); setPasso((p) => avancar(p, total)) }} aria-label="Próximo passo">⏭</button>
-        <button type="button" className="botao" disabled={desabilitado || passo === 0} onClick={() => { setTocando(false); setPasso(0) }} aria-label="Reiniciar">↺</button>
-      </div>
-    </article>
+      acao={<Controles p={p} />}
+    >
+      {indisponivel != null ? <p className="slide-vazio">{indisponivel}</p> : (
+        <div className="cenario-lados">
+          <section className="cenario-lado cenario-lado--nosso" aria-label="Nosso sistema">
+            <h3>Nosso sistema</h3>
+            {nosso(passo)}
+          </section>
+          <section className="cenario-lado" aria-label="Alternativa">
+            <h3>Alternativa</h3>
+            {alternativa(passo)}
+          </section>
+        </div>
+      )}
+    </Slide>
   )
 }

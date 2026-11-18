@@ -87,10 +87,6 @@
   padding: 0.2rem 0.8rem;
 }
 
-/* seção ainda não convertida: a aba inteira dentro do visual de um slide largo */
-.aba { display: flex; flex-direction: column; gap: 1rem; }
-.porque h2 { font-size: 1rem; margin: 0 0 0.4rem; }
-.porque-adr { margin-left: 0.5rem; color: var(--tinta-suave); font-weight: 400; }
 
 @media (max-width: 900px) {
   .slide { height: auto; padding: 1rem; }

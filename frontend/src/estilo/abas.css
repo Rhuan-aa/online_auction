@@ -106,32 +106,29 @@
 .adr-cartao { display: flex; flex-direction: column; gap: 0.35rem; padding: 1rem; border: var(--borda-largura) solid var(--borda); border-radius: var(--raio); background: var(--superficie); color: var(--tinta); text-decoration: none; font-size: 1rem; }
 .adr-cartao:hover, .adr-cartao:focus-visible { border-color: var(--tinta); }
 
-/* Aba E se fosse…? */
-.cenarios { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
-@media (max-width: 900px) { .cenarios { grid-template-columns: 1fr; } }
-.cenario { display: flex; flex-direction: column; gap: 0.75rem; padding: 0.75rem; border: var(--borda-largura) solid var(--borda); border-radius: var(--raio); background: var(--superficie); }
-.cenario-topo { display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; }
-.cenario-topo h2 { margin: 0; font-size: 1.1rem; }
-.cenario-lados { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
-.cenario-lado { min-height: 9rem; padding: 0.5rem; border: var(--borda-largura) solid var(--borda); border-radius: var(--raio); background: var(--superficie-2); font-size: 0.85rem; }
+/* Aba E se fosse…? (um cenário por slide: texto e controles à esquerda, os dois lados à direita) */
+.cenario-nota-topo { display: block; margin-top: 0.5rem; font-size: 0.9rem; }
+.cenario-lados { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; width: 100%; align-self: stretch; }
+@media (max-width: 900px) { .cenario-lados { grid-template-columns: 1fr; } }
+.cenario-lado { min-height: 12rem; padding: 1rem; border: var(--borda-largura) solid var(--borda); border-radius: var(--raio); background: var(--superficie-2); font-size: 1rem; }
 .cenario-lado--nosso { border-color: var(--sucesso); background: var(--sucesso-fundo); }
-.cenario-lado h3 { margin: 0 0 0.35rem; font-size: 0.8rem; color: var(--tinta-suave); text-transform: uppercase; letter-spacing: 0.05em; }
-.cenario-linhas, .cenario-eventos { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.3rem; }
-.cenario-linha, .cenario-evento { padding: 0.25rem 0.4rem; border-left: 4px solid var(--borda); background: var(--superficie); font-family: var(--fonte-mono); font-size: 0.8rem; }
+.cenario-lado h3 { margin: 0 0 0.6rem; font-size: 0.875rem; color: var(--tinta-suave); text-transform: uppercase; letter-spacing: 0.08em; }
+.cenario-linhas, .cenario-eventos { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+.cenario-linha, .cenario-evento { padding: 0.4rem 0.6rem; border-left: 4px solid var(--borda); background: var(--superficie); font-family: var(--fonte-mono); font-size: 0.9rem; }
 .cenario-linha--ok { border-left-color: var(--sucesso); }
 .cenario-linha--aviso { border-left-color: var(--aviso); background: var(--aviso-fundo); }
 .cenario-linha--erro { border-left-color: var(--perigo); background: var(--perigo-fundo); }
-.cenario-tabela { width: 100%; table-layout: fixed; border-collapse: collapse; font-family: var(--fonte-mono); font-size: 0.75rem; }
-.cenario-tabela th, .cenario-tabela td { padding: 0.25rem; overflow-wrap: anywhere; text-align: left; border: var(--borda-largura) solid var(--borda); background: var(--superficie); }
+.cenario-tabela { width: 100%; table-layout: fixed; border-collapse: collapse; font-family: var(--fonte-mono); font-size: 0.9rem; }
+.cenario-tabela th, .cenario-tabela td { padding: 0.4rem; overflow-wrap: anywhere; text-align: left; border: var(--borda-largura) solid var(--borda); background: var(--superficie); }
 .cenario-tabela td { background: var(--destaque-fundo); }
-.cenario-perdido { margin: 0.4rem 0 0; color: var(--perigo); font-family: var(--fonte-mono); font-size: 0.8rem; }
-.cenario-nota { margin: 0; color: var(--tinta-suave); font-size: 0.75rem; }
-.cenario-valor { margin: 0 0 0.4rem; padding: 0.15rem 0.4rem; font-family: var(--fonte-mono); font-size: 1.1rem; font-weight: 700; border-left: 4px solid var(--sucesso); background: var(--superficie); }
+.cenario-perdido { margin: 0.5rem 0 0; color: var(--perigo); font-family: var(--fonte-mono); font-size: 0.9rem; }
+.cenario-nota { margin: 0; color: var(--tinta-suave); font-size: 0.875rem; }
+.cenario-valor { margin: 0 0 0.5rem; padding: 0.2rem 0.5rem; font-family: var(--fonte-mono); font-size: 1.4rem; font-weight: 700; border-left: 4px solid var(--sucesso); background: var(--superficie); }
 .cenario-valor--velho { border-left-color: var(--aviso); background: var(--aviso-fundo); color: var(--aviso); }
-.cenario-legenda { margin: 0; min-height: 3em; }
-.cenario-conclusao { margin: 0; padding: 0.5rem; border-left: 4px solid var(--sucesso); background: var(--sucesso-fundo); font-weight: 600; }
-.cenario-vazio { margin: 0; padding: 2rem 0.5rem; text-align: center; }
-.cenario-controles { display: flex; gap: 0.5rem; margin-top: auto; }
+.cenario-legenda { margin: 0.75rem 0 0; min-height: 4.5em; }
+.cenario-conclusao { margin: 0.5rem 0 0; padding: 0.5rem 0.75rem; border-left: 4px solid var(--sucesso); background: var(--sucesso-fundo); font-size: 0.95rem; font-weight: 600; }
+.cenario-controles { display: flex; align-items: center; gap: 0.5rem; }
+.cenario-controles-rotulo { color: var(--tinta-suave); font-size: 0.875rem; margin-right: 0.25rem; }
 
 /* Slides: gráficos lado a lado e o passo "Tempo × versão" */
 .graficos-grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; align-items: start; }

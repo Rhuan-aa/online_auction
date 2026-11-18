@@ -71,7 +71,7 @@ export default function App() {
                   ? <AbaAuditoria pergunta={pergunta} passo={rota.passo} estado={palco.estado} />
                   : rota.aba === 'arquitetura'
                     ? <AbaArquitetura key={rota.leilaoId ?? ''} pergunta={pergunta} passo={rota.passo} {...vivo} usuario={usuario} ultimoEvento={palco.ultimoEvento} leilaoId={rota.leilaoId} />
-                    : <AbaESeFosse pergunta={pergunta} leilaoId={rota.leilaoId} versao={palco.estado?.versao ?? null} />}
+                    : <AbaESeFosse pergunta={pergunta} passo={rota.passo} leilaoId={rota.leilaoId} versao={palco.estado?.versao ?? null} />}
         </main>
       </SlideContexto>
       <footer className="rodape">

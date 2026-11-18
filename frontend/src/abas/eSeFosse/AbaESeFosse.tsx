@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, type EventoGravado } from '../../api.ts'
-import Aba from '../../shell/Aba.tsx'
+import Passos from '../../shell/Passos.tsx'
+import PorQue from '../../shell/PorQue.tsx'
 import CartaoCqrs from './CartaoCqrs.tsx'
 import CartaoCrud from './CartaoCrud.tsx'
 import CartaoFixo from './CartaoFixo.tsx'
@@ -12,7 +13,7 @@ const PORQUE = (
   </p>
 )
 
-interface Props { pergunta: string; leilaoId: string | null; versao: number | null }
+interface Props { pergunta: string; passo: number; leilaoId: string | null; versao: number | null }
 
 interface Carga { id: string; eventos: EventoGravado[]; erro: boolean }
 
@@ -30,19 +31,17 @@ function useEventos(leilaoId: string | null, versao: number | null): { eventos: 
   return leilaoId && carga?.id === leilaoId ? carga : { eventos: [], erro: false }
 }
 
-export default function AbaESeFosse({ pergunta, leilaoId, versao }: Props) {
+export default function AbaESeFosse({ pergunta, passo, leilaoId, versao }: Props) {
   const { eventos, erro } = useEventos(leilaoId, versao)
   // A chave reinicia o player quando muda o leilão ou a janela de lances mostrada.
   const chave = chaveJanela(leilaoId, ultimosLances(eventos))
   return (
-    <Aba pergunta={pergunta} porQue={PORQUE}>
-      {erro && <p role="alert" className="erro">não foi possível carregar os eventos</p>}
-      <div className="cenarios">
-        <CartaoCrud key={`crud-${chave}`} eventos={eventos} erro={erro} />
-        <CartaoCqrs key={`cqrs-${chave}`} eventos={eventos} erro={erro} />
-        <CartaoFixo titulo="REST síncrono × broker" roteiro={ROTEIRO_REST} />
-        <CartaoFixo titulo="RabbitMQ × Kafka" roteiro={ROTEIRO_KAFKA} />
-      </div>
-    </Aba>
+    <Passos passo={passo}>
+      <CartaoCrud key={`crud-${chave}`} eventos={eventos} erro={erro} />
+      <CartaoCqrs key={`cqrs-${chave}`} eventos={eventos} erro={erro} />
+      <CartaoFixo titulo="REST síncrono × broker" roteiro={ROTEIRO_REST} />
+      <CartaoFixo titulo="RabbitMQ × Kafka" roteiro={ROTEIRO_KAFKA} />
+      <PorQue titulo={pergunta}>{PORQUE}</PorQue>
+    </Passos>
   )
 }

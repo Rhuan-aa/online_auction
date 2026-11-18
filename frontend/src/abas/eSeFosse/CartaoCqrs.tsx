@@ -14,6 +14,7 @@ export default function CartaoCqrs({ eventos, erro }: { eventos: EventoGravado[]
       titulo="CQRS × cache versionado"
       nota={notaRecorte(eventos, lances.length)}
       indisponivel={pouco ? (erro ? 'não foi possível carregar os eventos' : SEM_LANCES) : undefined}
+      alerta={erro ? 'não foi possível carregar os eventos' : undefined}
       legendas={passos.map((p) => (p.replica == null
         ? `A escrita já está em ${dinheiro(p.escrita)}, mas a réplica ainda não recebeu nada.`
         : p.precoVelho
