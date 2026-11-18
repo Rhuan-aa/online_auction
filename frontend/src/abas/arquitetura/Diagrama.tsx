@@ -24,12 +24,13 @@ const ARESTAS: [No, No][] = [
 ]
 
 interface Props {
+  chave: string // muda a cada tentativa: o SVG é remontado e a animação recomeça
   luz: Record<string, number> // elemento → passo em que acende
   gravacaoMs: number | null
   propagacaoMs: number | null
 }
 
-export default function Diagrama({ luz, gravacaoMs, propagacaoMs }: Props) {
+export default function Diagrama({ chave, luz, gravacaoMs, propagacaoMs }: Props) {
   const [ref, medida] = useLargura()
   const W = Math.max(medida, LARGURA_MIN)
   const H = 250
@@ -57,7 +58,7 @@ export default function Diagrama({ luz, gravacaoMs, propagacaoMs }: Props) {
 
   return (
     <div className="diagrama" ref={ref as RefObject<HTMLDivElement>}>
-      <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="img"
+      <svg key={chave} viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="img"
         aria-label="Caminho de um lance: front, escrita, Event Store, Kafka, leitura e SSE de volta ao front; o agendador consome do Kafka">
         {ARESTAS.map(([a, b]) => aresta(a, b))}
         {(Object.keys(POS) as No[]).map((n) => {

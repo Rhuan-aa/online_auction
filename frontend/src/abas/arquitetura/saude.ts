@@ -16,13 +16,13 @@ const INFRA = [
 
 type Resp<T> = PromiseSettledResult<T>
 
-export function cartoesServicos(r: Resp<{ status: string; ms: number }>[]): Cartao[] {
-  return SERVICOS.map((s, i) => {
-    const x = r[i]
-    if (!x || x.status === 'rejected') return { ...s, status: 'DOWN', ms: null, nota: 'sem resposta' }
-    return { ...s, status: x.value.status === 'UP' ? 'UP' : 'DOWN', ms: Math.round(x.value.ms) }
-  })
+export function cartaoServico(i: number, x: Resp<{ status: string; ms: number }> | undefined): Cartao {
+  const s = SERVICOS[i]
+  if (!x || x.status === 'rejected') return { ...s, status: 'DOWN', ms: null, nota: 'sem resposta' }
+  return { ...s, status: x.value.status === 'UP' ? 'UP' : 'DOWN', ms: Math.round(x.value.ms) }
 }
+
+export const cartoesServicos = (r: Resp<{ status: string; ms: number }>[]): Cartao[] => SERVICOS.map((_, i) => cartaoServico(i, r[i]))
 
 export function cartoesInfra(r: Resp<SaudeInfra>): Cartao[] {
   if (r.status === 'rejected') return INFRA.map((s) => ({ ...s, status: 'DOWN', ms: null, nota: 'sem resposta (leitura fora)' }))

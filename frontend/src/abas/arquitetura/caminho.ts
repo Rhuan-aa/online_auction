@@ -12,8 +12,8 @@ export function casarSse(pendentes: Medicao[], versaoSse: number, quando: number
 
 export function trechos(m: Medicao): { gravacaoMs: number | null; propagacaoMs: number | null } {
   const gravacaoMs = m.respostaEm === null ? null : Math.max(0, m.respostaEm - m.cliqueEm)
-  // o SSE pode chegar um instante antes da resposta do POST: o trecho nunca fica negativo
-  const propagacaoMs = m.respostaEm === null || m.sseEm === null ? null : Math.max(0, m.sseEm - m.respostaEm)
+  // SSE antes da resposta do POST: não há como medir a propagação, e 0 ms seria inventado
+  const propagacaoMs = m.respostaEm === null || m.sseEm === null || m.sseEm < m.respostaEm ? null : m.sseEm - m.respostaEm
   return { gravacaoMs, propagacaoMs }
 }
 

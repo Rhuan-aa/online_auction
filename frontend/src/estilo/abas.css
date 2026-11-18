@@ -77,10 +77,13 @@
 .diagrama svg { display: block; }
 .aresta line { stroke: var(--borda); stroke-width: 3; transition: stroke var(--transicao-longa); }
 .aresta polygon { fill: var(--borda); transition: fill var(--transicao-longa); }
-.aresta--acesa line { stroke: var(--destaque); transition-delay: var(--atraso, 0ms); }
-.aresta--acesa polygon { fill: var(--destaque); transition-delay: var(--atraso, 0ms); }
+.aresta--acesa line { stroke: var(--destaque); animation: acender-traco var(--transicao-longa) var(--atraso, 0ms) both; }
+.aresta--acesa polygon { fill: var(--destaque); animation: acender-preenchimento var(--transicao-longa) var(--atraso, 0ms) both; }
 .no rect { fill: var(--superficie-2); stroke: var(--borda); stroke-width: var(--borda-largura); transition: fill var(--transicao-longa), stroke var(--transicao-longa); }
-.no--aceso rect { fill: var(--destaque-fundo); stroke: var(--destaque); transition-delay: var(--atraso, 0ms); }
+.no--aceso rect { fill: var(--destaque-fundo); stroke: var(--destaque); animation: acender-no var(--transicao-longa) var(--atraso, 0ms) both; }
+@keyframes acender-traco { from { stroke: var(--borda); } }
+@keyframes acender-preenchimento { from { fill: var(--borda); } }
+@keyframes acender-no { from { fill: var(--superficie-2); stroke: var(--borda); } }
 .no-nome { fill: var(--tinta); font-size: 14px; font-weight: 700; font-family: var(--fonte-mono); }
 .no-detalhe { fill: var(--tinta-suave); font-size: 14px; }
 .tempo { fill: var(--tinta); font-size: 16px; font-weight: 700; }

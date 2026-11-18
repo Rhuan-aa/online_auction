@@ -1,13 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useReducer, useRef, useState } from 'react'
 import { api, type EstadoLeilao } from '../../api.ts'
 import { podeDarLance, proximoLance, type EventoVisto } from '../../palco/palco.ts'
 import { hrefDe } from '../../rota.ts'
 import Aba from '../../shell/Aba.tsx'
 import { VENDEDOR, type UsuarioId } from '../../usuarios.ts'
 import { ADRS } from './adrs.ts'
-import { casarSse, luzDoCaminho, trechos, type Fase, type Medicao } from './caminho.ts'
+import { luzDoCaminho } from './caminho.ts'
 import Diagrama from './Diagrama.tsx'
 import Saude from './Saude.tsx'
+import { INICIAL, reduzir, visao } from './tentativa.ts'
 
 const PORQUE = (
   <p>
@@ -16,7 +17,6 @@ const PORQUE = (
   </p>
 )
 const LIMITE_SSE_MS = 5000
-const MAX_MEDICOES = 10
 
 interface Props {
   pergunta: string
@@ -29,10 +29,7 @@ interface Props {
 
 export default function AbaArquitetura({ pergunta, estado, incrementoMinimo, usuario, ultimoEvento, leilaoId }: Props) {
   const [montadoEm] = useState(Date.now) // eventos anteriores à abertura da aba não acendem o diagrama
-  const [medicoes, setMedicoes] = useState<Medicao[]>([])
-  const [emVoo, setEmVoo] = useState(false)
-  const [resultado, setResultado] = useState<string | null>(null)
-  const [expirada, setExpirada] = useState<number | null>(null)
+  const [s, despachar] = useReducer(reduzir, INICIAL)
   const eventoRef = useRef(ultimoEvento)
   const tratado = useRef<EventoVisto | null>(null)
 
@@ -40,14 +37,15 @@ export default function AbaArquitetura({ pergunta, estado, incrementoMinimo, usu
     eventoRef.current = ultimoEvento
     if (!ultimoEvento || ultimoEvento === tratado.current || ultimoEvento.quando < montadoEm) return
     tratado.current = ultimoEvento
-    setMedicoes((p) => casarSse(p, ultimoEvento.versao, ultimoEvento.quando))
+    despachar({ tipo: 'sse', versao: ultimoEvento.versao, quando: ultimoEvento.quando })
   }, [ultimoEvento, montadoEm])
 
-  const atual = medicoes.length ? medicoes[medicoes.length - 1] : null
-  const versaoEsperada = atual && atual.respostaEm !== null && atual.sseEm === null ? atual.versao : null
+  const v = visao(s)
+  const versaoEsperada = s.tentativa?.situacao === 'aceita' && s.tentativa.versao !== undefined
+    && s.medicoes.some((m) => m.versao === s.tentativa?.versao && m.sseEm === null) ? s.tentativa.versao : null
   useEffect(() => {
     if (versaoEsperada === null) return
-    const t = setTimeout(() => setExpirada(versaoEsperada), LIMITE_SSE_MS)
+    const t = setTimeout(() => despachar({ tipo: 'expirou', versao: versaoEsperada }), LIMITE_SSE_MS)
     return () => clearTimeout(t)
   }, [versaoEsperada])
 
@@ -55,28 +53,18 @@ export default function AbaArquitetura({ pergunta, estado, incrementoMinimo, usu
     if (!estado || incrementoMinimo === null) return
     const licitanteId = usuario === VENDEDOR ? 'licitante-1' : usuario
     const cliqueEm = Date.now()
-    setEmVoo(true)
-    setResultado(null)
+    despachar({ tipo: 'clique', em: cliqueEm })
     const r = await api.darLance(estado.leilaoId, { licitanteId, valor: proximoLance(estado, incrementoMinimo) })
-    setEmVoo(false)
     if (r.tipo !== 'aceito') {
-      setResultado(r.tipo === 'recusado' ? `Lance recusado: ${r.mensagem ?? r.codigo ?? 'regra violada'}`
-        : r.tipo === 'conflito' ? 'Conflito de versão: outro lance chegou antes' : 'Erro ao enviar o lance')
+      despachar({ tipo: 'recusado', mensagem: r.tipo === 'recusado' ? `Lance recusado: ${r.mensagem ?? r.codigo ?? 'regra violada'}`
+        : r.tipo === 'conflito' ? 'Conflito de versão: outro lance chegou antes' : 'Erro ao enviar o lance' })
       return
     }
     const ev = eventoRef.current // o SSE pode chegar antes da resposta do POST
     const sseEm = ev && ev.versao === r.versao && ev.quando >= cliqueEm ? ev.quando : null
-    setMedicoes((p) => [...p, { versao: r.versao, cliqueEm, respostaEm: Date.now(), sseEm }].slice(-MAX_MEDICOES))
+    despachar({ tipo: 'aceito', versao: r.versao, respostaEm: Date.now(), sseEm })
   }
 
-  const ultimoMomento = atual ? (atual.sseEm ?? atual.respostaEm ?? atual.cliqueEm) : 0
-  const externo = ultimoEvento !== null && ultimoEvento.quando >= montadoEm
-    && !medicoes.some((m) => m.versao === ultimoEvento.versao) && ultimoEvento.quando > ultimoMomento
-  let fase: Fase | null = null
-  if (emVoo) fase = 'gravando'
-  else if (externo) fase = 'externo'
-  else if (atual?.respostaEm != null) fase = atual.sseEm !== null ? 'completo' : 'gravado'
-  const t = fase && fase !== 'externo' && atual ? trechos(atual) : { gravacaoMs: null, propagacaoMs: null }
   const permissao = podeDarLance(estado, Date.now())
 
   return (
@@ -84,15 +72,15 @@ export default function AbaArquitetura({ pergunta, estado, incrementoMinimo, usu
       <section className="bloco-aba">
         <h2>O caminho de um lance</h2>
         <div className="rajada-controles">
-          <button type="button" onClick={() => void acompanhar()} disabled={emVoo || !estado || incrementoMinimo === null || !permissao.pode}>
+          <button type="button" onClick={() => void acompanhar()} disabled={s.tentativa?.situacao === 'gravando' || !estado || incrementoMinimo === null || !permissao.pode}>
             Dar lance e acompanhar
           </button>
           {!permissao.pode && <span className="suave">{permissao.motivo}</span>}
         </div>
-        <Diagrama luz={luzDoCaminho(fase)} gravacaoMs={t.gravacaoMs} propagacaoMs={t.propagacaoMs} />
-        {resultado && <p className="aviso" role="alert">{resultado}</p>}
-        {versaoEsperada !== null && expirada === versaoEsperada && <p className="aviso" role="alert">SSE não chegou em 5 s</p>}
-        {fase === 'externo' && <p className="suave">Lance de outra janela: o evento chegou por Kafka, leitura e SSE (sem tempo medido).</p>}
+        <Diagrama chave={`${s.tentativa?.cliqueEm ?? 0}-${s.externoEm ?? 0}`} luz={luzDoCaminho(v.fase)} gravacaoMs={v.gravacaoMs} propagacaoMs={v.propagacaoMs} />
+        {v.mensagem && <p className="aviso" role="alert">{v.mensagem}</p>}
+        {v.nota && <p className="aviso" role="alert">{v.nota}</p>}
+        {v.fase === 'externo' && <p className="suave">Lance de outra janela: o evento chegou por Kafka, leitura e SSE (sem tempo medido).</p>}
         <p className="suave">Os dois tempos são medidos neste navegador; os nós do meio não têm tempo próprio.</p>
       </section>
 

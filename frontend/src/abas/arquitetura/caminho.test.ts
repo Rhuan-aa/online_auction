@@ -56,5 +56,12 @@ test('cartões de infra: mapeia e, se falhar, avisa leitura fora', () => {
 
 test('ADRs levam a abas válidas', () => {
   expect(ADRS.map((a) => [a.id, a.aba])).toEqual([['ADR-001', 'rede'], ['ADR-002', 'auditoria'], ['ADR-003', 'desempenho'], ['ADR-004', 'arquitetura']])
-  for (const a of ADRS) { expect(ABAS.some((b) => b.id === a.aba)).toBe(true); expect(a.decisao.length).toBeGreaterThan(20) }
+  for (const a of ADRS) {
+    expect(ABAS.some((b) => b.id === a.aba)).toBe(true)
+    expect(a.decisao.endsWith('.')).toBe(true)
+  }
+})
+
+test('SSE antes da resposta do POST: propagação nula, não 0 ms', () => {
+  expect(trechos({ versao: 9, cliqueEm: 0, respostaEm: 12, sseEm: 10 })).toEqual({ gravacaoMs: 12, propagacaoMs: null })
 })

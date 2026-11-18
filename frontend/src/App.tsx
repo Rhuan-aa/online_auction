@@ -66,7 +66,7 @@ export default function App() {
                 : rota.aba === 'auditoria'
                   ? <AbaAuditoria pergunta={aba.pergunta} estado={palco.estado} />
                   : rota.aba === 'arquitetura'
-                    ? <AbaArquitetura pergunta={aba.pergunta} estado={palco.estado} incrementoMinimo={palco.incrementoMinimo} usuario={usuario} ultimoEvento={palco.ultimoEvento} leilaoId={rota.leilaoId} />
+                    ? <AbaArquitetura key={rota.leilaoId ?? ''} pergunta={aba.pergunta} estado={palco.estado} incrementoMinimo={palco.incrementoMinimo} usuario={usuario} ultimoEvento={palco.ultimoEvento} leilaoId={rota.leilaoId} />
                     : <Aba pergunta={aba.pergunta} porQue={null} />}
         </main>
       </div>
