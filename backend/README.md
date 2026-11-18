@@ -28,6 +28,8 @@ Para comparar as configurações do cache (ADR-003): `A` (sem cópia), `B` (só 
 | leitura | `GET /leiloes/{id}?ateVersao=N` | Estado do leilão na versão N (viagem no tempo) |
 | leitura | `GET /infra/saude` | Estado de Postgres, Redis e Kafka; responde sempre 200, com o status de cada um |
 
+**Rotas de administração: sem autenticação, uso local apenas.** `POST /admin/cache/reconstruir` só aceita `Content-Type: application/json`, o que força o preflight de CORS e barra POSTs simples de outros sites, mas não substitui autenticação.
+
 `POST /leiloes/{id}/lances` também devolve `tentativas` (quantas vezes o comando foi tentado por conflito de versão), e as mensagens SSE trazem `evento: {tipo, versao}`. As rotas `/admin` e o actuator aceitam CORS de `http://localhost:5173`.
 
 ## Módulos

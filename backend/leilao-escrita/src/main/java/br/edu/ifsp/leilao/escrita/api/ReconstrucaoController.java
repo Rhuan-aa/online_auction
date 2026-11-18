@@ -2,6 +2,7 @@ package br.edu.ifsp.leilao.escrita.api;
 
 import br.edu.ifsp.leilao.estado.ReconstrucaoCache;
 import br.edu.ifsp.leilao.estado.ReconstrucaoCache.Relatorio;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,7 +21,8 @@ public class ReconstrucaoController {
         this.reconstrucao = reconstrucao;
     }
 
-    @PostMapping
+    /** Exige JSON: um POST de formulário de outro site não passa, e o JSON obriga o navegador a fazer o preflight de CORS. */
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public Relatorio reconstruir() {
         return reconstrucao.reconstruir();
     }

@@ -208,7 +208,7 @@ export const api: Api = {
   estadoNaVersao: (id, versao) => getJson(`${LEITURA}/leiloes/${id}?ateVersao=${versao}`),
   async reconstruirCache() {
     const url = `${ESCRITA}/admin/cache/reconstruir`
-    const r = await medir(url, { method: 'POST' })
+    const r = await medir(url, { method: 'POST', headers: JSON_HEADERS, body: '{}' }) // o backend exige JSON
     if (!r.ok) throw await erroDe(r, `POST ${url}`)
     return r.json()
   },

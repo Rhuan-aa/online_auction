@@ -23,6 +23,10 @@ leilao:
     # A = sem cópia (relê todos os eventos), B = só checkpoint, C = Redis + checkpoint (ADR-003).
     # Ex.: CACHE_CONFIGURACAO=A para começar medindo o custo sem cache.
     configuracao: ${CACHE_CONFIGURACAO:C}
+# O /infra/saude cria um AdminClient do Kafka a cada consulta e o AdminClientConfig loga a configuração inteira em INFO.
+logging:
+  level:
+    org.apache.kafka.clients.admin.AdminClientConfig: WARN
 management:
   endpoints:
     web:
