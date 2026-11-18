@@ -25,6 +25,7 @@
     <module>leilao-leitura</module>
     <module>agendador-leilao</module>
     <module>ferramentas</module>
+    <module>leilao-corrida</module>
   </modules>
 
   <dependencyManagement>
