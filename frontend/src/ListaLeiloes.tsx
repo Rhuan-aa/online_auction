@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, type EstadoLeilao, type ResumoLeilao } from './api.ts'
 import { dataHora, dinheiro, ROTULO_STATUS } from './formato.ts'
-import { irPara } from './rota.ts'
+import { hrefDe } from './rota.ts'
 import { isVendedor, type UsuarioId } from './usuarios.ts'
 
 const FILTROS: { valor: EstadoLeilao['status'] | ''; rotulo: string }[] = [
@@ -34,7 +34,7 @@ export default function ListaLeiloes({ usuario }: { usuario: UsuarioId }) {
     <section>
       <div className="cabecalho">
         <h1>Leilões</h1>
-        {isVendedor(usuario) && <a className="botao" href={irPara.criar()}>+ Novo leilão</a>}
+        {isVendedor(usuario) && <a className="botao" href="#/criar">+ Novo leilão</a>}
       </div>
       <div className="filtros" role="group" aria-label="Filtrar por situação">
         {FILTROS.map((f) => (
@@ -45,11 +45,11 @@ export default function ListaLeiloes({ usuario }: { usuario: UsuarioId }) {
       </div>
       {falhou && <p className="erro" role="alert">Não consegui carregar a lista. Tentando de novo…</p>}
       {leiloes === null && !falhou && <p className="suave">Carregando…</p>}
-      {leiloes?.length === 0 && <p className="vazio">Nenhum leilão por aqui.{isVendedor(usuario) && <> <a href={irPara.criar()}>Criar o primeiro</a>.</>}</p>}
+      {leiloes?.length === 0 && <p className="vazio">Nenhum leilão por aqui.{isVendedor(usuario) && <> <a href="#/criar">Criar o primeiro</a>.</>}</p>}
       <ul className="cartoes">
         {leiloes?.map((l) => (
           <li key={l.leilaoId}>
-            <a className="cartao" href={irPara.detalhe(l.leilaoId)}>
+            <a className="cartao" href={hrefDe({ aba: 'integridade', leilaoId: l.leilaoId })}>
               <strong>{l.titulo}</strong>
               <span className="preco">{dinheiro(l.precoAtual)}</span>
               <span className={`status status-${l.status.toLowerCase()}`}>{ROTULO_STATUS[l.status]}</span>

@@ -5,7 +5,7 @@ import { api, type Servico } from './api.ts'
 import { dataHora, dinheiro, paraCentavos } from './formato.ts'
 import Grafico, { type Serie } from './Grafico.tsx'
 import { carregarHistorico, chaveSimulacao, MAXIMO_HISTORICO, rotuloSimulacao, salvarHistorico } from './historico.ts'
-import { irPara } from './rota.ts'
+import { hrefDe } from './rota.ts'
 import { type Base, BASES, lerConfiguracao, type ResumoBackend } from './metricas.ts'
 import { ErroSimulacao, executar, type Execucao, type Parametros, type Progresso } from './simulacao.ts'
 
@@ -284,12 +284,12 @@ export default function PainelAdm() {
         <p className="resultado" role="status">
           {progresso.fase}… {progresso.enviados}/{progresso.total} lances · {progresso.aceitos} aceitos ·{' '}
           {progresso.recusados} recusados · {progresso.conflitos} conflitos · {progresso.consultas} consultas
-          {progresso.leilaoId && <> · <a href={irPara.detalhe(progresso.leilaoId)}>leilão</a></>}
+          {progresso.leilaoId && <> · <a href={hrefDe({ aba: 'integridade', leilaoId: progresso.leilaoId })}>leilão</a></>}
         </p>
       )}
       {erro && (
         <p className="erro" role="alert">
-          {erro.mensagem}{erro.leilaoId && <> <a href={irPara.detalhe(erro.leilaoId)}>Ver o leilão</a>.</>}
+          {erro.mensagem}{erro.leilaoId && <> <a href={hrefDe({ aba: 'integridade', leilaoId: erro.leilaoId })}>Ver o leilão</a>.</>}
         </p>
       )}
 
@@ -301,7 +301,7 @@ export default function PainelAdm() {
           <div className="cabecalho grafico-topo">
             <h2>
               Detalhes da execução {atual.configuracao} <span className="suave">· {dataHora(atual.quando)} ·{' '}
-              <a href={irPara.detalhe(atual.leilaoId)}>ver o leilão</a></span>
+              <a href={hrefDe({ aba: 'integridade', leilaoId: atual.leilaoId })}>ver o leilão</a></span>
             </h2>
             <div className="filtros" role="group" aria-label="Configuração exibida nos detalhes">
               {CONFIGURACOES.map((cfg) => {

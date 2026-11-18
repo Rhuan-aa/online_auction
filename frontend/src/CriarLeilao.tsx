@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { api } from './api.ts'
 import { paraCentavos } from './formato.ts'
-import { irPara } from './rota.ts'
+import { hrefDe } from './rota.ts'
 import { isVendedor, VENDEDOR, type UsuarioId } from './usuarios.ts'
 
 /** Date → "2026-11-11T14:30", o formato do <input type="datetime-local">, no fuso local. */
@@ -39,7 +39,7 @@ export default function CriarLeilao({ usuario }: { usuario: UsuarioId }) {
         vendedorId: VENDEDOR, titulo: titulo.trim(), precoInicial: preco, incrementoMinimo: inc,
         inicioEm: inicioEm.toISOString(), fimEm: fimEm.toISOString(),
       })
-      window.location.hash = irPara.detalhe(leilaoId)
+      window.location.hash = hrefDe({ aba: 'integridade', leilaoId })
     } catch (err) {
       setErro(err instanceof Error && err.name !== 'TypeError' ? err.message : 'Não foi possível falar com o servidor.')
       setEnviando(false)

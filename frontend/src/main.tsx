@@ -1,7 +1,14 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import './index.css'
+import '@fontsource-variable/fraunces'
+import '@fontsource-variable/inter'
+import '@fontsource-variable/jetbrains-mono'
+import './estilo/tokens.css'
+import './estilo/base.css'
 import App from './App.tsx'
+import { aplicarTema, lerTema } from './tema.ts'
+
+aplicarTema(lerTema())
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import AcoesLeilao from './AcoesLeilao.tsx'
 import { api, ErroHttp, type EstadoLeilao, type LanceHistorico } from './api.ts'
 import { dataHora, dinheiro, ROTULO_STATUS, tempoRestante } from './formato.ts'
-import { irPara } from './rota.ts'
 import type { UsuarioId } from './usuarios.ts'
 
 /** Relógio da tela: a hora atual, atualizada a cada segundo enquanto `ativo`. */
@@ -47,7 +46,7 @@ export default function DetalheLeilao({ leilaoId, usuario }: { leilaoId: string;
 
   return (
     <section>
-      <p><a className="voltar" href={irPara.lista()}>← Voltar para os leilões</a></p>
+      <p><a className="voltar" href="#/">← Voltar para os leilões</a></p>
 
       {naoEncontrado && !estado && (
         <p className="erro" role="alert">Leilão não encontrado.</p>

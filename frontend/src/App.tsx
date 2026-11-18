@@ -3,11 +3,14 @@ import CriarLeilao from './CriarLeilao.tsx'
 import DetalheLeilao from './DetalheLeilao.tsx'
 import ListaLeiloes from './ListaLeiloes.tsx'
 import PainelAdm from './PainelAdm.tsx'
-import { irPara, useRota } from './rota.ts'
+import { useRota } from './rota.ts'
 import { isVendedor, salvarUsuario, usuarioSalvo, USUARIOS, type UsuarioId } from './usuarios.ts'
 
+// Telas antigas, mantidas até as próximas tarefas trocarem pelo palco e pelas abas.
+// #/criar e #/adm não são abas; viram rotas especiais só enquanto as telas antigas existirem.
 export default function App() {
   const rota = useRota()
+  const legado = window.location.hash.replace(/^#\/?/, '').split('?')[0]
   const [usuario, setUsuario] = useState<UsuarioId>(usuarioSalvo)
 
   function trocarUsuario(novo: UsuarioId) {
@@ -18,13 +21,11 @@ export default function App() {
   return (
     <>
       <header className="topo">
-        <a className="marca" href={irPara.lista()}><span className="logo" aria-hidden="true">⚖</span>Leilão online</a>
+        <a className="marca" href="#/"><span className="logo" aria-hidden="true">⚖</span>Leilão online</a>
         <nav>
-          <a href={irPara.lista()} aria-current={rota.tela === 'lista' ? 'page' : undefined}>Leilões</a>
-          {isVendedor(usuario) && (
-            <a href={irPara.criar()} aria-current={rota.tela === 'criar' ? 'page' : undefined}>Criar leilão</a>
-          )}
-          <a href={irPara.adm()} aria-current={rota.tela === 'adm' ? 'page' : undefined}>Painel ADM</a>
+          <a href="#/">Leilões</a>
+          {isVendedor(usuario) && <a href="#/criar">Criar leilão</a>}
+          <a href="#/adm">Painel ADM</a>
         </nav>
         <label className="usuario">
           Estou como:
@@ -34,10 +35,12 @@ export default function App() {
         </label>
       </header>
       <main className="conteudo">
-        {rota.tela === 'lista' && <ListaLeiloes usuario={usuario} />}
-        {rota.tela === 'criar' && <CriarLeilao usuario={usuario} />}
-        {rota.tela === 'detalhe' && <DetalheLeilao key={rota.leilaoId} leilaoId={rota.leilaoId} usuario={usuario} />}
-        {rota.tela === 'adm' && <PainelAdm />}
+        {legado === 'criar' && <CriarLeilao usuario={usuario} />}
+        {legado === 'adm' && <PainelAdm />}
+        {legado !== 'criar' && legado !== 'adm' && rota.leilaoId && (
+          <DetalheLeilao key={rota.leilaoId} leilaoId={rota.leilaoId} usuario={usuario} />
+        )}
+        {legado !== 'criar' && legado !== 'adm' && !rota.leilaoId && <ListaLeiloes usuario={usuario} />}
       </main>
     </>
   )

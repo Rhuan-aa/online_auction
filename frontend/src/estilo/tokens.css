@@ -1,0 +1,66 @@
+/* Tokens globais: "papel editorial". Claro por padrão; escuro é o papel invertido ([data-tema="escuro"]). */
+:root {
+  --fundo: #f6f2ea;
+  --superficie: #ffffff;
+  --superficie-2: #efe9dd;
+  --tinta: #16130f;
+  --tinta-suave: #5b5346;
+  --borda: #d9cfbd;
+  --destaque: #e4472b;
+  --destaque-fundo: #fbe3dd;
+  --sobre-destaque: #ffffff;
+  --sucesso: #1f7a4a;
+  --sucesso-fundo: #dff0e6;
+  --aviso: #a86a00;
+  --aviso-fundo: #f8ecd0;
+  --perigo: #c8321f;
+  --perigo-fundo: #f9e0db;
+  --sombra: 0 1px 2px rgb(22 19 15 / 0.06), 0 6px 18px rgb(22 19 15 / 0.06);
+
+  /* gráfico do painel de ADM: uma cor por configuração, com contraste sobre o fundo claro */
+  --serie-a: #1f5fb4;
+  --serie-b: #c2501f;
+  --serie-c: #17795a;
+  --grade: #d9cfbd;
+  --eixo: #7a7160;
+
+  --fonte-titulo: 'Fraunces Variable', Georgia, serif;
+  --fonte-texto: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --fonte-mono: 'JetBrains Mono Variable', ui-monospace, Consolas, monospace;
+
+  --texto-base: 18px;
+  --texto-preco-palco: 64px;
+  --texto-kpi: 40px;
+  --borda-largura: 1.5px;
+  --raio: 10px;
+  --transicao-curta: 150ms;
+  --transicao-longa: 300ms;
+
+  /* nomes usados pelas telas antigas, até serem reescritas */
+  --texto: var(--tinta);
+  --suave: var(--tinta-suave);
+}
+
+[data-tema="escuro"] {
+  --fundo: #17140f;
+  --superficie: #221e18;
+  --superficie-2: #2c2720;
+  --tinta: #f1eadc;
+  --tinta-suave: #b3a893;
+  --borda: #4a4235;
+  --destaque: #ff6a4d;
+  --destaque-fundo: #4a2219;
+  --sobre-destaque: #17140f;
+  --sucesso: #55c88a;
+  --sucesso-fundo: #1c3a29;
+  --aviso: #e0a84a;
+  --aviso-fundo: #3d2f12;
+  --perigo: #ff7a66;
+  --perigo-fundo: #4a1f19;
+  --sombra: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 18px rgb(0 0 0 / 0.35);
+  --serie-a: #6aa6f0;
+  --serie-b: #f08a5a;
+  --serie-c: #4cc79c;
+  --grade: #4a4235;
+  --eixo: #9a907c;
+}
