@@ -20,7 +20,19 @@ public final class ValidadorParametros {
         }
     }
 
+    /**
+     * Teto de recursos da máquina (não é um máximo da tela): protege o servidor de pedidos que o
+     * derrubariam. Configurável em {@code corrida.max-threads} e {@code corrida.max-lances}.
+     */
+    public record Orcamento(int maxThreads, long maxLances) {
+        public static final Orcamento PADRAO = new Orcamento(2000, 2_000_000);
+    }
+
     public static Pedido validar(JsonNode corpo, long sementePadrao) {
+        return validar(corpo, sementePadrao, Orcamento.PADRAO);
+    }
+
+    public static Pedido validar(JsonNode corpo, long sementePadrao, Orcamento orcamento) {
         if (corpo == null || !corpo.isObject()) {
             throw new ParametroInvalidoException("O corpo deve ser um objeto JSON com os parâmetros da corrida.");
         }
@@ -40,7 +52,25 @@ public final class ValidadorParametros {
         } catch (ArithmeticException e) {
             throw new ParametroInvalidoException("Valores grandes demais: o plano de lances não cabe em números de 64 bits.");
         }
+        verificarOrcamento(licitantes, lances, simultaneos, leitores, orcamento);
         return new Pedido(new Parametros(licitantes, lances, simultaneos, leitores, precoInicial, incremento), semente);
+    }
+
+    private static void verificarOrcamento(int licitantes, int lances, int simultaneos, int leitores,
+                                           Orcamento orcamento) {
+        // 6 arquiteturas, cada uma com simultaneos escritores + leitores leitores.
+        long threads = 6L * ((long) simultaneos + leitores);
+        if (threads > orcamento.maxThreads()) {
+            throw new ParametroInvalidoException("Threads demais para esta máquina: " + threads
+                    + " (6 arquiteturas x (simultâneos + leitores)); o limite é " + orcamento.maxThreads()
+                    + ". Reduza os simultâneos ou os leitores.");
+        }
+        long total = (long) licitantes * lances;
+        if (total > orcamento.maxLances()) {
+            throw new ParametroInvalidoException("Lances demais para esta máquina: " + total
+                    + " (licitantes x lances por licitante); o limite é " + orcamento.maxLances()
+                    + ". Reduza os licitantes ou os lances por licitante.");
+        }
     }
 
     private static JsonNode campo(JsonNode corpo, String nome) {

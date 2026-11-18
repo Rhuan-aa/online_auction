@@ -71,9 +71,15 @@ abstract class ArquiteturaBase implements Arquitetura {
         return EstadoLeilao.criado(l.precoInicial(), l.incremento());
     }
 
-    /** Soma de pg_total_relation_size (dados + índices + TOAST) das tabelas da arquitetura. */
+    /**
+     * Soma de pg_total_relation_size (dados + índices + TOAST) das tabelas da arquitetura, depois de
+     * um VACUUM (autocommit) nelas: as linhas mortas dos UPDATEs não contam como espaço usado.
+     */
     protected long bytes() {
         long total = 0;
+        for (String tabela : tabelas) {
+            jdbc.sql("VACUUM " + tabela).update();
+        }
         for (String tabela : tabelas) {
             total += jdbc.sql("SELECT pg_total_relation_size(CAST(? AS regclass))").param(tabela)
                     .query(Long.class).single();

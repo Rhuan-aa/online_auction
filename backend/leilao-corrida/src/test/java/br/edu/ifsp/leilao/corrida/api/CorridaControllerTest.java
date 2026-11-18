@@ -66,7 +66,7 @@ class CorridaControllerTest {
             "{\"licitantes\":5,\"lancesPorLicitante\":5,\"simultaneos\":4,\"leitores\":2,\"precoInicial\":10000,\"incremento\":100}";
 
     private final MotorFalso motor = new MotorFalso();
-    private final MockMvc mvc = MockMvcBuilders.standaloneSetup(new CorridaController(motor, 42)).build();
+    private final MockMvc mvc = MockMvcBuilders.standaloneSetup(new CorridaController(motor, 42, 2000, 2_000_000)).build();
 
     private ResultActions iniciar(String corpo) throws Exception {
         return mvc.perform(post("/corrida").contentType(APPLICATION_JSON).content(corpo));
@@ -84,7 +84,16 @@ class CorridaControllerTest {
         iniciar(CORPO).andExpect(status().isCreated());
         iniciar(CORPO).andExpect(status().isConflict())
                 .andExpect(jsonPath("$.erro").value("CORRIDA_EM_ANDAMENTO"))
+                .andExpect(jsonPath("$.corridaId").value(motor.atual.toString()))
                 .andExpect(jsonPath("$.mensagem").exists());
+    }
+
+    @Test
+    void alemDoOrcamentoE400ComMensagem() throws Exception {
+        iniciar(CORPO.replace("\"simultaneos\":4", "\"simultaneos\":999")).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.erro").value("PARAMETRO_INVALIDO"))
+                .andExpect(jsonPath("$.mensagem").value(org.hamcrest.Matchers.containsString("Threads demais")));
+        assertNull(motor.atual);
     }
 
     @Test

@@ -2,7 +2,9 @@ package br.edu.ifsp.leilao.corrida.motor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import br.edu.ifsp.leilao.corrida.motor.ValidadorParametros.Orcamento;
 import br.edu.ifsp.leilao.corrida.motor.ValidadorParametros.ParametroInvalidoException;
 import br.edu.ifsp.leilao.corrida.motor.ValidadorParametros.Pedido;
 import org.junit.jupiter.api.Test;
@@ -32,7 +34,7 @@ class ValidadorParametrosTest {
 
     @Test
     void semLimiteMaximoELeitoresPodeSerZero() {
-        Pedido p = validar("{\"licitantes\":5000,\"lancesPorLicitante\":1000,\"simultaneos\":500,\"leitores\":0,"
+        Pedido p = validar("{\"licitantes\":1000,\"lancesPorLicitante\":1000,\"simultaneos\":300,\"leitores\":0,"
                 + "\"precoInicial\":1,\"incremento\":1,\"semente\":7}");
         assertEquals(0, p.parametros().leitores());
         assertEquals(7, p.semente());
@@ -59,5 +61,29 @@ class ValidadorParametrosTest {
         invalido("{" + OK.replace("\"licitantes\":20", "\"licitantes\":50000")
                 .replace("\"lancesPorLicitante\":10", "\"lancesPorLicitante\":50000") + "}");
         invalido("{" + OK.replace("\"incremento\":100", "\"incremento\":9000000000000000000") + "}");
+    }
+
+    @Test
+    void orcamentoDeThreadsRecusaComMensagemClara() {
+        // 6 x (300 + 40) = 2040 > 2000
+        String corpo = "{" + OK.replace("\"simultaneos\":6", "\"simultaneos\":300")
+                .replace("\"leitores\":4", "\"leitores\":40") + "}";
+        ParametroInvalidoException e = assertThrows(ParametroInvalidoException.class, () -> validar(corpo));
+        assertTrue(e.getMessage().contains("Threads demais"), e.getMessage());
+        assertTrue(e.getMessage().contains("2040"), e.getMessage());
+        // no limite exato passa: 6 x (300 + 33) = 1998
+        validar("{" + OK.replace("\"simultaneos\":6", "\"simultaneos\":300")
+                .replace("\"leitores\":4", "\"leitores\":33") + "}");
+    }
+
+    @Test
+    void orcamentoDeLancesRecusaEEConfiguravel() {
+        String corpo = "{" + OK.replace("\"licitantes\":20", "\"licitantes\":3000")
+                .replace("\"lancesPorLicitante\":10", "\"lancesPorLicitante\":1000") + "}";
+        ParametroInvalidoException e = assertThrows(ParametroInvalidoException.class, () -> validar(corpo));
+        assertTrue(e.getMessage().contains("Lances demais"), e.getMessage());
+        // com teto maior (configuração), o mesmo pedido passa
+        Pedido p = ValidadorParametros.validar(JSON.readTree(corpo), 42, new Orcamento(2000, 5_000_000));
+        assertEquals(3_000_000, p.parametros().totalLances());
     }
 }

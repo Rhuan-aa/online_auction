@@ -29,7 +29,8 @@ public class ConfiguracaoCorrida implements WebMvcConfigurer {
     @Bean
     ArquiteturaEsCqrs arquiteturaEsCqrs(Esquema esquema, Conexoes conexoes,
                                         KafkaTemplate<String, String> kafka, JsonMapper json) {
-        return new ArquiteturaEsCqrs(conexoes.para(ArquiteturaEsCqrs.ID), kafka, json);
+        return new ArquiteturaEsCqrs(conexoes.para(ArquiteturaEsCqrs.ID), conexoes.para(ArquiteturaEsCqrs.ID + "-projecao"),
+                kafka, json);
     }
 
     /** As 6, na ordem do contrato. O Esquema entra como parâmetro para o DDL rodar antes. */

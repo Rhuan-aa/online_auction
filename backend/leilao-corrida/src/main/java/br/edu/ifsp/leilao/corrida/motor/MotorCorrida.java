@@ -19,8 +19,15 @@ public interface MotorCorrida {
     Optional<SseEmitter> assinar(UUID id);
 
     class CorridaEmAndamentoException extends RuntimeException {
+        private final UUID corridaId;
+
         public CorridaEmAndamentoException(UUID atual) {
             super("Já existe uma corrida rodando (" + atual + "). Pare-a ou espere terminar.");
+            this.corridaId = atual;
+        }
+
+        public UUID corridaId() {
+            return corridaId;
         }
     }
 }

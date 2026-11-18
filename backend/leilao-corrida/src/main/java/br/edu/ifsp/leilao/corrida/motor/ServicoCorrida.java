@@ -43,18 +43,24 @@ public class ServicoCorrida implements MotorCorrida, DisposableBean {
 
     @Override
     public UUID iniciar(ValidadorParametros.Pedido pedido) {
+        Corrida rodando = atual;
+        if (rodando != null && rodando.rodando()) {
+            throw new CorridaEmAndamentoException(rodando.id());
+        }
+        // O plano de lances (pode ser grande) é montado ANTES de pegar a trava das transmissões.
+        Corrida[] ref = new Corrida[1];
+        Corrida nova = new Corrida(UUID.randomUUID(), pedido.parametros(), pedido.semente(), arquiteturas,
+                () -> transmitirFim(ref[0]));
+        ref[0] = nova;
         synchronized (trava) {
             Corrida c = atual;
             if (c != null && c.rodando()) {
                 throw new CorridaEmAndamentoException(c.id());
             }
-            // Quem ainda assistia à corrida anterior já recebeu o fim; recomeça a lista.
+            // Quem ainda assistia à corrida anterior já recebeu o fim; fecha os que sobraram e recomeça.
+            assinantes.forEach(SseEmitter::complete);
             assinantes.clear();
             fimEnviado = false;
-            Corrida[] ref = new Corrida[1];
-            Corrida nova = new Corrida(UUID.randomUUID(), pedido.parametros(), pedido.semente(), arquiteturas,
-                    () -> transmitirFim(ref[0]));
-            ref[0] = nova;
             atual = nova;
             nova.iniciar();
             return nova.id();

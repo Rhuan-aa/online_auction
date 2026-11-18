@@ -25,6 +25,7 @@ class PistaTest {
         LeilaoInicial leilao;
         final boolean perdeAtualizacoes;
         final RuntimeException falha;
+        Error erroGrave;
 
         EmMemoria(boolean perdeAtualizacoes, RuntimeException falha) {
             this.perdeAtualizacoes = perdeAtualizacoes;
@@ -45,6 +46,7 @@ class PistaTest {
         @Override
         public ResultadoLance darLance(String licitante, long valor) {
             if (falha != null) throw falha;
+            if (erroGrave != null) throw erroGrave;
             EstadoLeilao lido;
             synchronized (this) {
                 lido = estado;
@@ -128,5 +130,19 @@ class PistaTest {
         Foto.ArqFoto f = correr(new EmMemoria(false, new IllegalStateException("banco caiu")), p).foto(System.nanoTime());
         assertEquals("erro", f.status());
         assertEquals("banco caiu", f.erro());
+    }
+
+    @Test
+    void errorTambemMarcaErroEFechaAPista() {
+        Parametros p = new Parametros(3, 3, 2, 1, 10_000, 100);
+        EmMemoria arq = new EmMemoria(false, null);
+        arq.erroGrave = new OutOfMemoryError("sem memória");
+        Pista pista = correr(arq, p);
+        Foto.ArqFoto f = pista.foto(System.nanoTime());
+        assertEquals("erro", f.status());
+        assertEquals("sem memória", f.erro());
+        assertNotNull(f.terminouEmMs());
+        assertNotNull(f.fim(), "fechar() roda mesmo com erro");
+        assertTrue(pista.terminou());
     }
 }

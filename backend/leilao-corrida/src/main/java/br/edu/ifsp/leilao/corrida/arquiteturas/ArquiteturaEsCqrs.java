@@ -27,12 +27,16 @@ public final class ArquiteturaEsCqrs extends ArquiteturaEventos {
 
     private static final String LEITURA = "corrida_es_cqrs.leitura";
 
+    private final JdbcClient jdbcProjecao;
     private final KafkaTemplate<String, String> kafka;
     private final JsonMapper json;
 
-    public ArquiteturaEsCqrs(JdbcClient jdbc, KafkaTemplate<String, String> kafka, JsonMapper json) {
+    /** {@code jdbcProjecao}: pool próprio da projeção, para o atraso medido não ser fila por conexão. */
+    public ArquiteturaEsCqrs(JdbcClient jdbc, JdbcClient jdbcProjecao, KafkaTemplate<String, String> kafka,
+                             JsonMapper json) {
         super(jdbc, ID, "ES + CQRS", "Grava eventos, publica no Kafka e lê de uma projeção", "corrida_es_cqrs",
                 List.of("leitura"));
+        this.jdbcProjecao = jdbcProjecao;
         this.kafka = kafka;
         this.json = json;
     }
@@ -71,13 +75,16 @@ public final class ArquiteturaEsCqrs extends ArquiteturaEventos {
     /** Chamado pelo consumidor Kafka. A escrita na projeção conta no custo de escrita. */
     public void projetar(String mensagem) {
         JsonNode m = json.readTree(mensagem);
-        custos.escritaBanco();
-        jdbc.sql("UPDATE " + LEITURA + " SET versao = ?, preco_atual = ?, lider = ?, atualizado_em = now()"
+        int alteradas = jdbcProjecao.sql("UPDATE " + LEITURA + " SET versao = ?, preco_atual = ?, lider = ?, atualizado_em = now()"
                         + " WHERE leilao_id = ? AND rodada = ? AND versao < ?")
                 .params(m.get("versao").asInt(), m.get("valor").asLong(), m.get("licitante").asString(),
                         UUID.fromString(m.get("leilaoId").asString()), UUID.fromString(m.get("rodada").asString()),
                         m.get("versao").asInt())
                 .update();
+        // Só conta a escrita que de fato mudou a linha (mensagem velha, repetida ou de outra rodada não conta).
+        if (alteradas == 1) {
+            custos.escritaBanco();
+        }
     }
 
     @Override

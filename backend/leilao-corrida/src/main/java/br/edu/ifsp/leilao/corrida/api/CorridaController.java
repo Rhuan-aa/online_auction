@@ -31,18 +31,24 @@ public class CorridaController {
 
     record Erro(String erro, String mensagem) {}
 
+    record ErroEmAndamento(String erro, String mensagem, String corridaId) {}
+
     private final MotorCorrida motor;
     private final long sementePadrao;
+    private final ValidadorParametros.Orcamento orcamento;
 
-    public CorridaController(MotorCorrida motor, @Value("${corrida.semente-padrao:42}") long sementePadrao) {
+    public CorridaController(MotorCorrida motor, @Value("${corrida.semente-padrao:42}") long sementePadrao,
+                             @Value("${corrida.max-threads:2000}") int maxThreads,
+                             @Value("${corrida.max-lances:2000000}") long maxLances) {
         this.motor = motor;
         this.sementePadrao = sementePadrao;
+        this.orcamento = new ValidadorParametros.Orcamento(maxThreads, maxLances);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Map<String, String> iniciar(@RequestBody(required = false) JsonNode corpo) {
-        ValidadorParametros.Pedido pedido = ValidadorParametros.validar(corpo, sementePadrao);
+        ValidadorParametros.Pedido pedido = ValidadorParametros.validar(corpo, sementePadrao, orcamento);
         return Map.of("corridaId", motor.iniciar(pedido).toString());
     }
 
@@ -85,7 +91,7 @@ public class CorridaController {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.CONFLICT)
-    public Erro emAndamento(CorridaEmAndamentoException e) {
-        return new Erro("CORRIDA_EM_ANDAMENTO", e.getMessage());
+    public ErroEmAndamento emAndamento(CorridaEmAndamentoException e) {
+        return new ErroEmAndamento("CORRIDA_EM_ANDAMENTO", e.getMessage(), e.corridaId().toString());
     }
 }

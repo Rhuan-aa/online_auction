@@ -93,7 +93,7 @@ final class Pista {
     void preparar() {
         try {
             arq.preparar(inicial);
-        } catch (RuntimeException e) {
+        } catch (Throwable e) {
             falhar(e);
         }
     }
@@ -101,14 +101,15 @@ final class Pista {
     /** Fase 2: corre (depois da largada comum) e fecha o resultado. Bloqueia até terminar. */
     void correr(long largadaNanos) {
         inicioNanos = largadaNanos;
-        confirmacoes = new Confirmacoes(p.totalLances() + 1, 1, largadaNanos);
         if (erro != null) {
             fimNanos = System.nanoTime();
             return;
         }
-        int threads = p.simultaneos() + p.leitores();
-        ExecutorService pool = Executors.newFixedThreadPool(threads, nomeadas("corrida-" + arq.id()));
+        ExecutorService pool = null;
         try {
+            confirmacoes = new Confirmacoes(p.totalLances() + 1, 1, largadaNanos);
+            int threads = p.simultaneos() + p.leitores();
+            pool = Executors.newFixedThreadPool(threads, nomeadas("corrida-" + arq.id()));
             List<Future<?>> escritores = new ArrayList<>();
             for (int i = 0; i < p.simultaneos(); i++) {
                 escritores.add(pool.submit(this::escritor));
@@ -124,12 +125,24 @@ final class Pista {
             if (erro == null) {
                 status = pararPedido && enviados.sum() < p.totalLances() ? "parada" : "terminou";
             }
+        } catch (Throwable e) {
+            // Falta de memória, de threads etc.: esta pista vira "erro"; as outras seguem.
+            falhar(e);
         } finally {
             escritoresTerminaram = true;
-            pool.shutdownNow();
-            custosFinais = arq.custos().foto();
+            if (fimNanos == 0) {
+                fimNanos = System.nanoTime();
+            }
+            if (pool != null) {
+                pool.shutdownNow();
+            }
+            try {
+                custosFinais = arq.custos().foto();
+            } catch (Throwable e) {
+                falhar(e);
+            }
+            fechar();
         }
-        fechar();
     }
 
     private void escritor() {
@@ -145,7 +158,7 @@ final class Pista {
                     despachante.liberar(vez.licitante());
                 }
             }
-        } catch (RuntimeException e) {
+        } catch (Throwable e) {
             falhar(e);
         }
     }
@@ -196,7 +209,7 @@ final class Pista {
                         confirmacoes.atrasoMs(lida.versao(), confirmada, t0));
                 precoConhecido.accumulateAndGet(lida.precoAtual(), Math::max);
             }
-        } catch (RuntimeException e) {
+        } catch (Throwable e) {
             falhar(e);
         }
     }
@@ -211,7 +224,7 @@ final class Pista {
             Integridade.Resultado integridade = Integridade.avaliar(aceitosLista, p.precoInicial(), fin.precoAtual(),
                     fin.lider());
             fim = new Foto.Final(integridade, arq.espaco(), arq.auditoria(), fin.precoAtual(), fin.lider());
-        } catch (RuntimeException e) {
+        } catch (Throwable e) {
             falhar(e);
         }
     }
