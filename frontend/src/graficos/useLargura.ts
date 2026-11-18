@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 
 export const LARGURA_PADRAO = 640
 
@@ -11,7 +11,7 @@ export function larguraEfetiva(w: number | undefined): number {
 export function useLargura() {
   const ref = useRef<HTMLElement | null>(null)
   const [largura, setLargura] = useState(LARGURA_PADRAO)
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = ref.current
     if (!el || typeof ResizeObserver === 'undefined') return
     setLargura(larguraEfetiva(el.getBoundingClientRect().width))

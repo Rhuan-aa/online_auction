@@ -11,7 +11,9 @@ export default function Sparkline({ valores: brutos, titulo = 'Tendência', unid
 }) {
   const [medida, L] = useLargura()
   const valores = brutos.filter((v) => finito(v) !== null)
-  if (valores.length === 0) return <span className="grafico-vazio">Sem dados ainda</span>
+  if (valores.length === 0) {
+    return <span ref={medida} className="grafico-vazio" style={{ display: 'block' }}>Sem dados ainda</span>
+  }
   const min = Math.min(...valores), max = Math.max(...valores)
   const x = escalaLinear([0, Math.max(1, valores.length - 1)], [P, L - P])
   const y = escalaLinear([min, max], [A - P, P])
