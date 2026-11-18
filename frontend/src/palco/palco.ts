@@ -35,7 +35,8 @@ export function situacaoDoPalco(entrada: {
   const { leilaoId, estado, erro, sseCaiu } = entrada
   if (!leilaoId) return 'sem-leilao'
   if (!estado) {
-    if (erro?.status === 404) return 'nao-encontrado'
+    // 404: não existe; 400: o id nem é um UUID (o Spring recusa antes de procurar)
+    if (erro?.status === 404 || erro?.status === 400) return 'nao-encontrado'
     return erro || sseCaiu ? 'indisponivel' : 'carregando'
   }
   return erro || sseCaiu ? 'desatualizado' : 'ao-vivo'

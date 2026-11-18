@@ -49,8 +49,10 @@ describe('situacaoDoPalco', () => {
     expect(situacaoDoPalco({ leilaoId: 'x', estado, erro: null, sseCaiu: true })).toBe('desatualizado'))
   test('sem estado e erro de rede fica indisponivel', () =>
     expect(situacaoDoPalco({ leilaoId: 'x', estado: null, erro: new ErroHttp(0, 'rede'), sseCaiu: false })).toBe('indisponivel'))
-  test('sem estado e erro 400 fica indisponivel', () =>
-    expect(situacaoDoPalco({ leilaoId: 'x', estado: null, erro: new ErroHttp(400, 'ruim'), sseCaiu: false })).toBe('indisponivel'))
+  test('sem estado e erro 400 (id que não é UUID) fica nao-encontrado', () =>
+    expect(situacaoDoPalco({ leilaoId: 'x', estado: null, erro: new ErroHttp(400, 'ruim'), sseCaiu: false })).toBe('nao-encontrado'))
+  test('sem estado e erro 500 fica indisponivel', () =>
+    expect(situacaoDoPalco({ leilaoId: 'x', estado: null, erro: new ErroHttp(500, 'caiu'), sseCaiu: false })).toBe('indisponivel'))
   test('sem estado e SSE caído fica indisponivel', () =>
     expect(situacaoDoPalco({ leilaoId: 'x', estado: null, erro: null, sseCaiu: true })).toBe('indisponivel'))
   test('404 fica nao-encontrado', () =>

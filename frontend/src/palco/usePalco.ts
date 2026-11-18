@@ -58,15 +58,15 @@ export function usePalco(leilaoId: string | null): Palco {
     )
 
     // O SSE fica mudo se o leilão não existe ou o serviço está fora: uma consulta avisa e, se
-    // falhar por outro motivo que não 404, repete a cada 3 s até conseguir. O último estado fica.
-    const parar404 = () => clearInterval(timer)
+    // falhar por outro motivo que não 4xx, repete a cada 3 s até conseguir. O último estado fica.
+    const pararTentativas = () => clearInterval(timer)
     const tentar = () => api.consultarLeilao(leilaoId).then((e) => {
       atualizar((d) => ({ ...d, estado: d.estado ?? e, erro: null }))
-      parar404()
+      pararTentativas()
     }).catch((e) => {
       const erro = e instanceof ErroHttp ? e : new ErroHttp(0, 'Sem conexão com o servidor')
       atualizar((d) => ({ ...d, erro }))
-      if (erro.status === 404) parar404()
+      if (erro.status >= 400 && erro.status < 500) pararTentativas() // 4xx não passa sozinho; só 0 e 5xx merecem outra tentativa
     })
     const timer = setInterval(tentar, 3000)
     tentar()
