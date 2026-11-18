@@ -53,3 +53,20 @@
 .waterfall svg { flex: 1; min-width: 0; }
 .waterfall-rotulos { flex: 0 0 15rem; margin: 0; padding: 0; list-style: none; font-family: var(--fonte-mono); font-size: 0.75rem; color: var(--tinta-suave); }
 .waterfall-rotulos li { display: flex; align-items: center; padding: 0 0.5rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+/* Aba Auditoria */
+.linha-tempo { display: flex; flex-direction: column; gap: 0.25rem; max-height: 24rem; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
+.evento { border: var(--borda-largura) solid var(--borda); border-radius: var(--raio); background: var(--superficie); }
+.evento button { display: flex; align-items: center; gap: 0.75rem; width: 100%; border: 0; background: transparent; color: var(--tinta); text-align: left; }
+.evento-tipo { font-family: var(--fonte-mono); font-weight: 700; }
+.evento--atual { border-color: var(--tinta); box-shadow: 0 0 0 3px var(--tinta); }
+.evento-json { margin: 0; padding: 0.5rem 0.75rem; overflow-x: auto; font-family: var(--fonte-mono); font-size: 0.8rem; border-top: var(--borda-largura) solid var(--borda); }
+.viagem-controle { display: flex; align-items: center; gap: 0.75rem; }
+.viagem-controle input[type='range'] { flex: 1; min-width: 0; }
+.viagem-estado { display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 1rem; margin: 0.75rem 0; }
+.viagem-estado dt { color: var(--tinta-suave); }
+.viagem-estado dd { margin: 0; }
+.viagem-mudancas { margin: 0; padding-left: 1.2rem; font-family: var(--fonte-mono); font-size: 0.9rem; }
+.reconstrucao { margin: 0.75rem 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.35rem; }
+.passo { padding: 0.35rem 0.6rem; border-left: 4px solid var(--sucesso); background: var(--superficie); }
+.passo--aviso { border-left-color: var(--aviso); }
