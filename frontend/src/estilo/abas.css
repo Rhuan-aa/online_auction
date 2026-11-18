@@ -70,3 +70,4 @@
 .reconstrucao { margin: 0.75rem 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.35rem; }
 .passo { padding: 0.35rem 0.6rem; border-left: 4px solid var(--sucesso); background: var(--superficie); }
 .passo--aviso { border-left-color: var(--aviso); }
+.viagem--carregando .viagem-estado, .viagem--carregando .viagem-mudancas { opacity: 0.5; }

@@ -3,12 +3,12 @@ import { dataHora, dinheiro, ROTULO_STATUS } from '../../formato.ts'
 
 export interface Mudanca { campo: keyof EstadoLeilao; de: unknown; para: unknown }
 
-const IGNORADOS: (keyof EstadoLeilao)[] = ['versao', 'leilaoId']
+/** Campos mostrados na auditoria (versao e leilaoId não entram: um é o índice, o outro nunca muda). */
+const CAMPOS: (keyof EstadoLeilao)[] = ['titulo', 'status', 'precoAtual', 'liderId', 'fimEm']
 
 /** O que mudou entre dois estados. Com `antes` nulo (versão 1), todos os campos aparecem. */
 export function mudancas(antes: EstadoLeilao | null, depois: EstadoLeilao): Mudanca[] {
-  const campos = (Object.keys(depois) as (keyof EstadoLeilao)[]).filter((c) => !IGNORADOS.includes(c))
-  return campos
+  return CAMPOS
     .filter((c) => antes === null || antes[c] !== depois[c])
     .map((campo) => ({ campo, de: antes ? antes[campo] : undefined, para: depois[campo] }))
 }

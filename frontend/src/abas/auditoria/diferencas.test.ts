@@ -9,9 +9,7 @@ describe('mudancas', () => {
     { campo: 'precoAtual', de: e1.precoAtual, para: 2000 }, { campo: 'liderId', de: e1.liderId, para: 'licitante-2' }]))
   test('primeira versão lista todos os campos', () => expect(mudancas(null, e1).length).toBeGreaterThan(3))
   test('ignora versao e leilaoId', () => {
-    const campos = mudancas(null, e1).map((m) => m.campo)
-    expect(campos).not.toContain('versao')
-    expect(campos).not.toContain('leilaoId')
+    expect(mudancas(null, e1).map((m) => m.campo)).toEqual(['titulo', 'status', 'precoAtual', 'liderId', 'fimEm'])
   })
   test('sem mudanças devolve lista vazia', () => expect(mudancas(e1, { ...e1, versao: 8 })).toEqual([]))
 })

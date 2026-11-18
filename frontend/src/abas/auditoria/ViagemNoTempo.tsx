@@ -24,6 +24,7 @@ export default function ViagemNoTempo({ leilaoId, atual, versao, aoMudar }: Prop
       return e
     }
     const t = setTimeout(() => {
+      setErro(null)
       Promise.all([buscar(versao), versao > 1 ? buscar(versao - 1) : Promise.resolve(null)])
         .then(([estado, anterior]) => { if (vigente) { setResultado({ chave, estado, anterior }); setErro(null) } })
         .catch((e: unknown) => { if (vigente) setErro({ chave, msg: e instanceof Error ? e.message : String(e) }) })
@@ -31,14 +32,15 @@ export default function ViagemNoTempo({ leilaoId, atual, versao, aoMudar }: Prop
     return () => { vigente = false; clearTimeout(t) }
   }, [leilaoId, versao, chave])
 
-  const r = resultado?.chave === chave ? resultado : null
+  const r = resultado // mantém o anterior na tela (esmaecido) até o novo chegar
+  const atrasado = r !== null && r.chave !== chave
   const lista = r ? mudancas(r.anterior, r.estado) : []
 
   return (
-    <div className="viagem">
+    <div className={atrasado ? 'viagem viagem--carregando' : 'viagem'}>
       <div className="viagem-controle">
         <button type="button" aria-label="Versão anterior" disabled={versao <= 1} onClick={() => aoMudar(versao - 1)}>◀</button>
-        <input type="range" min={1} max={atual} value={versao} aria-label="Versão" onChange={(e) => aoMudar(Number(e.target.value))} />
+        <input type="range" min={1} max={atual} value={versao} aria-label="Versão" aria-valuetext={`versão ${versao} de ${atual}`} onChange={(e) => aoMudar(Number(e.target.value))} />
         <button type="button" aria-label="Próxima versão" disabled={versao >= atual} onClick={() => aoMudar(versao + 1)}>▶</button>
         <strong className="id">v{versao} de {atual}</strong>
       </div>
@@ -52,10 +54,10 @@ export default function ViagemNoTempo({ leilaoId, atual, versao, aoMudar }: Prop
             <dt>Líder</dt><dd>{valorDoCampo('liderId', r.estado.liderId)}</dd>
             <dt>Fim</dt><dd>{valorDoCampo('fimEm', r.estado.fimEm)}</dd>
           </dl>
-          {versao === 1
+          {r.estado.versao === 1
             ? <p className="suave">Estado inicial</p>
             : lista.length === 0
-              ? <p className="suave">Nada mudou em relação à versão {versao - 1}.</p>
+              ? <p className="suave">Nada mudou em relação à versão {r.estado.versao - 1}.</p>
               : (
                 <ul className="viagem-mudancas">
                   {lista.map((m) => (

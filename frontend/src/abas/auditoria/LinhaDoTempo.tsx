@@ -12,7 +12,7 @@ export default function LinhaDoTempo({ eventos, selecionada }: Props) {
 
   useEffect(() => {
     itens.current.get(selecionada)?.scrollIntoView?.({ block: 'nearest', behavior: movimentoReduzido() ? 'auto' : 'smooth' })
-  }, [selecionada])
+  }, [selecionada, eventos]) // eventos: o item só existe depois da lista carregada / do evento novo
 
   function alternar(versao: number) {
     setAbertas((a) => { const n = new Set(a); if (!n.delete(versao)) n.add(versao); return n })

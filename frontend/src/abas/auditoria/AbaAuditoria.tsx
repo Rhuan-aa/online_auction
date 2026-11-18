@@ -12,19 +12,19 @@ const PORQUE = (
   </p>
 )
 
-interface Props { pergunta: string; estado: EstadoLeilao | null; ultimaVersao: number | null }
+interface Props { pergunta: string; estado: EstadoLeilao | null }
 
-export default function AbaAuditoria({ pergunta, estado, ultimaVersao }: Props) {
+export default function AbaAuditoria({ pergunta, estado }: Props) {
   return (
     <Aba pergunta={pergunta} adr="ADR-002" porQue={PORQUE}>
       {estado
-        ? <Conteudo key={estado.leilaoId} leilaoId={estado.leilaoId} atual={estado.versao} ultimaVersao={ultimaVersao} />
+        ? <Conteudo key={estado.leilaoId} leilaoId={estado.leilaoId} atual={estado.versao} />
         : <p className="suave">Escolha um leilão no palco</p>}
     </Aba>
   )
 }
 
-function Conteudo({ leilaoId, atual, ultimaVersao }: { leilaoId: string; atual: number; ultimaVersao: number | null }) {
+function Conteudo({ leilaoId, atual }: { leilaoId: string; atual: number }) {
   const [eventos, setEventos] = useState<EventoGravado[]>([])
   const [erro, setErro] = useState<string | null>(null)
   const [escolhida, setEscolhida] = useState<number | null>(null) // null = acompanha a versão mais nova
@@ -37,13 +37,13 @@ function Conteudo({ leilaoId, atual, ultimaVersao }: { leilaoId: string; atual: 
       .then((l) => { if (vigente) { setEventos(l); setErro(null) } })
       .catch((e: unknown) => { if (vigente) setErro(e instanceof Error ? e.message : String(e)) })
     return () => { vigente = false }
-  }, [leilaoId, ultimaVersao])
+  }, [leilaoId, atual]) // atual muda quando chega um evento novo
 
   return (
     <>
       <section className="bloco-aba">
         <h2>Voltar no tempo</h2>
-        <ViagemNoTempo leilaoId={leilaoId} atual={atual} versao={versao} aoMudar={setEscolhida} />
+        <ViagemNoTempo leilaoId={leilaoId} atual={atual} versao={versao} aoMudar={(v) => setEscolhida(v >= atual ? null : v)} />
       </section>
       <section className="bloco-aba">
         <h2>Linha do tempo ({eventos.length} eventos)</h2>
