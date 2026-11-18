@@ -1,0 +1,66 @@
+/* Corrida: formulário, raias, gráficos e placar. Só tokens; cada arquitetura usa a sua --arq-N. */
+
+/* formulário: 6 campos numa linha larga (3 por linha em telas médias), cada um com um tooltip */
+.formulario-corrida { display: flex; flex-direction: column; gap: 1.25rem; }
+.campos {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  min-width: 0;
+}
+.campo { position: relative; display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
+.campo label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; font-weight: 600; }
+.campo input { width: 100%; min-width: 0; font-family: var(--fonte-mono); font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.campo-info {
+  display: inline-grid;
+  place-items: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  border: 1px solid var(--tinta-suave);
+  color: var(--tinta-suave);
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.dica {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 0.4rem);
+  z-index: 5;
+  width: max-content;
+  max-width: 16rem;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--tinta);
+  background: var(--superficie-solida);
+  border: var(--borda-largura) solid var(--borda);
+  border-radius: var(--raio-pequeno);
+  box-shadow: var(--sombra);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition: opacity var(--transicao-curta), transform var(--transicao-curta), visibility var(--transicao-curta);
+  pointer-events: none;
+}
+.campo:hover .dica, .campo:focus-within .dica { opacity: 1; visibility: visible; transform: none; }
+.campo:last-child .dica, .campo:nth-last-child(2) .dica { left: auto; right: 0; }
+.formulario-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
+.botao--grande { font-size: 1.1rem; padding: 0.7rem 1.75rem; }
+.formulario-acoes .alerta { flex: 1 1 20rem; }
+
+@media (max-width: 1100px) {
+  .campos { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .campo:nth-child(3n) .dica { left: auto; right: 0; }
+}
+@media (max-width: 560px) {
+  .campos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .campo .dica { left: 0; right: auto; }
+  .campo:nth-child(2n) .dica { left: auto; right: 0; }
+}

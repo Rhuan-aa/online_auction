@@ -1,4 +1,6 @@
-// Acesso ao backend: leilao-escrita (8081) para comandos e leilao-leitura (8082) para consultas.
+// Acesso ao backend: leilao-escrita (8081) para comandos, leilao-leitura (8082) para consultas e
+// leilao-corrida (8085), o laboratório que roda a mesma corrida nas 6 arquiteturas.
+import type { Foto, Parametros } from './corrida/tipos.ts'
 import type { CriarLeilaoRequest, DarLanceRequest } from './types.ts'
 
 /** Resposta de GET /leiloes/{id} (PLANO.md, seção 2.5). */
@@ -52,10 +54,27 @@ export interface Api {
   observarLeilao(leilaoId: string, aoMudar: (estado: EstadoComEvento) => void, aoFalhar?: () => void): () => void
   eventos(leilaoId: string): Promise<EventoGravado[]>
   estadoNaVersao(leilaoId: string, versao: number): Promise<EstadoLeilao>
+
+  /** POST /corrida. Lança ErroHttp: 400 parâmetro inválido, 409 corrida em andamento, 0 serviço fora do ar. */
+  iniciarCorrida(p: Parametros): Promise<{ corridaId: string }>
+  pararCorrida(corridaId: string): Promise<void>
+  consultarCorrida(corridaId: string): Promise<Foto>
+  /** SSE: `foto` a cada 250 ms e `fim` uma vez (o stream é fechado aqui ao receber `fim`). */
+  observarCorrida(corridaId: string, ouvintes: OuvintesCorrida): () => void
 }
+
+export interface OuvintesCorrida {
+  aoFoto: (f: Foto) => void
+  aoFim: (f: Foto) => void
+  /** fechado = o navegador desistiu (não vai reconectar sozinho). */
+  aoFalhar: (fechado: boolean) => void
+}
+
+export const FORA_DO_AR = 'Serviço de corrida (8085) fora do ar'
 
 const ESCRITA = import.meta.env.VITE_COMMAND_API ?? 'http://localhost:8081'
 const LEITURA = import.meta.env.VITE_QUERY_API ?? 'http://localhost:8082'
+const CORRIDA = import.meta.env.VITE_CORRIDA_API ?? 'http://localhost:8085'
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
 
@@ -69,6 +88,15 @@ async function getJson<T>(url: string): Promise<T> {
   const r = await fetch(url)
   if (!r.ok) throw await erroDe(r, `GET ${url}`)
   return r.json() as Promise<T>
+}
+
+/** fetch no serviço de corrida: falha de rede vira ErroHttp(0) com a mensagem "fora do ar". */
+async function naCorrida(caminho: string, init?: RequestInit): Promise<Response> {
+  try {
+    return await fetch(`${CORRIDA}${caminho}`, init)
+  } catch {
+    throw new ErroHttp(0, FORA_DO_AR)
+  }
 }
 
 export const api: Api = {
@@ -108,4 +136,26 @@ export const api: Api = {
   },
   eventos: (id) => getJson(`${LEITURA}/leiloes/${id}/eventos`),
   estadoNaVersao: (id, versao) => getJson(`${LEITURA}/leiloes/${id}?ateVersao=${versao}`),
+  async iniciarCorrida(p) {
+    const r = await naCorrida('/corrida', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(p) })
+    if (!r.ok) throw await erroDe(r, 'POST /corrida')
+    return r.json()
+  },
+  async pararCorrida(id) {
+    const r = await naCorrida(`/corrida/${id}/parar`, { method: 'POST' })
+    if (!r.ok) throw await erroDe(r, 'POST /corrida/{id}/parar')
+  },
+  async consultarCorrida(id) {
+    const r = await naCorrida(`/corrida/${id}`)
+    if (!r.ok) throw await erroDe(r, 'GET /corrida/{id}')
+    return r.json()
+  },
+  observarCorrida(id, { aoFoto, aoFim, aoFalhar }) {
+    const fonte = new EventSource(`${CORRIDA}/corrida/${id}/stream`)
+    const ler = (ev: Event) => JSON.parse((ev as MessageEvent).data as string) as Foto
+    fonte.addEventListener('foto', (ev) => aoFoto(ler(ev)))
+    fonte.addEventListener('fim', (ev) => { fonte.close(); aoFim(ler(ev)) })
+    fonte.onerror = () => aoFalhar(fonte.readyState === EventSource.CLOSED)
+    return () => fonte.close()
+  },
 }
