@@ -1,0 +1,41 @@
+import type { ReactNode } from 'react'
+
+export interface ItemLegenda {
+  nome: string
+  cor: string
+}
+
+/** Figura com título visível, unidade, legenda (se houver mais de uma série) e estado vazio. */
+export default function Moldura({ titulo, unidade, legenda, vazio, children }: {
+  titulo: string
+  unidade?: string
+  legenda?: ItemLegenda[]
+  vazio?: boolean
+  children: ReactNode
+}) {
+  return (
+    <figure className="grafico">
+      <figcaption className="grafico-titulo">
+        <strong>{titulo}</strong>
+        {unidade && <span className="grafico-unidade"> ({unidade})</span>}
+      </figcaption>
+      {vazio ? (
+        <p className="grafico-vazio">Sem dados ainda</p>
+      ) : (
+        <>
+          {children}
+          {legenda && legenda.length > 1 && (
+            <ul className="grafico-legenda">
+              {legenda.map((l) => (
+                <li key={l.nome}>
+                  <span className="grafico-chave" style={{ background: l.cor }} aria-hidden="true" />
+                  {l.nome}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+    </figure>
+  )
+}

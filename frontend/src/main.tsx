@@ -6,6 +6,7 @@ import '@fontsource-variable/jetbrains-mono'
 import './estilo/tokens.css'
 import './estilo/base.css'
 import './estilo/shell.css'
+import './estilo/graficos.css'
 import App from './App.tsx'
 import { aplicarTema, lerTema } from './tema.ts'
 
