@@ -24,6 +24,11 @@
   --serie-a: #1f5fb4;
   --serie-b: #c2501f;
   --serie-c: #17795a;
+  /* origem do estado (Redis, checkpoint, início, fonte): paleta própria, para não confundir com A/B/C */
+  --origem-1: #6b4aa8;
+  --origem-2: #a8366b;
+  --origem-3: #5b5346;
+  --origem-4: #a86a00;
   --grade: #d9cfbd;
   --eixo: #7a7160;
 
@@ -67,6 +72,10 @@
   --serie-a: #6aa6f0;
   --serie-b: #f08a5a;
   --serie-c: #4cc79c;
+  --origem-1: #a78bde;
+  --origem-2: #e07aa8;
+  --origem-3: #b3a893;
+  --origem-4: #e0a84a;
   --grade: #4a4235;
   --eixo: #9a907c;
 }

@@ -7,7 +7,7 @@ import { atrasos, estadoDoExperimento, iniciarExperimento, maximo, media, type C
 const DURACAO_S = 30
 const MIN_INTERVALO = 250
 
-interface Props { estado: EstadoLeilao | null; incrementoMinimo: number | null; usuario: UsuarioId }
+interface Props { relogio: number; estado: EstadoLeilao | null; incrementoMinimo: number | null; usuario: UsuarioId }
 
 const ms = (n: number | null) => (n === null ? '—' : `${Math.round(n)} ms`)
 
@@ -23,7 +23,7 @@ function Resultado({ nome, unidade, rotuloBytes, custo, lista }: { nome: string;
   )
 }
 
-export default function ExperimentoRede({ estado, incrementoMinimo, usuario }: Props) {
+export default function ExperimentoRede({ relogio, estado, incrementoMinimo, usuario }: Props) {
   const [intervalo, setIntervalo] = useState('1000')
   const [fimEm, setFimEm] = useState<number | null>(null) // null = parado
   const [agora, setAgora] = useState(0)
@@ -87,7 +87,7 @@ export default function ExperimentoRede({ estado, incrementoMinimo, usuario }: P
   }
 
   const restante = fimEm === null ? null : Math.max(0, Math.ceil((fimEm - agora) / 1000))
-  const permissao = podeDarLance(estadoMedido, Date.now())
+  const permissao = podeDarLance(estadoMedido, relogio)
   const atr = snap ? atrasos(snap.percepcoes) : null
 
 

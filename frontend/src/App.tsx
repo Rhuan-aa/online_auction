@@ -8,6 +8,7 @@ import AbaRede from './abas/rede/AbaRede.tsx'
 import GavetaLeiloes from './palco/GavetaLeiloes.tsx'
 import GavetaNovoLeilao from './palco/GavetaNovoLeilao.tsx'
 import Palco from './palco/Palco.tsx'
+import { useAgora } from './palco/useAgora.ts'
 import { usePalco } from './palco/usePalco.ts'
 import { ABAS, hrefDe, useRota } from './rota.ts'
 import Aba from './shell/Aba.tsx'
@@ -23,6 +24,7 @@ export default function App() {
 
   // Sem leilão em foco, o palco abre a lista para escolher um (até a pessoa fechá-la).
   const palco = usePalco(rota.leilaoId)
+  const agora = useAgora(palco.estado?.status === 'ABERTO')
   const [dispensouLista, setDispensouLista] = useState(false)
   const [leilaoVisto, setLeilaoVisto] = useState(rota.leilaoId)
   if (leilaoVisto !== rota.leilaoId) { // outro leilão em foco: a lista pode abrir sozinha de novo
@@ -53,21 +55,22 @@ export default function App() {
         <Palco
           leilaoId={rota.leilaoId}
           palco={palco}
+          agora={agora}
           usuario={usuario}
           aoAbrirLeiloes={() => setGaveta('leiloes')}
           aoAbrirNovo={() => setGaveta('novo')}
         />
         <main className="conteudo">
           {rota.aba === 'integridade'
-            ? <AbaIntegridade pergunta={aba.pergunta} estado={palco.estado} incrementoMinimo={palco.incrementoMinimo} />
+            ? <AbaIntegridade pergunta={aba.pergunta} agora={agora} estado={palco.estado} incrementoMinimo={palco.incrementoMinimo} />
             : rota.aba === 'desempenho'
               ? <AbaDesempenho pergunta={aba.pergunta} />
               : rota.aba === 'rede'
-                ? <AbaRede pergunta={aba.pergunta} estado={palco.estado} incrementoMinimo={palco.incrementoMinimo} usuario={usuario} />
+                ? <AbaRede pergunta={aba.pergunta} agora={agora} estado={palco.estado} incrementoMinimo={palco.incrementoMinimo} usuario={usuario} />
                 : rota.aba === 'auditoria'
                   ? <AbaAuditoria pergunta={aba.pergunta} estado={palco.estado} />
                   : rota.aba === 'arquitetura'
-                    ? <AbaArquitetura key={rota.leilaoId ?? ''} pergunta={aba.pergunta} estado={palco.estado} incrementoMinimo={palco.incrementoMinimo} usuario={usuario} ultimoEvento={palco.ultimoEvento} leilaoId={rota.leilaoId} />
+                    ? <AbaArquitetura key={rota.leilaoId ?? ''} pergunta={aba.pergunta} agora={agora} estado={palco.estado} incrementoMinimo={palco.incrementoMinimo} usuario={usuario} ultimoEvento={palco.ultimoEvento} leilaoId={rota.leilaoId} />
                     : rota.aba === 'e-se-fosse'
                       ? <AbaESeFosse pergunta={aba.pergunta} leilaoId={rota.leilaoId} versao={palco.estado?.versao ?? null} />
                       : <Aba pergunta={aba.pergunta} porQue={null} />}

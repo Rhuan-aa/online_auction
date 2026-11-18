@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import Confirmar from '../Confirmar.tsx'
 import { api, ErroHttp, type EstadoLeilao } from '../api.ts'
 import { dinheiro, paraCentavos, ROTULO_STATUS, tempoRestante } from '../formato.ts'
@@ -9,23 +9,13 @@ import type { Palco as DadosPalco } from './usePalco.ts'
 interface Props {
   leilaoId: string | null
   palco: DadosPalco
+  agora: number
   usuario: UsuarioId
   aoAbrirLeiloes: () => void
   aoAbrirNovo: () => void
 }
 
 type Aviso = { tipo: 'ok' | 'erro'; texto: string }
-
-/** Relógio da tela: a hora atual, atualizada a cada segundo enquanto `ativo`. */
-function useAgora(ativo: boolean): number {
-  const [agora, setAgora] = useState(() => Date.now())
-  useEffect(() => {
-    if (!ativo) return
-    const timer = setInterval(() => setAgora(Date.now()), 1000)
-    return () => clearInterval(timer)
-  }, [ativo])
-  return agora
-}
 
 /** O backend avisa "Lance mínimo é 13000" (centavos): mostra em reais. */
 function traduzirMensagem(codigo: string | undefined, mensagem: string | undefined): string {
@@ -41,9 +31,8 @@ const paraCampo = (centavos: number) => (centavos / 100).toFixed(2).replace('.',
 
 const ROTULO_SITUACAO = { 'ao-vivo': 'ao vivo', desatualizado: 'desatualizado', carregando: 'carregando', indisponivel: 'serviço indisponível', 'nao-encontrado': '', 'sem-leilao': '' }
 
-export default function Palco({ leilaoId, palco, usuario, aoAbrirLeiloes, aoAbrirNovo }: Props) {
+export default function Palco({ leilaoId, palco, agora, usuario, aoAbrirLeiloes, aoAbrirNovo }: Props) {
   const { estado, eventos, situacao, incrementoMinimo, precoInicial } = palco
-  const agora = useAgora(estado?.status === 'ABERTO')
   const vendedor = isVendedor(usuario)
 
   return (

@@ -20,6 +20,7 @@ const LIMITE_SSE_MS = 5000
 
 interface Props {
   pergunta: string
+  agora: number
   estado: EstadoLeilao | null
   incrementoMinimo: number | null
   usuario: UsuarioId
@@ -27,7 +28,7 @@ interface Props {
   leilaoId: string | null
 }
 
-export default function AbaArquitetura({ pergunta, estado, incrementoMinimo, usuario, ultimoEvento, leilaoId }: Props) {
+export default function AbaArquitetura({ pergunta, agora, estado, incrementoMinimo, usuario, ultimoEvento, leilaoId }: Props) {
   const [montadoEm] = useState(Date.now) // eventos anteriores à abertura da aba não acendem o diagrama
   const [s, despachar] = useReducer(reduzir, INICIAL)
   const eventoRef = useRef(ultimoEvento)
@@ -65,7 +66,7 @@ export default function AbaArquitetura({ pergunta, estado, incrementoMinimo, usu
     despachar({ tipo: 'aceito', versao: r.versao, respostaEm: Date.now(), sseEm })
   }
 
-  const permissao = podeDarLance(estado, Date.now())
+  const permissao = podeDarLance(estado, agora)
 
   return (
     <Aba pergunta={pergunta} adr="ADR-001" porQue={PORQUE}>

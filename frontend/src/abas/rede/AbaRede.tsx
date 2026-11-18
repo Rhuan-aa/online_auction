@@ -14,9 +14,9 @@ const PORQUE = (
   </p>
 )
 
-interface Props { pergunta: string; estado: EstadoLeilao | null; incrementoMinimo: number | null; usuario: UsuarioId }
+interface Props { pergunta: string; agora: number; estado: EstadoLeilao | null; incrementoMinimo: number | null; usuario: UsuarioId }
 
-export default function AbaRede({ pergunta, estado, incrementoMinimo, usuario }: Props) {
+export default function AbaRede({ pergunta, agora, estado, incrementoMinimo, usuario }: Props) {
   const [lista, recarregar] = useRegistros()
   const resumo = resumoPorRota(lista)
 
@@ -50,7 +50,7 @@ export default function AbaRede({ pergunta, estado, incrementoMinimo, usuario }:
         <Waterfall registros={lista} />
       </section>
 
-      <ExperimentoRede estado={estado} incrementoMinimo={incrementoMinimo} usuario={usuario} />
+      <ExperimentoRede relogio={agora} estado={estado} incrementoMinimo={incrementoMinimo} usuario={usuario} />
     </Aba>
   )
 }

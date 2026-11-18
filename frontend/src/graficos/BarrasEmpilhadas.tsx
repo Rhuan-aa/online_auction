@@ -9,7 +9,7 @@ interface Props {
 }
 
 // cor por ordem de primeira aparição do nome, nunca por tamanho
-const PALETA = ['var(--serie-a)', 'var(--serie-b)', 'var(--serie-c)', 'var(--tinta-suave)']
+const PALETA = ['var(--origem-1)', 'var(--origem-2)', 'var(--origem-3)', 'var(--origem-4)']
 
 const ME = 110, MD = 16, MT = 8, MB = 34, LINHA = 40
 

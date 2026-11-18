@@ -6,7 +6,7 @@ import EscadaVersoes from './EscadaVersoes.tsx'
 import { MAX_RAJADA, MIN_RAJADA, planejarRajada, resumirRajada, type ResultadoRajada } from './rajada.ts'
 import SimulacaoCompleta from './SimulacaoCompleta.tsx'
 
-interface Props { pergunta: string; estado: EstadoLeilao | null; incrementoMinimo: number | null }
+interface Props { pergunta: string; agora: number; estado: EstadoLeilao | null; incrementoMinimo: number | null }
 
 const PORQUE = (
   <p>
@@ -16,12 +16,18 @@ const PORQUE = (
   </p>
 )
 
-export default function AbaIntegridade({ pergunta, estado, incrementoMinimo }: Props) {
+export default function AbaIntegridade({ pergunta, agora, estado, incrementoMinimo }: Props) {
   const [n, setN] = useState(4)
   const [mesmoValor, setMesmoValor] = useState(true)
   const [disparando, setDisparando] = useState(false)
   const [rajada, setRajada] = useState<{ versao: number; resultados: ResultadoRajada[] } | null>(null)
-  const liberado = podeDarLance(estado, Date.now())
+  // outro leilão em foco: a rajada anterior não vale para ele (só este estado é zerado)
+  const [leilaoDaRajada, setLeilaoDaRajada] = useState(estado?.leilaoId ?? null)
+  if (leilaoDaRajada !== (estado?.leilaoId ?? null)) {
+    setLeilaoDaRajada(estado?.leilaoId ?? null)
+    setRajada(null)
+  }
+  const liberado = podeDarLance(estado, agora)
   const pode = liberado.pode && estado !== null && incrementoMinimo !== null
 
   async function disparar() {
