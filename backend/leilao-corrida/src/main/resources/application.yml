@@ -32,9 +32,10 @@ corrida:
   pool-por-arquitetura: ${CORRIDA_POOL_POR_ARQUITETURA:8}
   # Semente do plano de lances quando o POST não manda "semente".
   semente-padrao: 42
+  # Licitantes e leitores rodam em threads virtuais (baratas), por isso o teto de threads é alto.
   # Tetos de segurança do servidor (não são limites da tela): 6 x (simultaneos + leitores) threads
   # e licitantes x lancesPorLicitante lances por corrida.
-  max-threads: ${CORRIDA_MAX_THREADS:2000}
+  max-threads: ${CORRIDA_MAX_THREADS:1000000}
   max-lances: ${CORRIDA_MAX_LANCES:2000000}
 logging:
   level:

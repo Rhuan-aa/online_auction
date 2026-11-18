@@ -65,15 +65,15 @@ class ValidadorParametrosTest {
 
     @Test
     void orcamentoDeThreadsRecusaComMensagemClara() {
-        // 6 x (300 + 40) = 2040 > 2000
-        String corpo = "{" + OK.replace("\"simultaneos\":6", "\"simultaneos\":300")
-                .replace("\"leitores\":4", "\"leitores\":40") + "}";
+        // 6 x (166600 + 67) = 1000002 > 1000000
+        String corpo = "{" + OK.replace("\"simultaneos\":6", "\"simultaneos\":166600")
+                .replace("\"leitores\":4", "\"leitores\":67") + "}";
         ParametroInvalidoException e = assertThrows(ParametroInvalidoException.class, () -> validar(corpo));
         assertTrue(e.getMessage().contains("Threads demais"), e.getMessage());
-        assertTrue(e.getMessage().contains("2040"), e.getMessage());
-        // no limite exato passa: 6 x (300 + 33) = 1998
-        validar("{" + OK.replace("\"simultaneos\":6", "\"simultaneos\":300")
-                .replace("\"leitores\":4", "\"leitores\":33") + "}");
+        assertTrue(e.getMessage().contains("1000002"), e.getMessage());
+        // abaixo do teto passa: 6 x (166600 + 66) = 999996 (o pedido de 13200 threads também)
+        validar("{" + OK.replace("\"simultaneos\":6", "\"simultaneos\":166600")
+                .replace("\"leitores\":4", "\"leitores\":66") + "}");
     }
 
     @Test

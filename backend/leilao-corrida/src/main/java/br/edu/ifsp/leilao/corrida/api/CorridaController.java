@@ -38,7 +38,7 @@ public class CorridaController {
     private final ValidadorParametros.Orcamento orcamento;
 
     public CorridaController(MotorCorrida motor, @Value("${corrida.semente-padrao:42}") long sementePadrao,
-                             @Value("${corrida.max-threads:2000}") int maxThreads,
+                             @Value("${corrida.max-threads:1000000}") int maxThreads,
                              @Value("${corrida.max-lances:2000000}") long maxLances) {
         this.motor = motor;
         this.sementePadrao = sementePadrao;

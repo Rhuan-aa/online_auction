@@ -40,6 +40,8 @@ public class Conexoes implements DisposableBean {
             ds.setPassword(senha);
             ds.setMaximumPoolSize(tamanho);
             ds.setMinimumIdle(0);
+            // Com milhares de licitantes na fila de poucas conexões, a espera pode passar dos 30 s padrão.
+            ds.setConnectionTimeout(600_000);
             ds.setPoolName("corrida-" + id);
             return ds;
         }));

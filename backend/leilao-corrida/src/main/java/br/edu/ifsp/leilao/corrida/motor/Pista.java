@@ -12,7 +12,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
@@ -108,8 +107,8 @@ final class Pista {
         ExecutorService pool = null;
         try {
             confirmacoes = new Confirmacoes(p.totalLances() + 1, 1, largadaNanos);
-            int threads = p.simultaneos() + p.leitores();
-            pool = Executors.newFixedThreadPool(threads, nomeadas("corrida-" + arq.id()));
+            // Threads virtuais: cada licitante/leitor é uma thread barata, então dá para simular milhares.
+            pool = Executors.newThreadPerTaskExecutor(nomeadas("corrida-" + arq.id()));
             List<Future<?>> escritores = new ArrayList<>();
             for (int i = 0; i < p.simultaneos(); i++) {
                 escritores.add(pool.submit(this::escritor));
@@ -286,12 +285,7 @@ final class Pista {
     }
 
     private static ThreadFactory nomeadas(String prefixo) {
-        AtomicInteger n = new AtomicInteger();
-        return r -> {
-            Thread t = new Thread(r, prefixo + "-" + n.incrementAndGet());
-            t.setDaemon(true);
-            return t;
-        };
+        return Thread.ofVirtual().name(prefixo + "-", 1).factory();
     }
 
     boolean terminou() {

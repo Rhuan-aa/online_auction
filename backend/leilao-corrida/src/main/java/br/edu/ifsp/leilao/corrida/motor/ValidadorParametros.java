@@ -25,7 +25,7 @@ public final class ValidadorParametros {
      * derrubariam. Configurável em {@code corrida.max-threads} e {@code corrida.max-lances}.
      */
     public record Orcamento(int maxThreads, long maxLances) {
-        public static final Orcamento PADRAO = new Orcamento(2000, 2_000_000);
+        public static final Orcamento PADRAO = new Orcamento(1_000_000, 2_000_000);
     }
 
     public static Pedido validar(JsonNode corpo, long sementePadrao) {
