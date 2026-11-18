@@ -1,0 +1,92 @@
+/* Página única: barra de cima, seções empilhadas numa coluna central de até 1240px. Só tokens. */
+.topo { border-bottom: var(--borda-largura) solid var(--borda); }
+.topo-conteudo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  max-width: var(--largura-conteudo);
+  margin: 0 auto;
+  padding: 0.9rem 24px;
+}
+.marca {
+  margin: 0;
+  font-family: var(--fonte-titulo);
+  font-weight: 800;
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+.marca span { color: var(--destaque); margin-left: 0.1em; }
+.topo-subtitulo { margin: 0; color: var(--tinta-suave); font-weight: 600; font-size: 1rem; }
+.botao-tema { margin-left: auto; padding: 0.3rem 0.7rem; font-size: 1rem; line-height: 1.2; }
+
+.pagina { max-width: var(--largura-conteudo); margin: 0 auto; padding: 0 24px 6rem; }
+
+.secao { padding-top: 4.5rem; scroll-margin-top: 1rem; }
+.secao + .secao { margin-top: 1.5rem; }
+.secao-cabecalho { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.75rem; }
+.secao-kicker {
+  margin: 0;
+  font-size: var(--texto-kicker);
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--destaque);
+}
+.secao-titulo {
+  margin: 0;
+  font-size: var(--texto-titulo-secao);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.secao-explicacao { margin: 0; max-width: 80ch; color: var(--tinta-suave); }
+
+/* painel translúcido onde mora o conteúdo de cada seção */
+.painel {
+  background: var(--superficie);
+  border: var(--borda-largura) solid var(--borda);
+  border-radius: var(--raio);
+  padding: 1.25rem 1.5rem;
+}
+
+/* selo obrigatório das medições da corrida */
+.selo-medido {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  align-self: flex-start;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--aviso);
+  background: var(--aviso-fundo);
+  border: var(--borda-largura) solid var(--aviso);
+  border-radius: 999px;
+  padding: 0.2rem 0.8rem;
+}
+.selo-medido::before { content: '⚑'; }
+
+.alerta {
+  margin: 0;
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--raio-pequeno);
+  border: var(--borda-largura) solid var(--perigo);
+  background: var(--perigo-fundo);
+  color: var(--tinta);
+  font-weight: 600;
+}
+.alerta--aviso { border-color: var(--aviso); background: var(--aviso-fundo); }
+
+/* utilitários de texto */
+.suave { color: var(--tinta-suave); font-size: 0.9rem; }
+.erro { color: var(--perigo); font-size: 0.9rem; }
+.aviso { color: var(--aviso); font-size: 0.9rem; margin: 0; }
+.visualmente-oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+@media (max-width: 640px) {
+  .topo-conteudo, .pagina { padding-left: 16px; padding-right: 16px; }
+  .topo-subtitulo { font-size: 0.85rem; }
+  .secao { padding-top: 3rem; }
+  .painel { padding: 1rem; }
+}

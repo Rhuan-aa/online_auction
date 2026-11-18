@@ -63,9 +63,11 @@ public class TransmissorSse {
         JsonNode envelope = json.readTree(mensagem);
         UUID leilaoId = UUID.fromString(envelope.get("leilaoId").asString());
         int versaoDoEvento = envelope.get("versao").asInt();
+        String tipo = envelope.get("tipo").asString();
 
         obterEstado.obterParaConsulta(leilaoId, versaoDoEvento).ifPresent(estado -> {
-            LeilaoDetalhe detalhe = LeilaoDetalhe.de(leilaoId, estado);
+            LeilaoDetalhe detalhe = LeilaoDetalhe.de(leilaoId, estado)
+                    .comEvento(new LeilaoDetalhe.EventoInfo(tipo, versaoDoEvento));
             conexoes.getOrDefault(leilaoId, List.of()).forEach(emissor -> enviar(emissor, detalhe));
         });
     }

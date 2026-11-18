@@ -1,10 +1,14 @@
 # Plano — Painel de ADM (simulação e desempenho)
 
-> Status: **implementado** em `#/adm` (`src/PainelAdm.tsx`, `src/simulacao.ts`, `src/historico.ts`, `src/Grafico.tsx`). Falta o ensaio com um leilão longo nas três configurações.
+> **Substituído:** o painel de ADM foi trocado pela página única "corrida de arquiteturas" (`frontend/`, com o laboratório `leilao-corrida` na 8085). Este documento fica como histórico do desenho e da lógica de medição; veja `docs/superpowers/specs/2026-11-19-corrida-arquiteturas-design.md`.
+
+> **Atualização:** o painel deixou de ser uma tela à parte (`#/adm` e `PainelAdm.tsx` foram removidos). A simulação e as checagens de integridade estão na aba **Integridade**, e a comparação A × B × C na aba **Desempenho** (veja `frontend/README.md`). A comparação não exige mais reiniciar nada: o botão "Comparar A × B × C" troca a configuração com `PUT /admin/cache/configuracao` nos dois serviços, roda a mesma simulação em cada uma e restaura a anterior. O restante deste texto descreve a lógica de medição, que continua valendo; os trechos sobre a tela e os arquivos são do desenho original.
+>
+> Status original: implementado em `#/adm` (`src/PainelAdm.tsx`, `src/simulacao.ts`, `src/historico.ts`, `src/Grafico.tsx`; arquivos removidos; hoje nas abas Integridade e Desempenho). Falta o ensaio com um leilão longo nas três configurações.
 
 ## 1. Objetivo
 
-Uma tela de administração para **demonstrar a arquitetura**, ao lado das telas de usuário (lista, detalhe, criar leilão). O ADM configura uma simulação de leilão, o painel dispara lances e mostra, medido de verdade:
+Uma tela de administração para **demonstrar a arquitetura**, ao lado do palco do leilão. O ADM configura uma simulação de leilão, o painel dispara lances e mostra, medido de verdade:
 
 - **Integridade:** um único vencedor e nenhum lance aceito perdido.
 - **Desempenho:** tempo para obter o estado e eventos lidos por pedido, **nas configurações A, B e C** do cache (ADR-003).
@@ -12,6 +16,8 @@ Uma tela de administração para **demonstrar a arquitetura**, ao lado das telas
 Não há mais métrica de "consistência eventual": sem banco de leitura separado, a leitura usa o mesmo estado da escrita (ver PLANO.md, seção 1).
 
 ## 2. A tela
+
+> Esboço do desenho original, em uma tela só. Hoje o formulário e o resultado estão na aba Integridade, e o gráfico e o histórico de comparações na aba Desempenho.
 
 ```
 ┌─ SIMULAÇÃO ────────────────────────────────────────────────────────────┐
@@ -40,7 +46,7 @@ Não há mais métrica de "consistência eventual": sem banco de leitura separad
 | Semente | Mesma semente = mesmos valores e mesma ordem dos lances. Aceitos e recusados dependem do tempo de resposta, então variam um pouco entre execuções |
 
 ### Como cada execução funciona
-1. Lê a configuração ativa em `GET /actuator/metrics/leilao.estado.obter` (`availableTags` → `configuracao`) **nas duas portas**; se forem diferentes ou uma não responder, não executa.
+1. Lê a configuração ativa em `GET /admin/cache/configuracao` **nas duas portas**; se forem diferentes ou uma não responder, não executa.
 2. `POST /leiloes` com início = agora − 2 s (absorve diferença de relógio com o servidor) e fim = agora + 10 min (longe do anti-sniping).
 3. Espera o status `ABERTO` (o agendador abre o leilão). Sem isso em 15 s, mostra "o agendador está rodando?".
 4. Dispara os lances com o número de simultâneos escolhido, mantendo a ordem de cada licitante.
@@ -58,7 +64,7 @@ Não há mais métrica de "consistência eventual": sem banco de leitura separad
 | **B** | checkpoint | checkpoint + no máximo N eventos | eventos lidos limitados por N |
 | **C** | Redis + checkpoint | cópia do Redis + 0 ou 1 evento | eventos lidos quase **constantes** |
 
-A configuração é escolhida ao subir os serviços: `CACHE_CONFIGURACAO=A|B|C`, **a mesma na escrita e na leitura**. Para comparar, roda-se a mesma simulação (mesma semente) uma vez em cada configuração; o histórico guarda as três. O código é o mesmo nas três: uma cópia desligada se comporta como vazia.
+A configuração inicial vem de `CACHE_CONFIGURACAO=A|B|C` e pode ser trocada em execução por `PUT /admin/cache/configuracao` (**a mesma na escrita e na leitura**; ligar o Redis limpa o Redis antes). Para comparar, roda-se a mesma simulação (mesma semente) uma vez em cada configuração, o que o botão da aba Desempenho faz sozinho; o histórico guarda as três. O código é o mesmo nas três: uma cópia desligada se comporta como vazia.
 
 Métricas lidas pelo painel (as duas portas, `GET /actuator/metrics/<nome>?tag=...`, com CORS liberado para `http://localhost:5173`):
 
@@ -87,28 +93,30 @@ São leilões curtos (até ~60 eventos) e não servem de comparação entre conf
 | módulo `estado` | `Configuracao` (A/B/C) e métricas no `ObterEstado` |
 | `leilao-escrita` e `leilao-leitura` | `/actuator/metrics` exposto, tag `configuracao` em toda métrica, CORS do actuator para o front |
 
-Rotas usadas: `POST /leiloes`, `POST /leiloes/{id}/lances`, `GET /leiloes/{id}`, `GET /leiloes/{id}/lances` e `/actuator/metrics`. O SSE **não** é necessário para o painel. A antiga rota de experimento "sem CQRS" saiu: a comparação agora é trocar a configuração.
+Rotas usadas: `POST /leiloes`, `POST /leiloes/{id}/lances`, `GET /leiloes/{id}`, `GET /leiloes/{id}/lances` e `/actuator/metrics`. O SSE **não** é necessário para o painel. A antiga rota de experimento "sem CQRS" saiu: a comparação agora é trocar a configuração (`/admin/cache/configuracao`).
 
 ## 5. Frontend (o mais simples possível)
 
-Sem bibliotecas novas. React puro, CSS próprio, gráfico em SVG. Uma tela a mais (`#/adm`).
+Sem bibliotecas novas além das fontes. React puro, CSS próprio, gráficos em SVG. As peças vivem nas abas Integridade e Desempenho.
 
 | Arquivo | Conteúdo |
 |---|---|
-| `src/api.ts` | `lerMetrica(servico, nome, tag)` para `/actuator/metrics`, além das rotas de sempre |
-| `src/simulacao.ts` | Gerador com semente (mulberry32), plano de lances, disparo com N simultâneos sem dois do mesmo licitante ao mesmo tempo, leitores, p50/p95, checagens e diferença das métricas |
-| `src/historico.ts` | Até 20 execuções no `localStorage` deste navegador; "mesma simulação" = mesmos parâmetros e semente |
-| `src/Grafico.tsx` | Linhas em SVG: mediana do tempo no navegador por faixa de nº de eventos, uma por configuração (a última de cada uma com a mesma simulação) |
-| `src/PainelAdm.tsx` | Formulário, resultado, gráfico (consultas ou lances) e histórico para comparar lado a lado |
-| `test/simulacao.test.ts` | `npm test` (`node --test`, sem biblioteca): percentil, semente e checagens |
+| `src/api.ts` | `lerMetrica(servico, nome, tags)` para `/actuator/metrics`, a configuração do cache (`/admin/cache/configuracao`) e as rotas de sempre |
+| `src/simulacao.ts` | Gerador com semente (mulberry32), plano de lances, disparo com N simultâneos sem dois do mesmo licitante ao mesmo tempo, leitores, p50/p95 e checagens |
+| `src/metricas.ts` | Leitura de `/actuator/metrics` nas duas portas e diferença entre antes e depois da execução |
+| `src/historico.ts` | Até 10 comparações no `localStorage` deste navegador (`leilao.adm.comparacoes`); o rótulo da simulação inclui parâmetros e semente |
+| `src/abas/integridade/` | Aba Integridade: formulário da simulação, rajada de lances, escada de versões e resultado com as checagens |
+| `src/abas/desempenho/` | Aba Desempenho: `comparacao.ts` (roda A, B e C em sequência e restaura a configuração), `ComparacaoAoVivo`, `GraficosComparacao`, `dadosComparacao.ts` e o painel ao vivo (`aoVivo.ts`) |
+| `src/graficos/` | Em SVG: `Barras`, `BarrasEmpilhadas`, `Linhas`, `Sparkline`, `Raias`, `Moldura` (legenda e quadro), `escalas` e `useLargura` |
+| `src/simulacao.test.ts` (e os demais `src/*.test.ts` e `src/abas/**/*.test.ts`) | `npm test` (Vitest): percentil, semente, checagens, comparação, métricas e rotas |
 
 ## 6. Limites (dizer se a banca perguntar)
 
 - Os tempos do painel são medidos **no navegador** e incluem a rede local; as métricas do backend medem só o tempo para obter o estado. As duas visões juntas mostram onde o tempo está.
 - O navegador abre ~6 conexões por porta, **somando todas as abas**. Escrita (8081) e leitura (8082) são portas diferentes, por isso os dois campos vão até 6: acima disso os pedidos esperariam na fila do navegador e o tempo medido incluiria a espera. Uma aba de detalhe aberta prende uma conexão SSE na 8082. Basta para gerar conflitos reais em demo, mas não é teste de carga de produção (para carga, use o `SimuladorLances`).
 - As métricas são do serviço inteiro: outras abas, o agendador ou outro leilão rodando ao mesmo tempo entram na diferença. Rode o painel sozinho.
-- Trocar de configuração exige reiniciar escrita e leitura.
-- O histórico fica só no navegador em que as execuções foram feitas.
+- Trocar de configuração não exige reiniciar, mas a troca é feita nos dois serviços; com o Redis fora do ar, a troca para C é recusada (503).
+- O histórico das comparações fica só no navegador em que foram feitas.
 - Cada execução cria um leilão de 10 min, que aparece na lista e é encerrado pelo agendador.
 
 ## 7. Próximos passos

@@ -1,0 +1,50 @@
+/* Seções com o sistema real (8081/8082): seletor do leilão, caminho de um lance e viagem no tempo. Só tokens. */
+.seletor-leilao { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.25rem; }
+.seletor-controles { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.75rem; }
+.seletor-campo { display: flex; flex-direction: column; gap: 0.25rem; flex: 1 1 22rem; min-width: 0; font-weight: 600; font-size: 0.9rem; }
+.seletor-campo select { width: 100%; min-width: 0; }
+.seletor-estado { margin: 0; font-size: 0.95rem; }
+.seletor-estado:empty { display: none; }
+
+/* caminho de um lance */
+.caminho { display: flex; flex-direction: column; gap: 1rem; }
+.caminho-acao { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem; }
+.caminho > .suave { margin: 0; }
+.diagrama { width: 100%; overflow-x: auto; border: var(--borda-largura) solid var(--borda); border-radius: var(--raio); background: var(--superficie); }
+.diagrama svg { display: block; }
+.aresta line { stroke: var(--borda); stroke-width: 3; transition: stroke var(--transicao-longa); }
+.aresta polygon { fill: var(--borda); transition: fill var(--transicao-longa); }
+.aresta--acesa line { stroke: var(--destaque); animation: acender-traco var(--transicao-longa) var(--atraso, 0ms) both; }
+.aresta--acesa polygon { fill: var(--destaque); animation: acender-preenchimento var(--transicao-longa) var(--atraso, 0ms) both; }
+.no rect { fill: var(--superficie-2); stroke: var(--borda); stroke-width: var(--borda-largura); transition: fill var(--transicao-longa), stroke var(--transicao-longa); }
+.no--aceso rect { fill: var(--destaque-fundo); stroke: var(--destaque); animation: acender-no var(--transicao-longa) var(--atraso, 0ms) both; }
+@keyframes acender-traco { from { stroke: var(--borda); } }
+@keyframes acender-preenchimento { from { fill: var(--borda); } }
+@keyframes acender-no { from { fill: var(--superficie-2); stroke: var(--borda); } }
+.no-nome { fill: var(--tinta); font-size: 15px; font-weight: 700; font-family: var(--fonte-mono); }
+.no-detalhe { fill: var(--tinta-suave); font-size: 14px; }
+.diagrama .tempo { fill: var(--tinta); font-size: 16px; font-weight: 700; }
+
+/* voltar no tempo: linha do tempo e viagem lado a lado */
+.tempo-secao { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+.tempo-subtitulo { margin: 0 0 0.25rem; font-size: 1.2rem; }
+.tempo-secao .painel > .suave { margin: 0 0 0.75rem; }
+.linha-tempo { position: relative; display: flex; flex-direction: column; gap: 0.25rem; max-height: 26rem; overflow-y: auto; margin: 0; padding: 0 0.25rem 0 0; list-style: none; }
+.evento { border: var(--borda-largura) solid var(--borda); border-radius: var(--raio); background: var(--superficie); }
+.evento button { display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0.5rem 0.75rem; border: 0; border-radius: var(--raio); background: transparent; color: var(--tinta); font: inherit; font-size: 0.9rem; font-weight: 500; text-align: left; }
+.evento-tipo { font-family: var(--fonte-mono); font-weight: 700; }
+.evento--atual { border-color: var(--destaque); box-shadow: 0 0 0 2px var(--destaque); }
+.evento-json { margin: 0; padding: 0.5rem 0.75rem; overflow-x: auto; font-family: var(--fonte-mono); font-size: 0.8rem; border-top: var(--borda-largura) solid var(--borda); }
+.viagem { display: flex; flex-direction: column; gap: 0.5rem; }
+.viagem-controle { display: flex; align-items: center; gap: 0.75rem; }
+.viagem-controle input[type='range'] { flex: 1; min-width: 0; }
+.viagem-controle .botao { padding: 0.35rem 0.8rem; }
+.viagem-estado { display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 1rem; margin: 0.5rem 0; }
+.viagem-estado dt { color: var(--tinta-suave); }
+.viagem-estado dd { margin: 0; }
+.viagem-subtitulo { margin: 0.25rem 0 0; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tinta-suave); }
+.viagem-mudancas { margin: 0; padding-left: 1.2rem; font-family: var(--fonte-mono); font-size: 0.9rem; }
+.viagem .suave { margin: 0; }
+.viagem--carregando .viagem-estado, .viagem--carregando .viagem-mudancas { opacity: 0.5; }
+
+@media (max-width: 860px) { .tempo-secao { grid-template-columns: minmax(0, 1fr); } }

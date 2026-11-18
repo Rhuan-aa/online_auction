@@ -1,0 +1,82 @@
+/* Tokens globais. Padrão: "palco" (índigo em gradiente, texto branco, destaque amarelo).
+   Alternativa clara para sala iluminada: [data-tema="claro"]. Os nomes ficam os mesmos nos dois temas. */
+:root {
+  color-scheme: dark;
+  --fundo: #1b1f5e; /* cor sólida: texto sobre botão invertido e fallback do gradiente */
+  --fundo-gradiente: linear-gradient(135deg, #1b1f5e 0%, #2b2f86 55%, #3b2f8f 100%);
+  --superficie: rgb(255 255 255 / 0.08);
+  --superficie-2: rgb(255 255 255 / 0.14);
+  --superficie-solida: #262a7a; /* gavetas, janelas e painéis que ficam por cima do conteúdo */
+  --tinta: #ffffff;
+  --tinta-suave: rgb(255 255 255 / 0.72);
+  --borda: rgb(255 255 255 / 0.18);
+  --destaque: #ffd23f;
+  --destaque-forte: #ffd23f;
+  --destaque-fundo: rgb(255 210 63 / 0.16);
+  --sobre-destaque: #1b1f5e;
+  --sucesso: #3ee6a8;
+  --sucesso-fundo: rgb(62 230 168 / 0.14);
+  --aviso: #ffb84d;
+  --aviso-fundo: rgb(255 184 77 / 0.14);
+  --perigo: #ff6b8a;
+  --perigo-fundo: rgb(255 107 138 / 0.16);
+  --sombra: 0 2px 6px rgb(8 10 40 / 0.25), 0 14px 34px rgb(8 10 40 / 0.35);
+
+  /* uma cor por arquitetura da corrida, na ordem do contrato: crud, crud-cache, es, es-snapshot, es-cache, es-cqrs.
+     Família CRUD em tons quentes, família ES em tons frios; todas com contraste ≥ 3:1 sobre o índigo. */
+  --arq-1: #ff7a5c;
+  --arq-2: #ffc24d;
+  --arq-3: #7cc4ff;
+  --arq-4: #c4a7ff;
+  --arq-5: #3ee6a8;
+  --arq-6: #ff8fd1;
+  --grade: rgb(255 255 255 / 0.14);
+  --eixo: rgb(255 255 255 / 0.45);
+
+  --fonte-titulo: 'Plus Jakarta Sans Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --fonte-texto: 'Plus Jakarta Sans Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --fonte-mono: 'JetBrains Mono Variable', ui-monospace, Consolas, monospace;
+
+  --texto-base: 18px;
+  --texto-titulo-secao: clamp(34px, 2.2vw + 14px, 48px);
+  --texto-kicker: 12px;
+  --borda-largura: 1.5px;
+  --raio: 18px;
+  --raio-pequeno: 12px;
+  --transicao-curta: 150ms;
+  --transicao-longa: 300ms;
+  --largura-conteudo: 1240px;
+}
+
+[data-tema="claro"] {
+  color-scheme: light;
+  --fundo: #f4f5ff;
+  --fundo-gradiente: linear-gradient(135deg, #f4f5ff 0%, #eceeff 100%);
+  --superficie: #ffffff;
+  --superficie-2: #eceeff;
+  --superficie-solida: #ffffff;
+  --tinta: #1b1f5e;
+  --tinta-suave: #4a4f86;
+  --borda: #d3d6f2;
+  --destaque: #6a4cff;
+  --destaque-forte: #6a4cff; /* 5,1:1 com texto branco */
+  --destaque-fundo: #ebe6ff;
+  --sobre-destaque: #ffffff;
+  /* estados escurecidos: todos com contraste ≥ 4,5:1 sobre branco */
+  --sucesso: #0f7a55;
+  --sucesso-fundo: #ddf5ec;
+  --aviso: #9a5b00;
+  --aviso-fundo: #fbefd9;
+  --perigo: #c4234f;
+  --perigo-fundo: #fbe1e8;
+  --sombra: 0 1px 2px rgb(27 31 94 / 0.08), 0 8px 24px rgb(27 31 94 / 0.12);
+  /* as mesmas 6 matizes, escurecidas: todas com contraste ≥ 4,5:1 sobre branco */
+  --arq-1: #c2410c;
+  --arq-2: #8f5a00;
+  --arq-3: #1f5fb4;
+  --arq-4: #6b4aa8;
+  --arq-5: #0f7a55;
+  --arq-6: #b02f74;
+  --grade: #dfe1f5;
+  --eixo: #6b6f9a;
+}

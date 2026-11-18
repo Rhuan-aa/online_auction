@@ -1,34 +1,29 @@
-// Navegação pelo hash da URL, sem biblioteca: #/ (lista), #/criar, #/leilao/{id}, #/adm.
-// O hash deixa abrir o mesmo leilão em duas abas e usar o botão "voltar".
+// A página é uma só; o hash guarda apenas o leilão de demonstração das seções "caminho" e "tempo":
+// #?leilao={id}. Qualquer caminho antes do "?" é ignorado (links antigos #/aba?leilao= continuam valendo).
 import { useEffect, useState } from 'react'
 
-export type Rota =
-  | { tela: 'lista' }
-  | { tela: 'criar' }
-  | { tela: 'detalhe'; leilaoId: string }
-  | { tela: 'adm' }
-
-export function lerRota(hash: string): Rota {
-  const [, tela, id] = hash.replace(/^#/, '').split('/')
-  if (tela === 'criar') return { tela: 'criar' }
-  if (tela === 'adm') return { tela: 'adm' }
-  if (tela === 'leilao' && id) return { tela: 'detalhe', leilaoId: id }
-  return { tela: 'lista' }
+export function lerLeilao(hash: string): string | null {
+  const i = hash.indexOf('?')
+  if (i < 0) return null
+  return new URLSearchParams(hash.slice(i + 1)).get('leilao') || null
 }
 
-export const irPara = {
-  lista: () => '#/',
-  criar: () => '#/criar',
-  detalhe: (leilaoId: string) => `#/leilao/${leilaoId}`,
-  adm: () => '#/adm',
+export function hrefDe(leilaoId: string | null): string {
+  return leilaoId ? `#?leilao=${encodeURIComponent(leilaoId)}` : '#'
 }
 
-export function useRota(): Rota {
+/** Troca o leilão sem rolar a página nem criar entrada nova no histórico. */
+export function escolherLeilao(leilaoId: string | null): void {
+  history.replaceState(null, '', hrefDe(leilaoId))
+  window.dispatchEvent(new HashChangeEvent('hashchange'))
+}
+
+export function useLeilaoDaRota(): string | null {
   const [hash, setHash] = useState(window.location.hash)
   useEffect(() => {
     const aoMudar = () => setHash(window.location.hash)
     window.addEventListener('hashchange', aoMudar)
     return () => window.removeEventListener('hashchange', aoMudar)
   }, [])
-  return lerRota(hash)
+  return lerLeilao(hash)
 }

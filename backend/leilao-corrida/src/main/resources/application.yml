@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: leilao-corrida
+  datasource:
+    # Laboratório local: usa o superusuário do Postgres (cria os próprios schemas corrida_*).
+    # Nunca toca em event_store, checkpoint nem read_model.
+    url: ${CORRIDA_DB_URL:jdbc:postgresql://localhost:5432/leilao}
+    username: ${CORRIDA_DB_USER:postgres}
+    password: ${CORRIDA_DB_PASSWORD:postgres}
+    hikari:
+      # Só DDL, espaço e auditoria; cada arquitetura tem o próprio pool (corrida.pool-por-arquitetura).
+      maximum-pool-size: 3
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      properties:
+        linger.ms: 0
+    consumer:
+      # Mensagens de corridas antigas são ignoradas pela rodada, então ler do início é seguro.
+      auto-offset-reset: earliest
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2s
+server:
+  port: 8085
+  # Só a própria máquina; para expor, CORRIDA_BIND=0.0.0.0.
+  address: ${CORRIDA_BIND:127.0.0.1}
+corrida:
+  # Conexões por arquitetura: as 6 juntas usam 6 x este valor. O Postgres local aceita 100.
+  pool-por-arquitetura: ${CORRIDA_POOL_POR_ARQUITETURA:8}
+  # Semente do plano de lances quando o POST não manda "semente".
+  semente-padrao: 42
+  # Licitantes e leitores rodam em threads virtuais (baratas), por isso o teto de threads é alto.
+  # Tetos de segurança do servidor (não são limites da tela): 6 x (simultaneos + leitores) threads
+  # e licitantes x lancesPorLicitante lances por corrida.
+  max-threads: ${CORRIDA_MAX_THREADS:1000000}
+  max-lances: ${CORRIDA_MAX_LANCES:2000000}
+logging:
+  level:
+    org.apache.kafka: WARN

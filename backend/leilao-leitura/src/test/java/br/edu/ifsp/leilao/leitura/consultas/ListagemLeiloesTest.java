@@ -6,7 +6,6 @@ import br.edu.ifsp.leilao.contratos.EventoLeilao.LeilaoCancelado;
 import br.edu.ifsp.leilao.contratos.EventoLeilao.LeilaoCriado;
 import br.edu.ifsp.leilao.contratos.EventoLeilao.LeilaoIniciado;
 import br.edu.ifsp.leilao.estado.CacheEstadoLeilao;
-import br.edu.ifsp.leilao.estado.Configuracao;
 import br.edu.ifsp.leilao.estado.EstadoLeilao;
 import br.edu.ifsp.leilao.estado.LeitorEventos;
 import br.edu.ifsp.leilao.estado.ObterEstado;
@@ -47,7 +46,7 @@ class ListagemLeiloesTest {
     final List<Map<UUID, EstadoLeilao>> repovoamentos = new ArrayList<>();
 
     final ListagemLeiloes listagem = new ListagemLeiloes(
-            new ObterEstado(null, null, null, new SimpleMeterRegistry()) {
+            new ObterEstado(null, null, null, new SimpleMeterRegistry(), null) {
                 @Override
                 public Map<UUID, EstadoLeilao> obterVariosParaConsulta(List<UUID> leiloes) {
                     Map<UUID, EstadoLeilao> achados = new LinkedHashMap<>();
@@ -55,7 +54,7 @@ class ListagemLeiloesTest {
                     return achados;
                 }
             },
-            new CacheEstadoLeilao(null, null, Configuracao.C) {
+            new CacheEstadoLeilao(null, null, null) {
                 @Override
                 public Optional<List<UUID>> abertos() {
                     return indice;

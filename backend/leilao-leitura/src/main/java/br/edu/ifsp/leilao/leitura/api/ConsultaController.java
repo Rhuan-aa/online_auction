@@ -1,11 +1,14 @@
 package br.edu.ifsp.leilao.leitura.api;
 
+import br.edu.ifsp.leilao.estado.LeitorEventos;
+import br.edu.ifsp.leilao.estado.LeitorEventos.EventoGravado;
 import br.edu.ifsp.leilao.estado.ObterEstado;
 import br.edu.ifsp.leilao.leitura.consultas.HistoricoLances;
 import br.edu.ifsp.leilao.leitura.consultas.HistoricoLances.Atividade;
 import br.edu.ifsp.leilao.leitura.consultas.HistoricoLances.Lance;
 import br.edu.ifsp.leilao.leitura.consultas.ListagemLeiloes;
 import br.edu.ifsp.leilao.leitura.consultas.ListagemLeiloes.LeilaoResumo;
+import br.edu.ifsp.leilao.leitura.consultas.ViagemNoTempo;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -30,13 +33,17 @@ public class ConsultaController {
     private final HistoricoLances historico;
     private final ObterEstado obterEstado;
     private final TransmissorSse transmissor;
+    private final ViagemNoTempo viagem;
+    private final LeitorEventos eventos;
 
     public ConsultaController(ListagemLeiloes listagem, HistoricoLances historico, ObterEstado obterEstado,
-                              TransmissorSse transmissor) {
+                              TransmissorSse transmissor, ViagemNoTempo viagem, LeitorEventos eventos) {
         this.listagem = listagem;
         this.historico = historico;
         this.obterEstado = obterEstado;
         this.transmissor = transmissor;
+        this.viagem = viagem;
+        this.eventos = eventos;
     }
 
     @GetMapping("/leiloes")
@@ -49,10 +56,36 @@ public class ConsultaController {
      * versão N (ex.: a que o POST do lance devolveu); sem ele, aceita a cópia que houver no Redis.
      */
     @GetMapping("/leiloes/{id}")
-    public LeilaoDetalhe buscar(@PathVariable UUID id, @RequestParam(defaultValue = "0") int versaoMinima) {
+    public LeilaoDetalhe buscar(@PathVariable UUID id, @RequestParam(defaultValue = "0") int versaoMinima,
+                                @RequestParam(required = false) Integer ateVersao) {
+        if (ateVersao != null) {
+            return naVersao(id, ateVersao);
+        }
         return obterEstado.obterParaConsulta(id, versaoMinima)
                 .map(estado -> LeilaoDetalhe.de(id, estado))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Leilão não encontrado"));
+    }
+
+    /** Viagem no tempo: o estado reconstruído dos eventos 1..N, sem cache nem checkpoint. */
+    private LeilaoDetalhe naVersao(UUID id, int ateVersao) {
+        if (ateVersao < 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ateVersao deve ser >= 1");
+        }
+        return viagem.estadoNaVersao(id, ateVersao)
+                .map(estado -> LeilaoDetalhe.de(id, estado))
+                .orElseThrow(() -> viagem.existe(id)
+                        ? new ResponseStatusException(HttpStatus.BAD_REQUEST, "O leilão não tem a versão " + ateVersao)
+                        : new ResponseStatusException(HttpStatus.NOT_FOUND, "Leilão não encontrado"));
+    }
+
+    /** Todos os eventos do leilão, como gravados no Event Store (auditoria). */
+    @GetMapping("/leiloes/{id}/eventos")
+    public List<EventoGravado> eventos(@PathVariable UUID id) {
+        List<EventoGravado> lista = eventos.todos(id);
+        if (lista.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Leilão não encontrado");
+        }
+        return lista;
     }
 
     /** Conexão SSE: o navegador fica ouvindo e recebe o estado do leilão a cada mudança. */
