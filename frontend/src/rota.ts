@@ -1,47 +1,64 @@
-// Navegação pelo hash da URL, sem biblioteca: #/{aba}?leilao={id}.
+// Navegação pelo hash da URL, sem biblioteca: #/{aba}/{passo}?leilao={id}, com passo a partir de 1.
 // O hash deixa abrir o mesmo leilão em duas abas do navegador e usar o botão "voltar".
-// A rota antiga #/leilao/{id} continua valendo, para links antigos não quebrarem.
+// Continuam valendo #/{aba}?leilao= (passo 1) e a rota antiga #/leilao/{id}, para links antigos não quebrarem.
 import { useEffect, useState } from 'react'
+import { ehAba, passosVisiveis, SECOES, type Aba } from './secoes.ts'
 
-export type Aba = 'integridade' | 'desempenho' | 'rede' | 'auditoria' | 'arquitetura' | 'e-se-fosse'
+export type { Aba } from './secoes.ts'
 
-export const ABAS: { id: Aba; rotulo: string; pergunta: string }[] = [
-  { id: 'integridade', rotulo: 'Integridade', pergunta: 'Dois lances ao mesmo tempo: quem ganha?' },
-  { id: 'desempenho', rotulo: 'Desempenho', pergunta: 'O cache ajuda mesmo?' },
-  { id: 'rede', rotulo: 'Rede', pergunta: 'Quanto custa ficar ao vivo?' },
-  { id: 'auditoria', rotulo: 'Auditoria', pergunta: 'Dá para voltar no tempo?' },
-  { id: 'arquitetura', rotulo: 'Arquitetura', pergunta: 'Por onde passa um lance?' },
-  { id: 'e-se-fosse', rotulo: 'E se fosse…?', pergunta: 'Por que não do jeito comum?' },
-]
+/** As 6 seções, na ordem da apresentação (com rótulo, pergunta e passos). */
+export const ABAS = SECOES
 
 export interface Rota {
   aba: Aba
+  passo: number
   leilaoId: string | null
 }
 
 const PADRAO: Aba = 'integridade'
 
-function ehAba(s: string): s is Aba {
-  return ABAS.some((a) => a.id === s)
+/** "2" → 2; vazio, não inteiro, < 1 ou além dos passos da seção → 1. */
+function lerPasso(aba: Aba, texto: string | undefined): number {
+  if (!texto || !/^\d+$/.test(texto)) return 1
+  const n = Number(texto)
+  return n >= 1 && n <= passosVisiveis(aba) ? n : 1
 }
 
 export function lerRota(hash: string): Rota {
   const [caminho, query = ''] = hash.replace(/^#\/?/, '').split('?')
-  const [primeiro, id] = caminho.split('/')
-  if (primeiro === 'leilao' && id) {
+  const [primeiro, segundo] = caminho.split('/')
+  if (primeiro === 'leilao' && segundo) {
     try {
-      return { aba: PADRAO, leilaoId: decodeURIComponent(id) }
+      return { aba: PADRAO, passo: 1, leilaoId: decodeURIComponent(segundo) }
     } catch {
-      return { aba: PADRAO, leilaoId: null } // id com escape malformado não serve como id de leilão
+      return { aba: PADRAO, passo: 1, leilaoId: null } // id com escape malformado não serve como id de leilão
     }
   }
   const leilao = new URLSearchParams(query).get('leilao')
-  return { aba: ehAba(primeiro) ? primeiro : PADRAO, leilaoId: leilao || null }
+  const aba = ehAba(primeiro) ? primeiro : PADRAO
+  return { aba, passo: lerPasso(aba, segundo), leilaoId: leilao || null }
 }
 
-export function hrefDe(r: Rota): string {
-  const base = `#/${r.aba}`
+/** O passo só entra no hash quando passa de 1: #/rede e #/rede/1 são a mesma tela. */
+export function hrefDe(r: { aba: Aba; passo?: number; leilaoId: string | null }): string {
+  const base = r.passo && r.passo > 1 ? `#/${r.aba}/${r.passo}` : `#/${r.aba}`
   return r.leilaoId ? `${base}?leilao=${encodeURIComponent(r.leilaoId)}` : base
+}
+
+/** Próximo slide: o passo seguinte ou, no último passo, o primeiro da próxima seção. Para no fim. */
+export function proximo(r: Rota): Rota {
+  if (r.passo < passosVisiveis(r.aba)) return { ...r, passo: r.passo + 1 }
+  const i = SECOES.findIndex((s) => s.id === r.aba)
+  const seguinte = SECOES[i + 1]
+  return seguinte ? { ...r, aba: seguinte.id, passo: 1 } : r
+}
+
+/** Slide anterior: o passo de antes ou, no primeiro passo, o último da seção anterior. Para no começo. */
+export function anterior(r: Rota): Rota {
+  if (r.passo > 1) return { ...r, passo: r.passo - 1 }
+  const i = SECOES.findIndex((s) => s.id === r.aba)
+  const previa = i > 0 ? SECOES[i - 1] : undefined
+  return previa ? { ...r, aba: previa.id, passo: passosVisiveis(previa.id) } : r
 }
 
 export function useRota(): Rota {

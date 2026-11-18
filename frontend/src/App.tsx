@@ -42,7 +42,7 @@ export default function App() {
   }
 
   function aoCriar(leilaoId: string) {
-    window.location.hash = hrefDe({ aba: rota.aba, leilaoId })
+    window.location.hash = hrefDe({ ...rota, leilaoId })
     fechar()
   }
 
@@ -76,7 +76,7 @@ export default function App() {
                       : <Aba pergunta={aba.pergunta} porQue={null} />}
         </main>
       </div>
-      {gavetaAberta === 'leiloes' && <GavetaLeiloes aba={rota.aba} aoFechar={fechar} />}
+      {gavetaAberta === 'leiloes' && <GavetaLeiloes aba={rota.aba} passo={rota.passo} aoFechar={fechar} />}
       {gavetaAberta === 'novo' && <GavetaNovoLeilao usuario={usuario} aoCriar={aoCriar} aoFechar={fechar} />}
     </>
   )

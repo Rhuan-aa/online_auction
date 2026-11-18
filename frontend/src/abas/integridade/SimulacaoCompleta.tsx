@@ -28,7 +28,7 @@ export default function SimulacaoCompleta() {
     setProgresso(p)
     if (p.leilaoId && focado.current !== p.leilaoId) { // o leilão criado vira o foco do palco
       focado.current = p.leilaoId
-      window.location.hash = hrefDe({ aba: 'integridade', leilaoId: p.leilaoId })
+      window.location.hash = hrefDe({ aba: 'integridade', passo: 2, leilaoId: p.leilaoId }) // fica no slide da simulação
     }
   }
 

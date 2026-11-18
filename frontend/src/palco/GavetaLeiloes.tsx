@@ -14,7 +14,7 @@ const FILTROS: { valor: EstadoLeilao['status'] | ''; rotulo: string }[] = [
 
 const INTERVALO_MS = 3000 // a lista não tem SSE: reconsulta de tempos em tempos
 
-export default function GavetaLeiloes({ aba, aoFechar }: { aba: Aba; aoFechar: () => void }) {
+export default function GavetaLeiloes({ aba, passo, aoFechar }: { aba: Aba; passo: number; aoFechar: () => void }) {
   const [filtro, setFiltro] = useState<EstadoLeilao['status'] | ''>('')
   const [leiloes, setLeiloes] = useState<ResumoLeilao[] | null>(null)
   const [falhou, setFalhou] = useState(false)
@@ -45,7 +45,7 @@ export default function GavetaLeiloes({ aba, aoFechar }: { aba: Aba; aoFechar: (
       <ul className="lista-leiloes">
         {leiloes?.map((l) => (
           <li key={l.leilaoId}>
-            <a className="cartao" href={hrefDe({ aba, leilaoId: l.leilaoId })} onClick={aoFechar}>
+            <a className="cartao" href={hrefDe({ aba, passo, leilaoId: l.leilaoId })} onClick={aoFechar}>
               <strong>{l.titulo}</strong>
               <span className="lista-preco">{dinheiro(l.precoAtual)}</span>
               <span className={`status status-${l.status.toLowerCase()}`}>{ROTULO_STATUS[l.status]}</span>
