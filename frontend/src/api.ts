@@ -84,7 +84,7 @@ export interface Api {
   listarLeiloes(status?: EstadoLeilao['status']): Promise<ResumoLeilao[]>
   cancelarLeilao(leilaoId: string, motivo: string): Promise<{ versao: number }>
   
-  observarLeilao(leilaoId: string, aoMudar: (estado: EstadoComEvento) => void, aoFalhar?: () => void): () => void
+  observarLeilao(leilaoId: string, aoMudar: (estado: EstadoComEvento, bytes: number) => void, aoFalhar?: () => void): () => void
 
   lerConfiguracaoCache(s: Servico): Promise<ConfiguracaoCache>
   trocarConfiguracaoCache(s: Servico, c: ConfiguracaoCache): Promise<ConfiguracaoCache>
@@ -194,8 +194,9 @@ export const api: Api = {
     const fonte = new EventSource(url)
     fonte.addEventListener('leilao', (ev) => {
       const dados = (ev as MessageEvent).data as string
-      registrar({ quando: Date.now(), metodo: 'SSE', rota, status: 200, ms: 0, bytes: CODIFICADOR.encode(dados).length, tipo: 'sse' })
-      aoMudar(JSON.parse(dados))
+      const bytes = CODIFICADOR.encode(dados).length
+      registrar({ quando: Date.now(), metodo: 'SSE', rota, status: 200, ms: 0, bytes, tipo: 'sse' })
+      aoMudar(JSON.parse(dados), bytes)
     })
     fonte.onerror = () => aoFalhar?.() // o EventSource reconecta sozinho; a tela só avisa
     return () => fonte.close()
