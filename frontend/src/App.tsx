@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import AbaArquitetura from './abas/arquitetura/AbaArquitetura.tsx'
 import AbaAuditoria from './abas/auditoria/AbaAuditoria.tsx'
+import AbaESeFosse from './abas/eSeFosse/AbaESeFosse.tsx'
 import AbaDesempenho from './abas/desempenho/AbaDesempenho.tsx'
 import AbaIntegridade from './abas/integridade/AbaIntegridade.tsx'
 import AbaRede from './abas/rede/AbaRede.tsx'
@@ -67,7 +68,9 @@ export default function App() {
                   ? <AbaAuditoria pergunta={aba.pergunta} estado={palco.estado} />
                   : rota.aba === 'arquitetura'
                     ? <AbaArquitetura key={rota.leilaoId ?? ''} pergunta={aba.pergunta} estado={palco.estado} incrementoMinimo={palco.incrementoMinimo} usuario={usuario} ultimoEvento={palco.ultimoEvento} leilaoId={rota.leilaoId} />
-                    : <Aba pergunta={aba.pergunta} porQue={null} />}
+                    : rota.aba === 'e-se-fosse'
+                      ? <AbaESeFosse pergunta={aba.pergunta} leilaoId={rota.leilaoId} versao={palco.estado?.versao ?? null} />
+                      : <Aba pergunta={aba.pergunta} porQue={null} />}
         </main>
       </div>
       {gavetaAberta === 'leiloes' && <GavetaLeiloes aba={rota.aba} aoFechar={fechar} />}
