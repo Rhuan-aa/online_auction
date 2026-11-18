@@ -44,7 +44,7 @@ export default function Linhas({ titulo, unidade, series: brutas, rotuloX, rotul
               points={s.pontos.map((p) => `${x(p.x)},${y(p.y)}`).join(' ')} />
             {s.pontos.map((p, i) => (
               <circle key={i} cx={x(p.x)} cy={y(p.y)} r={4} className="grafico-ponto" style={{ fill: s.cor }}>
-                <title>{`${s.nome}: ${rotuloNumero(p.y)} (${rotuloX} ${rotuloNumero(p.x)})`}</title>
+                <title>{`${s.nome}: ${rotuloNumero(p.y)} ${rotuloY} (${rotuloX} ${rotuloNumero(p.x)})`}</title>
               </circle>
             ))}
           </g>

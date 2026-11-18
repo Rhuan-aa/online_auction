@@ -14,7 +14,7 @@ export default function Raias({ foto, fase }: Props) {
     <div className="raias">
       <div className="raia raias-cabecalho" aria-hidden="true">
         {COLUNAS.map((c, i) => (
-          <span key={c}>{c}{i === 2 && <small>típico (pior caso embaixo)</small>}</span>
+          <span key={c}>{c}{i === 2 && <small>típico (pior caso embaixo)</small>}{i === 3 && <small>lances a cada 1 segundo</small>}</span>
         ))}
       </div>
       <ol className="raias-lista" aria-label="Arquiteturas na corrida">
@@ -59,7 +59,7 @@ function Raia({ a }: { a: ArqFoto }) {
       <Metrica rotulo="Tempo para registrar um lance (típico · pior caso)">
         {temEscrita(a) ? <>{ms(a.escrita.p50)}<small className="quebra">pior caso {ms(a.escrita.p95)}</small></> : '—'}
       </Metrica>
-      <Metrica rotulo="Lances por segundo">{decimal(a.enviados > 0 ? a.lancesPorSegundo : null)}</Metrica>
+      <Metrica rotulo="Lances por segundo">{a.enviados > 0 ? <>{decimal(a.lancesPorSegundo)}<small className="quebra">lances/s</small></> : '—'}</Metrica>
       <Metrica rotulo="Conflitos">
         {inteiro(a.conflitos)}
         {a.retentativas > 0 && <small className="quebra" title="retentativas">{inteiro(a.retentativas)} ret.</small>}

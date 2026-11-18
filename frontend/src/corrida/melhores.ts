@@ -1,5 +1,5 @@
 // Placar: os critérios numéricos, o sentido de cada um e quem venceu cada coluna.
-import { bytes, decimal, ms, pct, pctDesatualizadas, temEscrita, temLeitura } from './medidas.ts'
+import { bytes, ms, pct, pctDesatualizadas, porLanceOps, porSegundo, temEscrita, temLeitura } from './medidas.ts'
 import type { ArqFoto } from './tipos.ts'
 
 export type Sentido = 'menor' | 'maior'
@@ -30,10 +30,10 @@ const espaco = (a: ArqFoto) => a.espaco?.bytes ?? null
 export const CRITERIOS: Criterio[] = [
   { id: 'tipico', rotulo: 'Tempo típico de registro', sentido: 'menor', valor: escrita('p50'), texto: (a) => ms(escrita('p50')(a)) },
   { id: 'pior', rotulo: 'Pior caso', sentido: 'menor', valor: escrita('p95'), texto: (a) => ms(escrita('p95')(a)) },
-  { id: 'vazao', rotulo: 'Lances/s', sentido: 'maior', valor: vazao, texto: (a) => decimal(vazao(a)) },
+  { id: 'vazao', rotulo: 'Lances por segundo', sentido: 'maior', valor: vazao, texto: (a) => porSegundo(vazao(a)) },
   { id: 'consulta', rotulo: 'Consulta (típico)', sentido: 'menor', valor: consulta, texto: (a) => ms(consulta(a)) },
   { id: 'desatualizadas', rotulo: 'Leituras desatualizadas', sentido: 'menor', valor: pctDesatualizadas, texto: (a) => pct(pctDesatualizadas(a)) },
-  { id: 'operacoes', rotulo: 'Operações por lance', sentido: 'menor', valor: porLance, texto: (a) => decimal(porLance(a)) },
+  { id: 'operacoes', rotulo: 'Operações por lance', sentido: 'menor', valor: porLance, texto: (a) => porLanceOps(porLance(a)) },
   { id: 'espaco', rotulo: 'Espaço (após VACUUM)', sentido: 'menor', valor: espaco, texto: (a) => bytes(espaco(a)) },
 ]
 

@@ -10,6 +10,9 @@ export const ms = (v: number | null | undefined) => (v == null || !Number.isFini
 export const inteiro = (v: number | null | undefined) => (v == null || !Number.isFinite(v) ? '—' : ZERO.format(v))
 export const decimal = (v: number | null | undefined) => (v == null || !Number.isFinite(v) ? '—' : UMA.format(v))
 export const pct = (v: number | null | undefined) => (v == null || !Number.isFinite(v) ? '—' : `${UMA.format(v)}%`)
+/** Taxa: quantos lances a cada 1 segundo. */
+export const porSegundo = (v: number | null | undefined) => (v == null || !Number.isFinite(v) ? '—' : `${UMA.format(v)} lances/s`)
+export const porLanceOps = (v: number | null | undefined) => (v == null || !Number.isFinite(v) ? '—' : `${UMA.format(v)} op/lance`)
 export const segundos = (msTotal: number) => `${UMA.format(msTotal / 1000)} s`
 
 /** 49152 → "48,0 KB"; acima de 1 MB, em MB. */

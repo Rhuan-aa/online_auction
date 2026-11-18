@@ -5,13 +5,15 @@ import { useLargura } from './useLargura.ts'
 interface Props {
   titulo: string
   unidade: string
+  /** Unidade de cada valor (ms, %, KB, lances/s...): aparece no eixo e no valor ao passar o mouse. */
+  simbolo: string
   grupos: { rotulo: string; valores: { serie: string; valor: number | null }[] }[]
   cores: Record<string, string>
 }
 
-const A = 300, ME = 64, MD = 12, MT = 12, MB = 36
+const A = 300, ME = 64, MD = 12, MT = 26, MB = 36
 
-export default function Barras({ titulo, unidade, grupos: brutos, cores }: Props) {
+export default function Barras({ titulo, unidade, simbolo, grupos: brutos, cores }: Props) {
   const [medida, L] = useLargura()
   const grupos = brutos.map((g) => ({ ...g, valores: g.valores.map((v) => ({ ...v, valor: finito(v.valor) })) }))
   const todos = grupos.flatMap((g) => g.valores.map((v) => v.valor).filter((v): v is number => v !== null))
@@ -27,6 +29,7 @@ export default function Barras({ titulo, unidade, grupos: brutos, cores }: Props
       legenda={series.map((s) => ({ nome: s, cor: cores[s] ?? 'var(--tinta-suave)' }))}>
       <svg viewBox={`0 0 ${L} ${A}`} width="100%" height={A} preserveAspectRatio="xMidYMid meet" role="img" aria-label={resumo}>
         <title>{resumo}</title>
+        <text x={4} y={12} className="grafico-texto grafico-texto-suave">em {simbolo}</text>
         {ticks.map((t) => (
           <g key={t}>
             <line x1={ME} x2={L - MD} y1={y(t)} y2={y(t)} className="grafico-grade" />
@@ -55,7 +58,7 @@ export default function Barras({ titulo, unidade, grupos: brutos, cores }: Props
                 return (
                   <rect key={v.serie} x={x + 1} y={yy} width={Math.max(1, w - 2)} height={h} rx={3}
                     style={{ fill: cores[v.serie] ?? 'var(--tinta-suave)' }}>
-                    <title>{`${g.rotulo ? `${g.rotulo} · ` : ''}${v.serie}: ${rotuloNumero(v.valor)} ${unidade}`}</title>
+                    <title>{`${g.rotulo ? `${g.rotulo} · ` : ''}${v.serie}: ${rotuloNumero(v.valor)} ${simbolo}`}</title>
                   </rect>
                 )
               })}

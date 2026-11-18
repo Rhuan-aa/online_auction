@@ -36,7 +36,7 @@ export default function Placar({ foto }: { foto: Foto | null }) {
                 const melhor = v[c.id].has(i)
                 return (
                   <td key={c.id} className={melhor ? 'placar-melhor' : undefined}>
-                    {c.texto(a)}{c.id === 'espaco' && a.espaco && <small>{linhasDoEspaco(a.espaco)}</small>}{melhor && <span aria-hidden="true"> ★</span>}
+                    <ValorComUnidade texto={c.texto(a)} />{c.id === 'espaco' && a.espaco && <small>{linhasDoEspaco(a.espaco)}</small>}{melhor && <span aria-hidden="true"> ★</span>}
                     {melhor && <span className="visualmente-oculto"> (melhor)</span>}
                   </td>
                 )
@@ -80,4 +80,12 @@ function Integridade({ a }: { a: ArqFoto }) {
       <span role="tooltip" id={id} className="dica">{detalheIntegridade(a.integridade)}</span>
     </span>
   )
+}
+
+/** Unidades longas (lances/s, op/lance) vão para uma linha menor embaixo do número, para a tabela caber. */
+function ValorComUnidade({ texto }: { texto: string }) {
+  const i = texto.lastIndexOf(' ')
+  const unidade = i > 0 ? texto.slice(i + 1) : ''
+  if (!unidade.includes('/')) return <>{texto}</>
+  return <>{texto.slice(0, i)}<small className="unidade">{unidade}</small></>
 }
