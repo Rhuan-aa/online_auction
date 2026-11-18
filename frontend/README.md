@@ -2,7 +2,10 @@
 
 Vite + React + TypeScript. A infra e a documentação estão na raiz: veja o [README principal](../README.md).
 
-Interface pensada para apresentar a arquitetura em sala: um **palco** com o leilão ao vivo (lances, lista de leilões, criar leilão) e seis abas que respondem a uma pergunta cada.
+Uma página só, sem abas: a **corrida de arquiteturas**. O mesmo leilão roda ao mesmo tempo em 6 arquiteturas
+(CRUD simples, CRUD + cache, Event Sourcing puro, ES + snapshot, ES + cache e ES + CQRS) no serviço
+`leilao-corrida` (8085), e a página mostra tudo o que foi medido. Desenho: `docs/superpowers/specs/2026-11-19-corrida-arquiteturas-design.md`;
+contrato: `docs/superpowers/specs/2026-11-19-corrida-contrato.md`.
 
 ```bash
 cp .env.example .env
@@ -13,31 +16,31 @@ npm run lint     # oxlint
 npm run build    # tsc + vite build
 ```
 
-## Abas
+## A página, de cima para baixo
 
-| Aba | Pergunta | O que mostra |
-|---|---|---|
-| Integridade | Dois lances ao mesmo tempo: quem ganha? | Rajada de lances e simulação completa (aceitos, recusados, conflitos, um só vencedor, trilha completa) |
-| Desempenho | O cache ajuda mesmo? | Métricas ao vivo e o botão "Comparar A × B × C": troca a configuração do cache em execução, roda a mesma simulação em cada uma e volta à configuração anterior |
-| Rede | Quanto custa ficar ao vivo? | Experimento SSE × polling, com waterfall das requisições |
-| Auditoria | Dá para voltar no tempo? | Linha do tempo dos eventos, slider de versão (`?ateVersao=N`) e reconstrução do cache a partir dos eventos |
-| Arquitetura | Por onde passa um lance? | Diagrama com um lance acompanhado, saúde de Postgres/Redis/Kafka e dos serviços, ADRs |
-| E se fosse…? | Por que não do jeito comum? | Quatro cenários comparando CRUD, CQRS e o desenho atual |
+1. **Simulação**: 6 campos (licitantes, lances por licitante, lances simultâneos, leitores, preço inicial, incremento), sem limite máximo, cada um com um tooltip. ▶ Iniciar corrida / ■ Parar.
+2. **Corrida ao vivo**: uma raia por arquitetura, atualizada pelo SSE `GET /corrida/{id}/stream` (eventos `foto` e `fim`).
+3. **Comparação**: gráficos SVG próprios (`src/graficos/`), uma cor por arquitetura (`--arq-1…6`).
+4. **Placar**: o melhor de cada critério destacado, integridade e histórico. Selo "medido nesta máquina; as 6 rodaram juntas e disputaram CPU e banco".
+5. **Por onde passa um lance?**: um lance real no sistema (8081 → Kafka → 8082 → SSE), num leilão aberto escolhido ou criado na hora.
+6. **Dá para voltar no tempo?**: linha do tempo dos eventos e o estado em qualquer versão, no mesmo leilão.
 
-## Rotas
+O leilão das seções 5 e 6 fica no hash (`#?leilao={id}`).
 
-Navegação pelo hash, sem biblioteca: `#/{aba}?leilao={id}` (abas: `integridade`, `desempenho`, `rede`, `auditoria`, `arquitetura`, `e-se-fosse`). Sem aba, abre `integridade`. A rota antiga `#/leilao/{id}` continua valendo. O leilão fica na URL, então dá para abrir o mesmo leilão em duas janelas.
+## Código
 
-O antigo Painel ADM (`#/adm`) foi removido: a simulação está em Integridade e a comparação A × B × C em Desempenho (veja [docs/PAINEL_ADM.md](../docs/PAINEL_ADM.md)).
+- `src/corrida/`: tipos do contrato, `useCorrida` (POST, SSE e parar), formulário, raias, gráficos, placar e as funções puras (`formulario.ts`, `medidas.ts`, `series.ts`, `melhores.ts`).
+- `src/caminho/`, `src/tempo/`: as seções 5 e 6; `src/leilao/`: o leilão real (`useLeilao`, seletor, regras).
+- `src/estilo/tokens.css`: cores e medidas dos dois temas (palco e claro).
 
 ## Tema e fontes
-- Tema claro (padrão) ou escuro, pelo botão no topo; a escolha fica no `localStorage` (`tema`).
-- As fontes (Fraunces, Inter e JetBrains Mono) vêm empacotadas pelo `@fontsource-variable/*`: funcionam sem internet.
+- Tema palco (padrão, índigo) ou claro, pelo botão no topo; a escolha fica no `localStorage`.
+- Plus Jakarta Sans e JetBrains Mono vêm empacotadas pelo `@fontsource-variable/*`: funcionam sem internet.
 - As animações respeitam `prefers-reduced-motion`.
 
 ## Variáveis
 - `VITE_COMMAND_API`: API de comandos (padrão `http://localhost:8081`)
 - `VITE_QUERY_API`: API de consulta (padrão `http://localhost:8082`)
-- `VITE_SCHEDULER_API`: agendador, só para o indicador de saúde (padrão `http://localhost:8084`)
+- `VITE_CORRIDA_API`: laboratório da corrida (padrão `http://localhost:8085`)
 
-`src/types.ts` espelha os corpos HTTP de `backend/contratos`: mudou um, muda o outro no mesmo PR.
+`src/types.ts` espelha os corpos HTTP de `backend/contratos` e `src/corrida/tipos.ts` o contrato da corrida: mudou um, muda o outro no mesmo PR.

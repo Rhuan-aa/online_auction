@@ -1,15 +1,22 @@
+import SecaoCaminho from './caminho/SecaoCaminho.tsx'
 import Formulario from './corrida/Formulario.tsx'
 import Graficos from './corrida/Graficos.tsx'
 import Placar from './corrida/Placar.tsx'
 import Raias, { ResumoCorrida } from './corrida/Raias.tsx'
 import { SELO } from './corrida/tipos.ts'
 import { useCorrida } from './corrida/useCorrida.ts'
+import SeletorLeilao from './leilao/SeletorLeilao.tsx'
+import { useLeilao } from './leilao/useLeilao.ts'
+import { useLeilaoDaRota } from './rota.ts'
 import Secao from './Secao.tsx'
+import SecaoTempo from './tempo/SecaoTempo.tsx'
 import Topo from './Topo.tsx'
 
 export default function App() {
   const corrida = useCorrida()
   const rodando = corrida.fase === 'rodando' || corrida.fase === 'parando'
+  const leilaoId = useLeilaoDaRota()
+  const leilao = useLeilao(leilaoId) // a única assinatura SSE do leilão real, usada pelas seções 5 e 6
 
   return (
     <>
@@ -45,6 +52,19 @@ export default function App() {
           explicacao="O melhor valor de cada critério fica destacado com ★; integridade diz se o resultado final está certo.">
           <div className="placar-topo"><span className="selo-medido">{SELO}</span></div>
           <Placar foto={corrida.foto} />
+        </Secao>
+
+        <Secao id="caminho" kicker="5 · No sistema de verdade" titulo="Por onde passa um lance?"
+          explicacao="Um lance real no leilão escolhido abaixo: da escrita (8081) ao Event Store, pelo Kafka até a leitura (8082) e de volta por SSE.">
+          <SeletorLeilao leilaoId={leilaoId} leilao={leilao} />
+          <SecaoCaminho key={leilaoId ?? ''} leilao={leilao} />
+        </Secao>
+
+        <Secao id="tempo" kicker="6 · Auditoria" titulo="Dá para voltar no tempo?"
+          explicacao="Os eventos do mesmo leilão nunca são alterados; o estado de qualquer versão é refeito aplicando-os em ordem.">
+          {leilaoId
+            ? <SecaoTempo key={leilaoId} leilaoId={leilaoId} atual={leilao.estado?.versao ?? 0} />
+            : <p className="painel suave">Escolha ou crie um leilão na seção anterior.</p>}
         </Secao>
       </main>
     </>
