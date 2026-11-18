@@ -6,11 +6,17 @@ import type { Execucao, Parametros } from './simulacao.ts'
 const CHAVE = 'leilao.adm.historico'
 export const MAXIMO_HISTORICO = 20
 
+/** Entradas antigas não têm p99. */
+function normalizar(e: Execucao): Execucao {
+  if (!e?.escrita || !e.leitura) return e
+  return { ...e, escrita: { ...e.escrita, p99: e.escrita.p99 ?? null }, leitura: { ...e.leitura, p99: e.leitura.p99 ?? null } }
+}
+
 /** Mais recente primeiro. */
 export function carregarHistorico(): Execucao[] {
   try {
     const salvo = JSON.parse(localStorage.getItem(CHAVE) ?? '[]')
-    return Array.isArray(salvo) ? salvo : []
+    return Array.isArray(salvo) ? salvo.map(normalizar) : []
   } catch {
     return []
   }
@@ -42,7 +48,9 @@ export const MAXIMO_COMPARACOES = 10
 export function carregarComparacoes(): Comparacao[] {
   try {
     const salvo = JSON.parse(localStorage.getItem(CHAVE_COMPARACOES) ?? '[]')
-    return Array.isArray(salvo) ? salvo : []
+    return Array.isArray(salvo)
+      ? salvo.map((c: Comparacao) => ({ ...c, execucoes: Object.fromEntries(Object.entries(c.execucoes ?? {}).map(([k, e]) => [k, normalizar(e)])) }))
+      : []
   } catch {
     return []
   }

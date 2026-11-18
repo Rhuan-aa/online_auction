@@ -10,6 +10,8 @@ export interface Comparacao {
   parametros: Parametros
   execucoes: Partial<Record<ConfiguracaoCache, Execucao>>
   completa: boolean
+  /** Não foi possível devolver um dos serviços à configuração anterior: avisar o usuário. */
+  restauracaoFalhou?: boolean
 }
 
 export interface AndamentoComparacao {
@@ -33,6 +35,7 @@ export async function compararABC(
   const anterior = await lerConfiguracaoAtiva(api)
   const execucoes: Comparacao['execucoes'] = {}
   const feitas: ConfiguracaoCache[] = []
+  let restauracaoFalhou = false
   try {
     for (const cfg of ORDEM) {
       if (sinal.aborted) break
@@ -43,7 +46,7 @@ export async function compararABC(
       try {
         execucoes[cfg] = await executarFn(api, p, cfg, (progresso) => aoProgredir({ configuracao: cfg, progresso, feitas: [...feitas] }), sinal)
       } catch (err) {
-        if (sinal.aborted && err instanceof ErroSimulacao) break // interrompida pelo usuário: devolve o que já rodou
+        if (sinal.aborted) break // interrompida pelo usuário (qualquer erro vindo do fetch cancelado): devolve o que já rodou
         throw err
       }
       feitas.push(cfg)
@@ -53,6 +56,7 @@ export async function compararABC(
       try {
         await api.trocarConfiguracaoCache(s, anterior)
       } catch (err) {
+        restauracaoFalhou = true
         console.error(`Não foi possível restaurar a configuração ${anterior} na ${s}`, err)
       }
     }
@@ -63,5 +67,6 @@ export async function compararABC(
     parametros: p,
     execucoes,
     completa: ORDEM.every((c) => execucoes[c]),
+    ...(restauracaoFalhou && { restauracaoFalhou }),
   }
 }

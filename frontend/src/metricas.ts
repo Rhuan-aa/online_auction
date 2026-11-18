@@ -1,7 +1,7 @@
 // Métricas do backend para o painel de ADM (docs/PAINEL_ADM.md, seção 3): lê /actuator/metrics
 // da escrita (8081) e da leitura (8082) e calcula quanto uma execução custou como a diferença entre
 // uma foto de antes e outra de depois, filtrando pela configuração (A/B/C) em que ela rodou.
-import type { Api, ConfiguracaoCache, Metrica, Servico } from './api.ts'
+import { ErroHttp, type Api, type ConfiguracaoCache, type Metrica, type Servico } from './api.ts'
 
 export const BASES = ['redis', 'checkpoint', 'inicio', 'fonte'] as const
 export type Base = typeof BASES[number]
@@ -48,15 +48,26 @@ export function diferenca(antes: Foto, depois: Foto): ResumoBackend {
 
 const CAMINHO: Record<Servico, string> = { escrita: 'comando', leitura: 'consulta' }
 
-async function fotografar(api: Api, servico: Servico, configuracao: ConfiguracaoCache): Promise<Foto> {
-  const [obter, ...bases] = await Promise.all([
-    api.lerMetrica(servico, 'leilao.estado.obter', [`caminho:${CAMINHO[servico]}`, `configuracao:${configuracao}`]),
-    ...BASES.map((b) => api.lerMetrica(servico, 'leilao.estado.eventos.lidos', [`base:${b}`, `configuracao:${configuracao}`])),
-  ])
-  return {
-    obter: acumulado(obter),
-    bases: Object.fromEntries(BASES.map((b, i) => [b, acumulado(bases[i])])) as Record<Base, Acumulado>,
+/**
+ * O backend registra os medidores na primeira medição, com a configuração como tag; sem medidor
+ * para a combinação de tags o Actuator responde 404. Isso é "ainda não aconteceu": zero.
+ */
+async function acumuladoDe(api: Api, servico: Servico, nome: string, tags: string[]): Promise<Acumulado> {
+  try {
+    return acumulado(await api.lerMetrica(servico, nome, tags))
+  } catch (e) {
+    if (e instanceof ErroHttp && e.status === 404) return { count: 0, total: 0 }
+    throw e
   }
+}
+
+async function fotografar(api: Api, servico: Servico, configuracao: ConfiguracaoCache): Promise<Foto> {
+  const cfg = `configuracao:${configuracao}`
+  const [obter, ...bases] = await Promise.all([
+    acumuladoDe(api, servico, 'leilao.estado.obter', [`caminho:${CAMINHO[servico]}`, cfg]),
+    ...BASES.map((b) => acumuladoDe(api, servico, 'leilao.estado.eventos.lidos', [`base:${b}`, cfg])),
+  ])
+  return { obter, bases: Object.fromEntries(BASES.map((b, i) => [b, bases[i]])) as Record<Base, Acumulado> }
 }
 
 export async function fotografarServicos(api: Api, configuracao: ConfiguracaoCache): Promise<Record<Servico, Foto>> {
