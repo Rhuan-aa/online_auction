@@ -26,7 +26,7 @@ export default function AbaRede({ pergunta, estado, incrementoMinimo, usuario }:
 
       <section className="bloco-aba">
         <h2>Por rota</h2>
-        <div><button type="button" onClick={() => { limpar(); recarregar() }}>Limpar</button></div>
+        <div><button type="button" className="botao" onClick={() => { limpar(); recarregar() }}>Limpar</button></div>
         {resumo.length === 0
           ? <p className="suave">Nenhuma requisição medida ainda.</p>
           : (

@@ -49,7 +49,7 @@ export default function Palco({ leilaoId, palco, usuario, aoAbrirLeiloes, aoAbri
   return (
     <aside className="palco" aria-label="Leilão em foco">
       <div className="palco-seletor">
-        <span className="id palco-id">{leilaoId ?? 'nenhum leilão'}</span>
+        <span className="id palco-id" title={leilaoId ?? undefined}>{leilaoId ? leilaoId.slice(0, 8) : 'nenhum leilão'}</span>
         <button className="palco-link" onClick={aoAbrirLeiloes}>trocar ▾</button>
       </div>
 

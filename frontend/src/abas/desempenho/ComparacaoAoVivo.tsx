@@ -30,7 +30,7 @@ export default function ComparacaoAoVivo({ andamento, aoInterromper }: { andamen
           )
         })}
       </div>
-      <button type="button" className="perigo" onClick={aoInterromper}>■ Interromper</button>
+      <button type="button" className="botao botao--perigo" onClick={aoInterromper}>■ Interromper</button>
     </div>
   )
 }

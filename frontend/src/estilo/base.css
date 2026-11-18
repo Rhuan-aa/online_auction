@@ -27,7 +27,8 @@ code, pre, .id { font-family: var(--fonte-mono); font-size: 0.85em; }
 }
 a.cartao:hover { border-color: var(--destaque); box-shadow: var(--sombra); }
 
-.botao {
+/* controles: tudo que é botão ou campo já nasce com o visual do projeto (só tokens) */
+:where(button), .botao {
   display: inline-block;
   font: inherit;
   font-weight: 600;
@@ -40,10 +41,37 @@ a.cartao:hover { border-color: var(--destaque); box-shadow: var(--sombra); }
   text-decoration: none;
   transition: background-color var(--transicao-curta), color var(--transicao-curta), border-color var(--transicao-curta);
 }
-.botao:hover { background: var(--superficie-2); }
-.botao:disabled { opacity: 0.5; cursor: not-allowed; }
-.botao--destaque { background: var(--destaque); border-color: var(--destaque); color: var(--sobre-destaque); }
-.botao--destaque:hover { background: var(--perigo); border-color: var(--perigo); }
+button:where(:hover), .botao:hover { background: var(--superficie-2); }
+button:where(:focus-visible), .botao:focus-visible,
+input:where(:focus-visible), select:where(:focus-visible), textarea:where(:focus-visible) { outline: 3px solid var(--destaque); outline-offset: 2px; }
+button:where(:disabled), .botao:disabled { opacity: 0.5; cursor: not-allowed; }
+.botao--destaque { background: var(--destaque-forte); border-color: var(--destaque-forte); color: var(--sobre-destaque); }
+.botao--destaque:hover { background: var(--tinta); border-color: var(--tinta); color: var(--fundo); }
+.botao--perigo { background: var(--perigo); border-color: var(--perigo); color: var(--sobre-destaque); }
+.botao--perigo:hover { background: var(--tinta); border-color: var(--tinta); color: var(--fundo); }
+
+:where(input, select, textarea) {
+  font: inherit;
+  font-size: 1rem;
+  color: var(--tinta);
+  background: var(--superficie);
+  border: var(--borda-largura) solid var(--borda);
+  border-radius: var(--raio);
+  padding: 0.4rem 0.6rem;
+}
+input[type='checkbox'], input[type='radio'], input[type='range'] { accent-color: var(--destaque); padding: 0; }
+input:where(:disabled), select:where(:disabled), textarea:where(:disabled) { opacity: 0.6; }
+fieldset { border: var(--borda-largura) solid var(--borda); border-radius: var(--raio); background: var(--superficie); padding: 0.75rem 1rem; margin: 0; }
+fieldset:disabled { opacity: 0.7; }
+label { font-size: 0.95rem; }
+
+/* simulação: campos em grade, cada rótulo em cima do seu campo */
+.simulacao fieldset { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.75rem 1rem; min-width: 0; }
+.simulacao label { display: flex; flex-direction: column; gap: 0.25rem; }
+.simulacao label.opcao { flex-direction: row; align-items: center; gap: 0.5rem; grid-column: 1 / -1; }
+.simulacao-botoes { margin-top: 0.75rem; }
+.rajada-controles label { display: flex; flex-direction: column; gap: 0.25rem; }
+.rajada-controles label.opcao { flex-direction: row; align-items: center; gap: 0.5rem; }
 
 /* selo que marca um dado como ilustração (simulado), nunca medição real */
 .selo-ilustracao {

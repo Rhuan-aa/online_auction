@@ -72,7 +72,7 @@ export default function AbaArquitetura({ pergunta, estado, incrementoMinimo, usu
       <section className="bloco-aba">
         <h2>O caminho de um lance</h2>
         <div className="rajada-controles">
-          <button type="button" onClick={() => void acompanhar()} disabled={s.tentativa?.situacao === 'gravando' || !estado || incrementoMinimo === null || !permissao.pode}>
+          <button type="button" className="botao botao--destaque" onClick={() => void acompanhar()} disabled={s.tentativa?.situacao === 'gravando' || !estado || incrementoMinimo === null || !permissao.pode}>
             Dar lance e acompanhar
           </button>
           {!permissao.pode && <span className="suave">{permissao.motivo}</span>}

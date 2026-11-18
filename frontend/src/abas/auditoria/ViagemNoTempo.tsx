@@ -39,9 +39,9 @@ export default function ViagemNoTempo({ leilaoId, atual, versao, aoMudar }: Prop
   return (
     <div className={atrasado ? 'viagem viagem--carregando' : 'viagem'}>
       <div className="viagem-controle">
-        <button type="button" aria-label="Versão anterior" disabled={versao <= 1} onClick={() => aoMudar(versao - 1)}>◀</button>
+        <button type="button" className="botao" aria-label="Versão anterior" disabled={versao <= 1} onClick={() => aoMudar(versao - 1)}>◀</button>
         <input type="range" min={1} max={atual} value={versao} aria-label="Versão" aria-valuetext={`versão ${versao} de ${atual}`} onChange={(e) => aoMudar(Number(e.target.value))} />
-        <button type="button" aria-label="Próxima versão" disabled={versao >= atual} onClick={() => aoMudar(versao + 1)}>▶</button>
+        <button type="button" className="botao" aria-label="Próxima versão" disabled={versao >= atual} onClick={() => aoMudar(versao + 1)}>▶</button>
         <strong className="id">v{versao} de {atual}</strong>
       </div>
       {erro?.chave === chave && <p role="alert" className="erro">{erro.msg}</p>}

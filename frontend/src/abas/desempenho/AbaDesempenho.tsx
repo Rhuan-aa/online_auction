@@ -101,7 +101,7 @@ export default function AbaDesempenho({ pergunta }: { pergunta: string }) {
         <form className="simulacao" onSubmit={comparar}>
           <FormSimulacao valor={campos} onChange={setCampos} desabilitado={rodando} />
           <div className="simulacao-botoes">
-            {!rodando && <button type="submit">▶ Comparar A × B × C</button>}
+            {!rodando && <button type="submit" className="botao botao--destaque">▶ Comparar A × B × C</button>}
           </div>
         </form>
         {rodando && <ComparacaoAoVivo andamento={andamento} aoInterromper={() => controle.current?.abort()} />}

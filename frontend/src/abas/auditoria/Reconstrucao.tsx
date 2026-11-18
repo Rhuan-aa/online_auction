@@ -42,7 +42,7 @@ export default function Reconstrucao() {
 
   return (
     <div>
-      <button type="button" disabled={rodando} onClick={() => setConfirmando(true)}>Reconstruir cache</button>
+      <button type="button" className="botao botao--destaque" disabled={rodando} onClick={() => setConfirmando(true)}>Reconstruir cache</button>
       {erro && <p role="alert" className="erro">{erro}</p>}
       <ol className="reconstrucao" aria-live="polite">
         {passos.slice(0, visiveis).map((p, i) => (

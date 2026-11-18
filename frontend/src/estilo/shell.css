@@ -7,6 +7,9 @@
   height: 56px;
   background: var(--superficie);
   border-bottom: var(--borda-largura) solid var(--tinta);
+  position: sticky;
+  top: 0;
+  z-index: 5;
 }
 .marca {
   font-family: var(--fonte-titulo);
@@ -32,14 +35,7 @@
 .abas a[aria-current='page'] { color: var(--tinta); border-bottom-color: var(--destaque); }
 .topo-direita { display: flex; align-items: center; gap: 0.75rem; }
 .usuario { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--tinta-suave); }
-.usuario select, .formulario input {
-  font: inherit;
-  color: var(--tinta);
-  background: var(--superficie);
-  border: var(--borda-largura) solid var(--borda);
-  border-radius: var(--raio);
-  padding: 0.3rem 0.5rem;
-}
+.usuario select { padding: 0.3rem 0.5rem; }
 .botao-tema { padding: 0.2rem 0.6rem; }
 
 .corpo { display: flex; min-height: calc(100vh - 56px); }
@@ -55,12 +51,13 @@
   background: var(--superficie);
   border-right: var(--borda-largura) solid var(--tinta);
   position: sticky;
-  top: 0;
+  top: 56px;
   align-self: flex-start;
-  min-height: calc(100vh - 56px);
+  height: calc(100vh - 56px);
+  overflow-y: auto;
 }
 .palco-seletor { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
-.palco-id { color: var(--tinta-suave); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.palco-id { color: var(--tinta-suave); white-space: nowrap; }
 .palco-link {
   font: inherit;
   font-size: 0.85rem;
@@ -70,6 +67,7 @@
   padding: 0;
   cursor: pointer;
   text-decoration: underline;
+  white-space: nowrap;
 }
 .palco-titulo { font-size: 1.4rem; margin: 0.5rem 0 0; }
 .palco-status { display: flex; align-items: center; gap: 0.5rem; margin: 0; font-size: 0.8rem; }

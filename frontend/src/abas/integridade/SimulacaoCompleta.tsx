@@ -69,8 +69,8 @@ export default function SimulacaoCompleta() {
         <FormSimulacao valor={campos} onChange={setCampos} desabilitado={rodando} />
         <div className="simulacao-botoes">
           {rodando
-            ? <button type="button" className="perigo" onClick={() => controle.current?.abort()}>■ Parar</button>
-            : <button type="submit">▶ Executar simulação</button>}
+            ? <button type="button" className="botao botao--perigo" onClick={() => controle.current?.abort()}>■ Parar</button>
+            : <button type="submit" className="botao botao--destaque">▶ Executar simulação</button>}
         </div>
       </form>
       {progresso && (

@@ -1,5 +1,6 @@
 /* Tokens globais: "papel editorial". Claro por padrão; escuro é o papel invertido ([data-tema="escuro"]). */
 :root {
+  color-scheme: light;
   --fundo: #f6f2ea;
   --superficie: #ffffff;
   --superficie-2: #efe9dd;
@@ -7,6 +8,7 @@
   --tinta-suave: #5b5346;
   --borda: #d9cfbd;
   --destaque: #e4472b;
+  --destaque-forte: #c23a20; /* fundo de botão primário: contraste 5,4:1 com texto branco */
   --destaque-fundo: #fbe3dd;
   --sobre-destaque: #ffffff;
   --sucesso: #1f7a4a;
@@ -43,6 +45,7 @@
 }
 
 [data-tema="escuro"] {
+  color-scheme: dark;
   --fundo: #17140f;
   --superficie: #221e18;
   --superficie-2: #2c2720;
@@ -50,6 +53,7 @@
   --tinta-suave: #b3a893;
   --borda: #4a4235;
   --destaque: #ff6a4d;
+  --destaque-forte: #ff6a4d;
   --destaque-fundo: #4a2219;
   --sobre-destaque: #17140f;
   --sucesso: #55c88a;

@@ -55,7 +55,7 @@ export default function AbaIntegridade({ pergunta, estado, incrementoMinimo }: P
             <input type="checkbox" checked={mesmoValor} disabled={!pode || disparando} onChange={(e) => setMesmoValor(e.target.checked)} />
             Mesmo valor para todos
           </label>
-          <button type="button" disabled={!pode || disparando} onClick={disparar}>
+          <button type="button" className="botao botao--destaque" disabled={!pode || disparando} onClick={disparar}>
             {disparando ? 'Disparando…' : `▶ Disparar ${n} lances`}
           </button>
         </div>

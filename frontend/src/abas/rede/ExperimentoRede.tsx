@@ -100,9 +100,9 @@ export default function ExperimentoRede({ estado, incrementoMinimo, usuario }: P
           <input inputMode="numeric" value={intervalo} disabled={rodando} onChange={(e) => setIntervalo(e.target.value)} />
         </label>
         {!rodando
-          ? <button type="button" onClick={iniciar} disabled={!estado || !intervaloOk}>▶ Iniciar ({DURACAO_S} s)</button>
-          : <button type="button" onClick={() => encerrar()}>■ Parar</button>}
-        <button type="button" onClick={darLance} disabled={!rodando || !estadoMedido || !permissao.pode || incrementoMinimo === null}>Dar lance agora</button>
+          ? <button type="button" className="botao botao--destaque" onClick={iniciar} disabled={!estado || !intervaloOk}>▶ Iniciar ({DURACAO_S} s)</button>
+          : <button type="button" className="botao botao--perigo" onClick={() => encerrar()}>■ Parar</button>}
+        <button type="button" className="botao" onClick={darLance} disabled={!rodando || !estadoMedido || !permissao.pode || incrementoMinimo === null}>Dar lance agora</button>
         {rodando && <span className="config-grande">{restante} s</span>}
       </div>
       {!estado && <p className="aviso">Sem leilão em foco: escolha um leilão para rodar o experimento.</p>}
