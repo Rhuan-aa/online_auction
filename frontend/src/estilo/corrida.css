@@ -35,9 +35,12 @@
   width: max-content;
   max-width: 16rem;
   padding: 0.45rem 0.7rem;
+  font-family: var(--fonte-texto);
   font-size: 0.82rem;
   font-weight: 500;
   line-height: 1.35;
+  text-align: left;
+  white-space: normal;
   color: var(--tinta);
   background: var(--superficie-solida);
   border: var(--borda-largura) solid var(--borda);
@@ -105,6 +108,8 @@
 .raia-metrica { display: flex; flex-direction: column; min-width: 0; }
 .raia-valor { font-family: var(--fonte-mono); font-size: 1.05rem; font-weight: 700; white-space: nowrap; }
 .raia-valor small { font-size: 0.8rem; font-weight: 500; color: var(--tinta-suave); }
+.raia-valor small.quebra { display: block; white-space: normal; line-height: 1.2; }
+.raias-nota, .ressalvas, .placar-nota { margin: 0.6rem 0 0; font-size: 0.85rem; max-width: 70ch; }
 .raia-rotulo { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .raia-status { min-width: 0; }
 .estado { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 700; color: var(--tinta-suave); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -148,7 +153,7 @@
 /* placar */
 .placar-topo { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.5rem; margin-bottom: 1rem; }
 .placar-vazio { margin: 0; color: var(--tinta-suave); }
-.placar-rolagem { border-radius: var(--raio); }
+.placar-rolagem { border-radius: var(--raio); overflow-x: auto; }
 .placar {
   width: 100%;
   background: var(--superficie);
@@ -165,12 +170,16 @@
 .placar tbody th { font-weight: 800; white-space: nowrap; border-left: 6px solid var(--borda); }
 .placar td { font-family: var(--fonte-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .placar td:nth-last-child(-n + 2) { font-family: var(--fonte-texto); }
+.placar td:last-child { white-space: normal; }
+.placar td small { display: block; font-family: var(--fonte-texto); font-size: 0.75rem; font-weight: 500; color: var(--tinta-suave); white-space: normal; }
+.placar-fora > * { opacity: 0.55; }
+.placar-fora > th:first-child { opacity: 1; }
 .placar-melhor { background: var(--destaque-fundo); color: var(--tinta); font-weight: 800; box-shadow: inset 0 0 0 2px var(--destaque); }
 .placar-melhor span[aria-hidden] { color: var(--destaque); }
 .sim { color: var(--sucesso); font-weight: 700; }
 .nao { color: var(--perigo); font-weight: 700; }
 .sim small { color: var(--tinta-suave); font-weight: 500; }
-@media (max-width: 1180px) {
-  .placar-rolagem { overflow-x: auto; }
-  .placar .com-dica .dica { position: fixed; left: 16px; right: 16px; bottom: 16px; max-width: none; width: auto; }
-}
+.placar .com-dica .dica { position: fixed; left: 16px; right: 16px; bottom: 16px; max-width: none; width: auto; }
+/* Escape esconde a dica (WCAG 1.4.13); vem depois das regras de hover/foco */
+.formulario-corrida[data-dica-oculta] .campo .dica,
+.com-dica[data-dica-oculta] .dica { opacity: 0; visibility: hidden; }

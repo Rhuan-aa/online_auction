@@ -39,10 +39,13 @@ export type ResultadoLance =
 export class ErroHttp extends Error {
   status: number
   codigo?: string
-  constructor(status: number, mensagem: string, codigo?: string) {
+  /** 409: a corrida que já está rodando. */
+  corridaId?: string
+  constructor(status: number, mensagem: string, codigo?: string, corridaId?: string) {
     super(mensagem)
     this.status = status
     this.codigo = codigo
+    this.corridaId = corridaId
   }
 }
 
@@ -80,8 +83,8 @@ const JSON_HEADERS = { 'Content-Type': 'application/json' }
 
 /** Lê {erro, mensagem}; o 404 da leitura vem no formato padrão do Spring, então o corpo é opcional. */
 async function erroDe(r: Response, rotulo: string): Promise<ErroHttp> {
-  const corpo = await r.json().catch(() => null) as { erro?: string; mensagem?: string } | null
-  return new ErroHttp(r.status, corpo?.mensagem ?? `${rotulo} → ${r.status}`, corpo?.erro)
+  const corpo = await r.json().catch(() => null) as { erro?: string; mensagem?: string; corridaId?: string } | null
+  return new ErroHttp(r.status, corpo?.mensagem ?? `${rotulo} → ${r.status}`, corpo?.erro, corpo?.corridaId)
 }
 
 async function getJson<T>(url: string): Promise<T> {

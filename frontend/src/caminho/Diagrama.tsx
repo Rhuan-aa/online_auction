@@ -2,8 +2,8 @@ import type { CSSProperties, RefObject } from 'react'
 import { useLargura } from '../graficos/useLargura.ts'
 import { PASSO_MS, type No } from './caminho.ts'
 
-const LARGURA_MIN = 950 // 5 colunas de 190 px: nó de 150 px e 40 px para a seta
-const NO_L = 150
+const LARGURA_MIN = 1060 // 5 colunas de 212 px: nó de 172 px e 40 px para a seta
+const NO_L = 172
 const NO_A = 60
 const ROTULOS: Record<No, [string, string]> = {
   front: ['Front', 'React'],

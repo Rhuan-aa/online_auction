@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { dominioRaias, escalaLinear, finito, marcas, truncar } from './escalas.ts'
+import { descreverBarras, escalaLinear, finito, marcas, mensagemVazia, truncar } from './escalas.ts'
 import { larguraEfetiva, proximaLargura } from './useLargura.ts'
 
 test('escala mapeia extremos', () => {
@@ -10,11 +10,6 @@ test('escala mapeia extremos', () => {
 test('marcas redondas', () => expect(marcas(0, 87)).toEqual([0, 20, 40, 60, 80, 100]))
 test('domínio degenerado não gera NaN', () => expect(Number.isNaN(escalaLinear([5, 5], [0, 100])(5))).toBe(false))
 
-test('domínio das raias vai até a última marca e cobre a duração', () => {
-  expect(dominioRaias(87)).toBe(100)
-  expect(dominioRaias(87)).toBeGreaterThanOrEqual(87)
-  expect(dominioRaias(0)).toBeGreaterThanOrEqual(1)
-})
 test('finito rejeita NaN e Infinity', () => {
   expect(finito(NaN)).toBeNull()
   expect(finito(Infinity)).toBeNull()
@@ -36,4 +31,18 @@ test('proximaLargura ignora 0 (passo escondido) e mantém a atual', () => {
   expect(proximaLargura(820, undefined)).toBe(820)
   expect(proximaLargura(820, NaN)).toBe(820)
   expect(proximaLargura(640, 912.6)).toBe(913)
+})
+
+test('aria das barras: grupo único sem rótulo não deixa ": " solto', () => {
+  expect(descreverBarras('Lances por segundo', 'maior é melhor', [{ rotulo: '', valores: [{ serie: 'CRUD', valor: 12.5 }, { serie: 'ES', valor: null }] }]))
+    .toBe('Lances por segundo, em maior é melhor: CRUD 12,5, ES sem dado')
+})
+test('aria das barras: vários grupos com rótulo', () => {
+  expect(descreverBarras('T', 'ms', [{ rotulo: 'p50', valores: [{ serie: 'A', valor: 1 }] }, { rotulo: 'p95', valores: [{ serie: 'A', valor: 3 }] }]))
+    .toBe('T, em ms: p50: A 1; p95: A 3')
+})
+test('gráfico vazio: sem grupos, tudo null, ou com dados', () => {
+  expect(mensagemVazia([])).toBe('Sem dados ainda')
+  expect(mensagemVazia([{ rotulo: '', valores: [{ serie: 'A', valor: null }, { serie: 'B', valor: Number.NaN }] }])).toMatch(/Sem medições/)
+  expect(mensagemVazia([{ rotulo: '', valores: [{ serie: 'A', valor: null }, { serie: 'B', valor: 0 }] }])).toBeNull()
 })

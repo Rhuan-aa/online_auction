@@ -16,18 +16,6 @@ a { color: var(--destaque); }
 table { border-collapse: collapse; font-variant-numeric: tabular-nums; }
 code, pre, .id { font-family: var(--fonte-mono); font-size: 0.85em; }
 
-.cartao {
-  display: block;
-  background: var(--superficie);
-  border: var(--borda-largura) solid var(--borda);
-  border-radius: var(--raio);
-  padding: 1rem 1.25rem;
-  color: inherit;
-  text-decoration: none;
-  transition: border-color var(--transicao-curta), box-shadow var(--transicao-curta);
-}
-a.cartao:hover { border-color: var(--destaque); box-shadow: var(--sombra); }
-
 /* controles: tudo que é botão ou campo já nasce com o visual do projeto (só tokens).
    Botões em pílula; o primário é o destaque (amarelo no palco) com texto escuro. */
 :where(button), .botao {

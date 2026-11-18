@@ -54,8 +54,22 @@ export function truncar(txt: string, max: number): string {
   return `${txt.slice(0, max - 1)}…`
 }
 
-/** Domínio x das raias: a última marca redonda, sempre >= duracaoMs. */
-export function dominioRaias(duracaoMs: number): number {
-  const m = marcas(0, Math.max(1, duracaoMs))
-  return m[m.length - 1]
+export interface GrupoBarras { rotulo: string; valores: { serie: string; valor: number | null }[] }
+
+/** Texto de leitor de tela das barras; grupo sem rótulo (gráfico de um grupo só) não gera ": " solto. */
+export function descreverBarras(titulo: string, unidade: string, grupos: GrupoBarras[]): string {
+  const partes = grupos.map((g) => {
+    const valores = g.valores.map((v) => `${v.serie} ${v.valor === null ? 'sem dado' : rotuloNumero(v.valor)}`).join(', ')
+    return g.rotulo ? `${g.rotulo}: ${valores}` : valores
+  })
+  return `${titulo}, em ${unidade}: ${partes.join('; ')}`
+}
+
+/** Mensagem do gráfico sem nada para desenhar (null: há dados). */
+export function mensagemVazia(grupos: GrupoBarras[]): string | null {
+  if (grupos.length === 0) return 'Sem dados ainda'
+  if (grupos.every((g) => g.valores.every((v) => finito(v.valor) === null))) {
+    return 'Sem medições para este gráfico nesta corrida (por exemplo, sem leitores não há consultas).'
+  }
+  return null
 }

@@ -1,5 +1,5 @@
 import Moldura from './Moldura.tsx'
-import { escalaLinear, finito, marcas, rotuloNumero, truncar } from './escalas.ts'
+import { descreverBarras, escalaLinear, finito, marcas, mensagemVazia, rotuloNumero, truncar } from './escalas.ts'
 import { useLargura } from './useLargura.ts'
 
 interface Props {
@@ -20,10 +20,10 @@ export default function Barras({ titulo, unidade, grupos: brutos, cores }: Props
   const y = escalaLinear([0, topo], [A - MB, MT])
   const largG = (L - ME - MD) / Math.max(1, grupos.length)
   const series = [...new Set(grupos.flatMap((g) => g.valores.map((v) => v.serie)))]
-  const resumo = `${titulo}, em ${unidade}: ${grupos.map((g) => `${g.rotulo}: ${g.valores.map((v) => `${v.serie} ${v.valor === null ? 'sem dado' : rotuloNumero(v.valor)}`).join(', ')}`).join('; ')}`
+  const resumo = descreverBarras(titulo, unidade, grupos)
 
   return (
-    <Moldura titulo={titulo} unidade={unidade} vazio={grupos.length === 0} medida={medida}
+    <Moldura titulo={titulo} unidade={unidade} vazio={mensagemVazia(grupos) ?? false} medida={medida}
       legenda={series.map((s) => ({ nome: s, cor: cores[s] ?? 'var(--tinta-suave)' }))}>
       <svg viewBox={`0 0 ${L} ${A}`} width="100%" height={A} preserveAspectRatio="xMidYMid meet" role="img" aria-label={resumo}>
         <title>{resumo}</title>
@@ -55,7 +55,7 @@ export default function Barras({ titulo, unidade, grupos: brutos, cores }: Props
                 return (
                   <rect key={v.serie} x={x + 1} y={yy} width={Math.max(1, w - 2)} height={h} rx={3}
                     style={{ fill: cores[v.serie] ?? 'var(--tinta-suave)' }}>
-                    <title>{`${g.rotulo} · ${v.serie}: ${rotuloNumero(v.valor)} ${unidade}`}</title>
+                    <title>{`${g.rotulo ? `${g.rotulo} · ` : ''}${v.serie}: ${rotuloNumero(v.valor)} ${unidade}`}</title>
                   </rect>
                 )
               })}

@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import { arq } from './fixtures.ts'
-import { cores, desatualizadas, espaco, gruposTempos, lancesPorSegundo, seriesCurva } from './series.ts'
+import { contagemDoEspaco, cores, desatualizadas, espaco, gruposTempos, lancesPorSegundo, seriesCurva } from './series.ts'
 
 const crud = arq('crud', { escrita: { p50: 2, p95: 5, amostras: 10 } })
 const es = arq('es', { escrita: { p50: 8, p95: 30, amostras: 0 }, leitura: { ...arq('es').leitura, consultas: 0 } })
@@ -36,4 +36,9 @@ test('espaço só depois do fim, em KB', () => {
 test('curva: pontos ordenados por versão, com a cor da arquitetura', () => {
   const s = seriesCurva([arq('es-cache', { curva: [{ versao: 20, ms: 4.1 }, { versao: 10, ms: 3.9 }] })])
   expect(s).toEqual([{ nome: 'ES-CACHE', cor: 'var(--arq-5)', pontos: [{ x: 10, y: 3.9 }, { x: 20, y: 4.1 }] }])
+})
+
+test('contagem do espaço: linhas, eventos e chaves de quem tem resultado final', () => {
+  const a = arq('crud', { nome: 'CRUD', espaco: { linhas: 1, eventos: 0, chavesRedis: 0, bytes: 8192 } })
+  expect(contagemDoEspaco([a, arq('es')])).toBe('CRUD: linhas 1, eventos 0, chaves Redis 0')
 })

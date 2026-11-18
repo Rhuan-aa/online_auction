@@ -35,6 +35,14 @@ export function espaco(arqs: ArqFoto[]): Grupo[] {
   return grupoUnico(arqs, (a) => (a.espaco ? a.espaco.bytes / 1024 : null))
 }
 
+/** "CRUD simples: linhas 1, eventos 0, chaves Redis 0 · …": o que foi contado junto com os bytes. */
+export function contagemDoEspaco(arqs: ArqFoto[]): string {
+  return arqs
+    .filter((a) => a.espaco)
+    .map((a) => `${a.nome}: linhas ${a.espaco!.linhas}, eventos ${a.espaco!.eventos}, chaves Redis ${a.espaco!.chavesRedis}`)
+    .join(' · ')
+}
+
 /** Tempo médio de escrita por faixa de versão: uma linha por arquitetura, em ordem de versão. */
 export function seriesCurva(arqs: ArqFoto[]): Serie[] {
   return arqs.map((a) => ({

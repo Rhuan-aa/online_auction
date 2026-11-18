@@ -3,7 +3,7 @@ import Formulario from './corrida/Formulario.tsx'
 import Graficos from './corrida/Graficos.tsx'
 import Placar from './corrida/Placar.tsx'
 import Raias, { ResumoCorrida } from './corrida/Raias.tsx'
-import { SELO } from './corrida/tipos.ts'
+import { RESSALVAS, SELO } from './corrida/tipos.ts'
 import { useCorrida } from './corrida/useCorrida.ts'
 import SeletorLeilao from './leilao/SeletorLeilao.tsx'
 import { useLeilao } from './leilao/useLeilao.ts'
@@ -25,7 +25,8 @@ export default function App() {
         <Secao id="simulacao" kicker="1 · Simulação" titulo="O mesmo leilão, em 6 arquiteturas ao mesmo tempo"
           explicacao="Escolha a carga: as 6 arquiteturas partem do mesmo estado e recebem a mesma sequência de lances.">
           <Formulario rodando={rodando} ocupado={corrida.fase === 'iniciando' || corrida.fase === 'parando'}
-            erro={corrida.erro} aoIniciar={corrida.iniciar} aoParar={corrida.parar} />
+            erro={corrida.erro} emAndamento={corrida.emAndamento !== null}
+            aoAcompanhar={corrida.acompanhar} aoPararEmAndamento={corrida.pararEmAndamento} aoIniciar={corrida.iniciar} aoParar={corrida.parar} />
         </Secao>
 
         <Secao id="corrida" kicker="2 · Corrida ao vivo" titulo="Quem registra os lances mais rápido?"
@@ -34,6 +35,7 @@ export default function App() {
             <ResumoCorrida foto={corrida.foto} />
             <span className="selo-medido">{SELO}</span>
           </div>
+          <p className="suave ressalvas">{RESSALVAS}</p>
           {(corrida.aviso || (corrida.erro && corrida.foto)) && (
             <div className="corrida-alertas">
               {corrida.erro && corrida.foto && <p className="alerta">{corrida.erro}</p>}

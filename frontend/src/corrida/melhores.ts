@@ -22,26 +22,52 @@ export interface Criterio {
 
 const escrita = (k: 'p50' | 'p95') => (a: ArqFoto) => (temEscrita(a) ? a.escrita[k] : null)
 const consulta = (a: ArqFoto) => (temLeitura(a) ? a.leitura.p50 : null)
+// sem lances enviados não há o que dividir: "—", nunca "0,0"
+const vazao = (a: ArqFoto) => (a.enviados > 0 ? a.lancesPorSegundo : null)
+const porLance = (a: ArqFoto) => (a.enviados > 0 ? a.operacoes.porLance : null)
 const espaco = (a: ArqFoto) => a.espaco?.bytes ?? null
 
 export const CRITERIOS: Criterio[] = [
   { id: 'tipico', rotulo: 'Tempo típico de registro', sentido: 'menor', valor: escrita('p50'), texto: (a) => ms(escrita('p50')(a)) },
   { id: 'pior', rotulo: 'Pior caso', sentido: 'menor', valor: escrita('p95'), texto: (a) => ms(escrita('p95')(a)) },
-  { id: 'vazao', rotulo: 'Lances/s', sentido: 'maior', valor: (a) => a.lancesPorSegundo, texto: (a) => decimal(a.lancesPorSegundo) },
+  { id: 'vazao', rotulo: 'Lances/s', sentido: 'maior', valor: vazao, texto: (a) => decimal(vazao(a)) },
   { id: 'consulta', rotulo: 'Consulta (típico)', sentido: 'menor', valor: consulta, texto: (a) => ms(consulta(a)) },
   { id: 'desatualizadas', rotulo: 'Leituras desatualizadas', sentido: 'menor', valor: pctDesatualizadas, texto: (a) => pct(pctDesatualizadas(a)) },
-  { id: 'operacoes', rotulo: 'Operações por lance', sentido: 'menor', valor: (a) => a.operacoes.porLance, texto: (a) => decimal(a.operacoes.porLance) },
-  { id: 'espaco', rotulo: 'Espaço', sentido: 'menor', valor: espaco, texto: (a) => bytes(espaco(a)) },
+  { id: 'operacoes', rotulo: 'Operações por lance', sentido: 'menor', valor: porLance, texto: (a) => decimal(porLance(a)) },
+  { id: 'espaco', rotulo: 'Espaço (após VACUUM)', sentido: 'menor', valor: espaco, texto: (a) => bytes(espaco(a)) },
 ]
 
-/** Vencedores de cada critério: id do critério → índices das arquiteturas. */
+/** Por que a linha não concorre ao ★ (null: concorre). Só vale quem terminou, está correto e enviou lances. */
+export function motivoExclusao(a: ArqFoto): string | null {
+  if (a.status === 'erro') return 'terminou com erro'
+  if (a.status === 'parada') return 'a corrida foi parada'
+  if (a.status !== 'terminou') return 'ainda não terminou'
+  if (a.integridade?.ok !== true) return a.integridade ? 'resultado incorreto' : 'sem verificação de integridade'
+  if (a.enviados <= 0) return 'nenhum lance enviado'
+  return null
+}
+
+export interface Exclusao { indice: number; nome: string; motivo: string }
+
+/** As linhas fora da disputa, com o motivo (para a nota abaixo do placar). */
+export function excluidas(arqs: ArqFoto[]): Exclusao[] {
+  return arqs.flatMap((a, indice) => {
+    const motivo = motivoExclusao(a)
+    return motivo === null ? [] : [{ indice, nome: a.nome, motivo }]
+  })
+}
+
+/** Vencedores de cada critério (id → índices). Linhas excluídas viram null e nunca ganham. */
 export function vencedores(arqs: ArqFoto[]): Record<string, Set<number>> {
-  return Object.fromEntries(CRITERIOS.map((c) => [c.id, melhores(arqs.map(c.valor), c.sentido)]))
+  return Object.fromEntries(CRITERIOS.map((c) => [
+    c.id,
+    melhores(arqs.map((a) => (motivoExclusao(a) === null ? c.valor(a) : null)), c.sentido),
+  ]))
 }
 
 const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`
 
-/** Texto do tooltip de integridade: o que deu errado, ou por que está certo. */
+/** Texto do tooltip de integridade: a explicação do servidor, ou a nossa se ele não mandou. */
 export function detalheIntegridade(i: NonNullable<ArqFoto['integridade']>): string {
   const problemas = [
     i.lancesPerdidos > 0 ? plural(i.lancesPerdidos, 'lance perdido', 'lances perdidos') : null,
@@ -49,5 +75,5 @@ export function detalheIntegridade(i: NonNullable<ArqFoto['integridade']>): stri
     i.precoFinalCorreto ? null : 'preço final diferente do maior lance aceito',
   ].filter((p): p is string => p !== null)
   const base = problemas.length > 0 ? problemas.join('; ') : 'Um vencedor, preço final correto e nenhum lance perdido'
-  return i.detalhe ? `${base}. ${i.detalhe}` : base
+  return i.detalhe || base
 }

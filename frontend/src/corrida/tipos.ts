@@ -75,3 +75,10 @@ export function corDe(id: string): string {
 
 /** Selo obrigatório ao lado de toda medição da corrida. */
 export const SELO = 'medido nesta máquina; as 6 rodaram juntas e disputaram CPU e banco'
+
+/** Ressalvas honestas da comparação, ao lado do selo. */
+export const RESSALVAS = 'Cuidados ao comparar: as sequências de lances divergem entre as arquiteturas, porque cada uma segue o próprio preço; '
+  + 'um conflito que persiste depois de 3 tentativas conta como lance recusado; e o tempo de escrita do ES + CQRS inclui a confirmação do Kafka.'
+
+/** O que "leitura desatualizada" quer dizer no CRUD simples (que não tem atraso de projeção). */
+export const NOTA_CRUD = 'No CRUD simples, "desatualizada" é a versão voltando para trás: um UPDATE sobrescreve outro, sem controle de concorrência. Não é atraso de cópia.'

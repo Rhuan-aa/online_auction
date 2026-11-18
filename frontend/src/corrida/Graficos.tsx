@@ -22,7 +22,7 @@ export default function Graficos({ foto }: { foto: Foto | null }) {
       <div className="painel grafico-largo">
         <Linhas titulo="Tempo × tamanho do leilão" unidade="ms por lance, média a cada 10 versões"
           series={S.seriesCurva(arqs)} rotuloX="versão do leilão (lances aceitos)" rotuloY="ms" />
-        <p className="suave grafico-nota">Quem relê todos os eventos fica mais lento conforme o leilão cresce; snapshot e cache seguram o tempo.</p>
+        <p className="suave grafico-nota">Compare a inclinação: quem relê todos os eventos tende a subir conforme o leilão cresce.</p>
       </div>
       <div className="painel">
         <Barras titulo="Operações por lance" unidade="banco + Redis, menor é melhor" grupos={S.operacoesPorLance(arqs)} cores={cores} />
@@ -31,8 +31,9 @@ export default function Graficos({ foto }: { foto: Foto | null }) {
         <Barras titulo="Leituras desatualizadas" unidade="% das consultas" grupos={S.desatualizadas(arqs)} cores={cores} />
       </div>
       <div className="painel grafico-largo">
-        <Barras titulo="Espaço usado" unidade="KB no banco ao final" grupos={S.espaco(arqs)} cores={cores} />
+        <Barras titulo="Espaço usado" unidade="KB no banco ao final, depois de VACUUM nas tabelas da arquitetura" grupos={S.espaco(arqs)} cores={cores} />
         {!terminou && <p className="suave grafico-nota">Medido quando a corrida termina.</p>}
+        {terminou && <p className="suave grafico-nota">{S.contagemDoEspaco(arqs)}</p>}
       </div>
     </div>
   )

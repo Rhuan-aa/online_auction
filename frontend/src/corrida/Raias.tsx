@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { decimal, inteiro, ms, pct, pctDesatualizadas, progresso, segundos, temEscrita, textoStatus } from './medidas.ts'
-import { ARQUITETURAS, corDe, type ArqFoto, type Foto } from './tipos.ts'
+import { ARQUITETURAS, corDe, NOTA_CRUD, type ArqFoto, type Foto } from './tipos.ts'
 import type { Fase } from './useCorrida.ts'
 
 interface Props { foto: Foto | null; fase: Fase }
@@ -22,6 +22,9 @@ export default function Raias({ foto, fase }: Props) {
           ? arqs.map((a) => <Raia key={a.id} a={a} />)
           : ARQUITETURAS.map((a) => <RaiaVazia key={a.id} id={a.id} nome={a.nome} descricao={a.descricao} fase={fase} />)}
       </ol>
+      {arqs?.some((a) => a.id === 'crud' && a.leitura.desatualizadas > 0) && (
+        <p className="suave raias-nota">* {NOTA_CRUD}</p>
+      )}
     </div>
   )
 }
@@ -56,12 +59,15 @@ function Raia({ a }: { a: ArqFoto }) {
       <Metrica rotulo="Tempo para registrar um lance (típico · pior caso)">
         {temEscrita(a) ? <>{ms(a.escrita.p50)} <small>· {ms(a.escrita.p95)}</small></> : '—'}
       </Metrica>
-      <Metrica rotulo="Lances por segundo">{decimal(a.lancesPorSegundo)}</Metrica>
+      <Metrica rotulo="Lances por segundo">{decimal(a.enviados > 0 ? a.lancesPorSegundo : null)}</Metrica>
       <Metrica rotulo="Conflitos">
         {inteiro(a.conflitos)}
-        {a.retentativas > 0 && <small title="retentativas"> · {inteiro(a.retentativas)} ret.</small>}
+        {a.retentativas > 0 && <small className="quebra" title="retentativas">{inteiro(a.retentativas)} ret.</small>}
       </Metrica>
-      <Metrica rotulo="Leituras desatualizadas">{pct(pctDesatualizadas(a))}</Metrica>
+      <Metrica rotulo="Leituras desatualizadas">
+        {pct(pctDesatualizadas(a))}
+        {a.id === 'crud' && a.leitura.desatualizadas > 0 && <small className="quebra" title={NOTA_CRUD}>versão que voltou*</small>}
+      </Metrica>
       <div className="raia-status" title={a.erro ?? undefined}>
         <span className="raia-rotulo">Status</span>
         <span className={`estado estado--${a.status}`}>{textoStatus(a)}</span>

@@ -10,7 +10,7 @@ export default function Moldura({ titulo, unidade, legenda, vazio, medida, child
   titulo: string
   unidade?: string
   legenda?: ItemLegenda[]
-  vazio?: boolean
+  vazio?: boolean | string // true: "Sem dados ainda"; texto: a mensagem a mostrar
   medida?: Ref<HTMLElement>
   children: ReactNode
 }) {
@@ -21,7 +21,7 @@ export default function Moldura({ titulo, unidade, legenda, vazio, medida, child
         {unidade && <span className="grafico-unidade"> ({unidade})</span>}
       </figcaption>
       {vazio ? (
-        <p className="grafico-vazio">Sem dados ainda</p>
+        <p className="grafico-vazio">{typeof vazio === 'string' ? vazio : 'Sem dados ainda'}</p>
       ) : (
         <>
           {children}

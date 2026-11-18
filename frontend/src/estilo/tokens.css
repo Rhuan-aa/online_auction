@@ -20,7 +20,6 @@
   --aviso-fundo: rgb(255 184 77 / 0.14);
   --perigo: #ff6b8a;
   --perigo-fundo: rgb(255 107 138 / 0.16);
-  --veu: rgb(10 12 40 / 0.6);
   --sombra: 0 2px 6px rgb(8 10 40 / 0.25), 0 14px 34px rgb(8 10 40 / 0.35);
 
   /* uma cor por arquitetura da corrida, na ordem do contrato: crud, crud-cache, es, es-snapshot, es-cache, es-cqrs.
@@ -31,11 +30,6 @@
   --arq-4: #c4a7ff;
   --arq-5: #3ee6a8;
   --arq-6: #ff8fd1;
-  /* origem do estado (Redis, checkpoint, início, fonte): paleta própria, para não confundir com A/B/C */
-  --origem-1: #c4a7ff;
-  --origem-2: #ff9ecb;
-  --origem-3: rgb(255 255 255 / 0.55);
-  --origem-4: #ffd23f;
   --grade: rgb(255 255 255 / 0.14);
   --eixo: rgb(255 255 255 / 0.45);
 
@@ -46,12 +40,10 @@
   --texto-base: 18px;
   --texto-titulo-secao: clamp(34px, 2.2vw + 14px, 48px);
   --texto-kicker: 12px;
-  --texto-kpi: 40px;
   --borda-largura: 1.5px;
   --raio: 18px;
   --raio-pequeno: 12px;
   --transicao-curta: 150ms;
-  --transicao-slide: 200ms;
   --transicao-longa: 300ms;
   --largura-conteudo: 1240px;
 }
@@ -77,7 +69,6 @@
   --aviso-fundo: #fbefd9;
   --perigo: #c4234f;
   --perigo-fundo: #fbe1e8;
-  --veu: rgb(27 31 94 / 0.4);
   --sombra: 0 1px 2px rgb(27 31 94 / 0.08), 0 8px 24px rgb(27 31 94 / 0.12);
   /* as mesmas 6 matizes, escurecidas: todas com contraste ≥ 4,5:1 sobre branco */
   --arq-1: #c2410c;
@@ -86,10 +77,6 @@
   --arq-4: #6b4aa8;
   --arq-5: #0f7a55;
   --arq-6: #b02f74;
-  --origem-1: #6b4aa8;
-  --origem-2: #b02f74;
-  --origem-3: #6b6f9a;
-  --origem-4: #9a5b00;
   --grade: #dfe1f5;
   --eixo: #6b6f9a;
 }
