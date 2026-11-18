@@ -14,7 +14,7 @@ export default function Raias({ foto, fase }: Props) {
     <div className="raias">
       <div className="raia raias-cabecalho" aria-hidden="true">
         {COLUNAS.map((c, i) => (
-          <span key={c}>{c}{i === 2 && <small> típico · pior caso</small>}</span>
+          <span key={c}>{c}{i === 2 && <small>típico (pior caso embaixo)</small>}</span>
         ))}
       </div>
       <ol className="raias-lista" aria-label="Arquiteturas na corrida">
@@ -57,7 +57,7 @@ function Raia({ a }: { a: ArqFoto }) {
         <span className="raia-contagem">{inteiro(a.enviados)} / {inteiro(a.total)}</span>
       </div>
       <Metrica rotulo="Tempo para registrar um lance (típico · pior caso)">
-        {temEscrita(a) ? <>{ms(a.escrita.p50)} <small>· {ms(a.escrita.p95)}</small></> : '—'}
+        {temEscrita(a) ? <>{ms(a.escrita.p50)}<small className="quebra">pior caso {ms(a.escrita.p95)}</small></> : '—'}
       </Metrica>
       <Metrica rotulo="Lances por segundo">{decimal(a.enviados > 0 ? a.lancesPorSegundo : null)}</Metrica>
       <Metrica rotulo="Conflitos">
@@ -66,7 +66,7 @@ function Raia({ a }: { a: ArqFoto }) {
       </Metrica>
       <Metrica rotulo="Leituras desatualizadas">
         {pct(pctDesatualizadas(a))}
-        {a.id === 'crud' && a.leitura.desatualizadas > 0 && <small className="quebra" title={NOTA_CRUD}>versão que voltou*</small>}
+        {a.id === 'crud' && a.leitura.desatualizadas > 0 && <small className="quebra" title={NOTA_CRUD}>versão voltou*</small>}
       </Metrica>
       <div className="raia-status" title={a.erro ?? undefined}>
         <span className="raia-rotulo">Status</span>

@@ -72,7 +72,7 @@
 .raias { display: flex; flex-direction: column; gap: 0.5rem; }
 .raias-lista { display: flex; flex-direction: column; gap: 0.6rem; margin: 0; padding: 0; list-style: none; }
 .raia {
-  --colunas: minmax(12rem, 1.5fr) minmax(9rem, 1.2fr) 10rem 6.5rem 6rem 7.5rem 9rem;
+  --colunas: minmax(11rem, 1.4fr) minmax(8rem, 1fr) 11rem 7.5rem 6.5rem 8rem 8.5rem;
   display: grid;
   grid-template-columns: var(--colunas);
   align-items: center;
@@ -105,10 +105,11 @@
 .barra { height: 10px; border-radius: 999px; background: var(--superficie-2); overflow: hidden; }
 .barra span { display: block; height: 100%; border-radius: inherit; background: var(--cor, var(--destaque)); transition: width 250ms linear; }
 .raia-contagem { font-family: var(--fonte-mono); font-size: 0.8rem; color: var(--tinta-suave); }
-.raia-metrica { display: flex; flex-direction: column; min-width: 0; }
+.raia-metrica { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+.raia-metrica .raia-valor { overflow: hidden; text-overflow: ellipsis; }
 .raia-valor { font-family: var(--fonte-mono); font-size: 1.05rem; font-weight: 700; white-space: nowrap; }
 .raia-valor small { font-size: 0.8rem; font-weight: 500; color: var(--tinta-suave); }
-.raia-valor small.quebra { display: block; white-space: normal; line-height: 1.2; }
+.raia-valor small.quebra { display: block; margin-top: 0.15rem; white-space: nowrap; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; }
 .raias-nota, .ressalvas, .placar-nota { margin: 0.6rem 0 0; font-size: 0.85rem; max-width: 70ch; }
 .raia-rotulo { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .raia-status { min-width: 0; }
