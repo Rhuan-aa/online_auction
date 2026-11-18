@@ -55,7 +55,7 @@
 .waterfall-rotulos li { display: flex; align-items: center; padding: 0 0.5rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
 /* Aba Auditoria */
-.linha-tempo { display: flex; flex-direction: column; gap: 0.25rem; max-height: 24rem; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
+.linha-tempo { position: relative; display: flex; flex-direction: column; gap: 0.25rem; max-height: 24rem; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
 .evento { border: var(--borda-largura) solid var(--borda); border-radius: var(--raio); background: var(--superficie); }
 .evento button { display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0.5rem 0.75rem; border: 0; border-radius: var(--raio); background: transparent; color: var(--tinta); font: inherit; font-weight: 500; text-align: left; }
 .evento-tipo { font-family: var(--fonte-mono); font-weight: 700; }

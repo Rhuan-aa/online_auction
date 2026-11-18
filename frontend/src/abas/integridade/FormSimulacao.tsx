@@ -3,6 +3,8 @@ import { paraCentavos } from '../../formato.ts'
 import type { Parametros } from '../../simulacao.ts'
 
 export const MAX_CONEXOES = 6
+/** O SSE do palco já ocupa 1 das ~6 conexões do navegador com a leitura (8082): sobram 5 para os leitores. */
+export const MAX_LEITORES = MAX_CONEXOES - 1
 
 export interface Campos {
   licitantes: string; lancesPorLicitante: string; simultaneos: string
@@ -26,7 +28,7 @@ export function validar(c: Campos): Parametros | string {
   const licitantes = inteiro(c.licitantes, 'Licitantes', 1, 200)
   const lances = inteiro(c.lancesPorLicitante, 'Lances por licitante', 1, 500)
   const simultaneos = inteiro(c.simultaneos, 'Lances simultâneos', 1, MAX_CONEXOES)
-  const leitores = inteiro(c.leitores, 'Leitores', 1, MAX_CONEXOES)
+  const leitores = inteiro(c.leitores, 'Leitores', 1, MAX_LEITORES)
   const semente = inteiro(c.semente, 'Semente', 0, 2 ** 31 - 1)
   for (const v of [licitantes, lances, simultaneos, leitores, semente]) if (typeof v === 'string') return v
   const preco = paraCentavos(c.precoInicial)
@@ -53,7 +55,7 @@ export default function FormSimulacao({ valor, onChange, desabilitado }: Props) 
       <label>Licitantes<input inputMode="numeric" value={valor.licitantes} onChange={mudar('licitantes')} /></label>
       <label>Lances por licitante<input inputMode="numeric" value={valor.lancesPorLicitante} onChange={mudar('lancesPorLicitante')} /></label>
       <label>Lances simultâneos (1–{MAX_CONEXOES})<input inputMode="numeric" value={valor.simultaneos} onChange={mudar('simultaneos')} /></label>
-      <label>Leitores (1–{MAX_CONEXOES})<input inputMode="numeric" value={valor.leitores} onChange={mudar('leitores')} /></label>
+      <label>Leitores (1–{MAX_LEITORES})<input inputMode="numeric" value={valor.leitores} onChange={mudar('leitores')} /></label>
       <label>Preço inicial (R$)<input inputMode="decimal" value={valor.precoInicial} onChange={mudar('precoInicial')} /></label>
       <label>Incremento de (R$)<input inputMode="decimal" value={valor.incrementoMin} onChange={mudar('incrementoMin')} /></label>
       <label>até (R$)<input inputMode="decimal" value={valor.incrementoMax} onChange={mudar('incrementoMax')} /></label>

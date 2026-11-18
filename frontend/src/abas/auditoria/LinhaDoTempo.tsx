@@ -9,9 +9,16 @@ interface Props { eventos: EventoGravado[]; selecionada: number }
 export default function LinhaDoTempo({ eventos, selecionada }: Props) {
   const [abertas, setAbertas] = useState<ReadonlySet<number>>(new Set())
   const itens = useRef(new Map<number, HTMLLIElement>())
+  const listaRef = useRef<HTMLOListElement>(null)
 
   useEffect(() => {
-    itens.current.get(selecionada)?.scrollIntoView?.({ block: 'nearest', behavior: movimentoReduzido() ? 'auto' : 'smooth' })
+    // rola só a lista (scrollIntoView arrastaria a página inteira junto)
+    const lista = listaRef.current
+    const item = itens.current.get(selecionada)
+    if (!lista || !item) return
+    const topo = item.offsetTop // a lista é position: relative, então é relativo a ela
+    const alvo = Math.min(Math.max(lista.scrollTop, topo + item.offsetHeight - lista.clientHeight), topo)
+    if (alvo !== lista.scrollTop) lista.scrollTo?.({ top: alvo, behavior: movimentoReduzido() ? 'auto' : 'smooth' })
   }, [selecionada, eventos]) // eventos: o item só existe depois da lista carregada / do evento novo
 
   function alternar(versao: number) {
@@ -19,7 +26,7 @@ export default function LinhaDoTempo({ eventos, selecionada }: Props) {
   }
 
   return (
-    <ol className="linha-tempo" aria-label="Eventos gravados">
+    <ol className="linha-tempo" ref={listaRef} aria-label="Eventos gravados">
       {eventos.map((e) => {
         const aberta = abertas.has(e.versao)
         return (

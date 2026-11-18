@@ -17,6 +17,7 @@ function Resultado({ nome, unidade, rotuloBytes, custo, lista }: { nome: string;
       <h3>{nome}</h3>
       <p>{unidade}: <strong>{custo.requisicoes}</strong></p>
       <p>{rotuloBytes}: <strong>{custo.bytes}</strong></p>
+      <p>Lances medidos (n): <strong>{lista.length}</strong></p>
       <p>Atraso médio desde o envio do lance: <strong>{ms(media(lista))}</strong></p>
       <p>Atraso máximo desde o envio do lance: <strong>{ms(maximo(lista))}</strong></p>
     </div>

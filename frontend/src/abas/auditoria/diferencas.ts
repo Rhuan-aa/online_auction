@@ -1,4 +1,4 @@
-import type { EstadoLeilao, RelatorioReconstrucao } from '../../api.ts'
+import type { ConfiguracaoCache, EstadoLeilao, RelatorioReconstrucao } from '../../api.ts'
 import { dataHora, dinheiro, ROTULO_STATUS } from '../../formato.ts'
 
 export interface Mudanca { campo: keyof EstadoLeilao; de: unknown; para: unknown }
@@ -31,12 +31,14 @@ export interface Passo { texto: string; ms: number; ok: boolean }
 const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`
 
 /** As 4 etapas da reconstrução do cache, com os números e tempos do relatório. */
-export function passosDaReconstrucao(r: RelatorioReconstrucao): Passo[] {
+/** `configuracao` é a do cache de escrita: só a C guarda cópias; nas outras, refazer não deixa cópia nenhuma. */
+export function passosDaReconstrucao(r: RelatorioReconstrucao, configuracao?: ConfiguracaoCache): Passo[] {
   const atras = r.diferentes.length
+  const refeitos = plural(r.refeitos, 'estado', 'estados')
   return [
     { texto: `Fotografia: ${plural(r.leiloes, 'leilão', 'leilões')}`, ms: r.tempos.fotografiaMs, ok: true },
     { texto: `Apagados: ${plural(r.chavesApagadas, 'chave', 'chaves')} do Redis e ${plural(r.checkpointsApagados, 'checkpoint', 'checkpoints')}`, ms: r.tempos.apagarMs, ok: true },
-    { texto: `Refeitos ${plural(r.refeitos, 'estado', 'estados')} a partir dos eventos`, ms: r.tempos.refazerMs, ok: true },
+    { texto: configuracao && configuracao !== 'C' ? `Refeitos ${refeitos} (sem cópias na configuração ${configuracao})` : `Refeitos ${refeitos} a partir dos eventos`, ms: r.tempos.refazerMs, ok: true },
     atras === 0
       ? { texto: 'Idênticos ✓', ms: r.tempos.compararMs, ok: true }
       : { texto: `Cópia atrás da fonte em ${plural(atras, 'leilão', 'leilões')} — corrigida`, ms: r.tempos.compararMs, ok: false },

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api, type RelatorioReconstrucao } from '../../api.ts'
+import { api, type ConfiguracaoCache, type RelatorioReconstrucao } from '../../api.ts'
 import Confirmar from '../../Confirmar.tsx'
 import { movimentoReduzido, passosDaReconstrucao } from './diferencas.ts'
 
@@ -11,6 +11,7 @@ export default function Reconstrucao() {
   const [rodando, setRodando] = useState(false)
   const [relatorio, setRelatorio] = useState<RelatorioReconstrucao | null>(null)
   const [visiveis, setVisiveis] = useState(0)
+  const [configuracao, setConfiguracao] = useState<ConfiguracaoCache | undefined>(undefined)
   const [erro, setErro] = useState<string | null>(null)
 
   // Revela uma etapa a cada 400 ms; o cleanup limpa o timer (também ao desmontar).
@@ -29,7 +30,9 @@ export default function Reconstrucao() {
     setConfirmando(false)
     setRodando(true); setErro(null); setRelatorio(null); setVisiveis(0)
     try {
+      const cfg = await api.lerConfiguracaoCache('escrita').catch(() => undefined) // lida antes: reconstruir não a muda
       const r = await api.reconstruirCache()
+      setConfiguracao(cfg)
       const reduzido = movimentoReduzido() // sem animação: todas as etapas de uma vez
       setVisiveis(reduzido ? 4 : 1)
       setRelatorio(r)
@@ -38,7 +41,7 @@ export default function Reconstrucao() {
     catch (e) { setErro(e instanceof Error ? e.message : String(e)); setRodando(false) }
   }
 
-  const passos = relatorio ? passosDaReconstrucao(relatorio) : []
+  const passos = relatorio ? passosDaReconstrucao(relatorio, configuracao) : []
 
   return (
     <div>

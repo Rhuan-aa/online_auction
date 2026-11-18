@@ -40,6 +40,11 @@ describe('passosDaReconstrucao', () => {
     expect(p[3].ok).toBe(false)
     expect(passosDaReconstrucao(rel({ diferentes: ['x'] }))[3].texto).toBe('Cópia atrás da fonte em 1 leilão — corrigida')
   })
+  test('fora da configuração C o passo de refazer avisa que não há cópias', () => {
+    expect(passosDaReconstrucao(rel(), 'A')[2].texto).toBe('Refeitos 3 estados (sem cópias na configuração A)')
+    expect(passosDaReconstrucao(rel(), 'B')[2].texto).toBe('Refeitos 3 estados (sem cópias na configuração B)')
+    expect(passosDaReconstrucao(rel(), 'C')[2].texto).toBe('Refeitos 3 estados a partir dos eventos')
+  })
   test('singular', () => {
     const p = passosDaReconstrucao(rel({ leiloes: 1, chavesApagadas: 1, checkpointsApagados: 1, refeitos: 1 }))
     expect(p[0].texto).toBe('Fotografia: 1 leilão')
