@@ -66,7 +66,7 @@ export default function App() {
             : rota.aba === 'desempenho'
               ? <AbaDesempenho pergunta={pergunta} passo={rota.passo} />
               : rota.aba === 'rede'
-                ? <AbaRede pergunta={pergunta} {...vivo} usuario={usuario} />
+                ? <AbaRede pergunta={pergunta} passo={rota.passo} {...vivo} usuario={usuario} />
                 : rota.aba === 'auditoria'
                   ? <AbaAuditoria pergunta={pergunta} estado={palco.estado} />
                   : rota.aba === 'arquitetura'

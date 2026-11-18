@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api, type EstadoLeilao } from '../../api.ts'
 import { podeDarLance, proximoLance } from '../../palco/palco.ts'
+import Slide from '../../shell/Slide.tsx'
 import { VENDEDOR, type UsuarioId } from '../../usuarios.ts'
 import { atrasos, estadoDoExperimento, iniciarExperimento, maximo, media, type Custo, type Experimento, type Snapshot } from './experimento.ts'
 
@@ -92,10 +93,8 @@ export default function ExperimentoRede({ relogio, estado, incrementoMinimo, usu
   const atr = snap ? atrasos(snap.percepcoes) : null
 
 
-  return (
-    <section className="bloco-aba">
-      <h2>Experimento: SSE × polling</h2>
-      <p className="suave">Por {DURACAO_S} s, uma assinatura SSE e um laço de polling observam o mesmo leilão. Dê lances pelo botão abaixo e compare o atraso e o custo de cada via.</p>
+  const controles = (
+    <>
       <div className="rajada-controles">
         <label>Intervalo do polling (ms, mínimo {MIN_INTERVALO})
           <input inputMode="numeric" value={intervalo} disabled={rodando} onChange={(e) => setIntervalo(e.target.value)} />
@@ -110,15 +109,26 @@ export default function ExperimentoRede({ relogio, estado, incrementoMinimo, usu
       {!intervaloOk && <p className="erro" role="alert">Informe um intervalo inteiro de pelo menos {MIN_INTERVALO} ms.</p>}
       {rodando && !permissao.pode && <p className="suave">Não dá para dar lance agora: {permissao.motivo}.</p>}
       {aviso && <p className="aviso" role="alert">{aviso}</p>}
-      {snap && atr && (
-        <>
-          <div className="colunas-abc">
-            <Resultado nome="SSE" unidade="Mensagens" rotuloBytes="Bytes" custo={snap.sse} lista={atr.sse} />
-            <Resultado nome="Polling" unidade="Requisições" rotuloBytes="Bytes (JSON da resposta)" custo={snap.polling} lista={atr.polling} />
-          </div>
-          <p className="suave">Atraso não medido: {atr.naoMedidos} lances de outras janelas (ou sem medida válida). {rodando ? 'Medindo…' : 'Experimento encerrado.'}</p>
-        </>
-      )}
-    </section>
+    </>
+  )
+
+  return (
+    <Slide
+      titulo="Experimento: SSE × polling"
+      texto={<p>Por {DURACAO_S} s, uma assinatura SSE e um laço de polling observam o mesmo leilão. Dê lances pelo botão abaixo e compare o atraso e o custo de cada via.</p>}
+      acao={controles}
+    >
+      {snap && atr
+        ? (
+          <>
+            <div className="colunas-abc colunas-abc--duas">
+              <Resultado nome="SSE" unidade="Mensagens" rotuloBytes="Bytes" custo={snap.sse} lista={atr.sse} />
+              <Resultado nome="Polling" unidade="Requisições" rotuloBytes="Bytes (JSON da resposta)" custo={snap.polling} lista={atr.polling} />
+            </div>
+            <p className="suave">Atraso não medido: {atr.naoMedidos} lances de outras janelas (ou sem medida válida). {rodando ? 'Medindo…' : 'Experimento encerrado.'}</p>
+          </>
+        )
+        : <p className="slide-vazio">Os custos e atrasos de SSE e polling aparecem aqui depois de iniciar o experimento.</p>}
+    </Slide>
   )
 }

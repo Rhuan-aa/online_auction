@@ -1,7 +1,7 @@
 import type { Registro } from '../../rede.ts'
 import { layoutWaterfall } from './waterfall.ts'
 
-const LINHA = 22
+const LINHA = 16
 
 /** Últimas 30 requisições numa linha do tempo compartilhada; SSE aparece como ponto. */
 export default function Waterfall({ registros }: { registros: Registro[] }) {
@@ -20,8 +20,8 @@ export default function Waterfall({ registros }: { registros: Registro[] }) {
           const x = l.inicio * 1000
           const detalhe = `${l.rotulo} · ${l.registro.status} · ${Math.round(l.registro.ms)} ms · ${l.registro.bytes} B`
           return l.ponto
-            ? <rect key={l.registro.id} x={Math.max(0, x - 3)} y={i * LINHA + 5} width={6} height={LINHA - 10} rx={2} style={{ fill: l.cor }}><title>{detalhe}</title></rect>
-            : <rect key={l.registro.id} x={x} y={i * LINHA + 4} width={Math.max(3, l.largura * 1000)} height={LINHA - 8} rx={2} style={{ fill: l.cor }}><title>{detalhe}</title></rect>
+            ? <rect key={l.registro.id} x={Math.max(0, x - 3)} y={i * LINHA + 3} width={6} height={LINHA - 6} rx={2} style={{ fill: l.cor }}><title>{detalhe}</title></rect>
+            : <rect key={l.registro.id} x={x} y={i * LINHA + 3} width={Math.max(3, l.largura * 1000)} height={LINHA - 6} rx={2} style={{ fill: l.cor }}><title>{detalhe}</title></rect>
         })}
       </svg>
     </div>

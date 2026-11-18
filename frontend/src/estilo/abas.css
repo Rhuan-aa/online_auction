@@ -137,3 +137,5 @@
 .tempo-versao .bloco-aba { margin-bottom: 0; }
 .config-ativa { font-size: 1.5rem; }
 .historico-comparacoes { flex-direction: row; flex-wrap: wrap; }
+.colunas-abc--duas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.slide--dividido .aviso-fixo { margin-bottom: 0; }

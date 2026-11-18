@@ -1,7 +1,9 @@
 import type { EstadoLeilao } from '../../api.ts'
 import Barras from '../../graficos/Barras.tsx'
 import { limpar, resumoPorRota } from '../../rede.ts'
-import Aba from '../../shell/Aba.tsx'
+import Passos from '../../shell/Passos.tsx'
+import PorQue from '../../shell/PorQue.tsx'
+import Slide from '../../shell/Slide.tsx'
 import type { UsuarioId } from '../../usuarios.ts'
 import ExperimentoRede from './ExperimentoRede.tsx'
 import { useRegistros } from './useRegistros.ts'
@@ -14,21 +16,27 @@ const PORQUE = (
   </p>
 )
 
-interface Props { pergunta: string; agora: number; estado: EstadoLeilao | null; incrementoMinimo: number | null; usuario: UsuarioId }
+interface Props { pergunta: string; passo: number; agora: number; estado: EstadoLeilao | null; incrementoMinimo: number | null; usuario: UsuarioId }
 
-export default function AbaRede({ pergunta, agora, estado, incrementoMinimo, usuario }: Props) {
+/** Pergunta 3, em 4 passos (secoes.ts): custo por rota, últimas requisições, experimento SSE × polling e "por que". */
+export default function AbaRede({ pergunta, passo, agora, estado, incrementoMinimo, usuario }: Props) {
   const [lista, recarregar] = useRegistros()
   const resumo = resumoPorRota(lista)
 
   return (
-    <Aba pergunta={pergunta} adr="ADR-001" porQue={PORQUE}>
-      <p className="aviso-fixo">Medimos o corpo das respostas; cabeçalhos HTTP não entram</p>
-
-      <section className="bloco-aba">
-        <h2>Por rota</h2>
-        <div><button type="button" className="botao" onClick={() => { limpar(); recarregar() }}>Limpar</button></div>
+    <Passos passo={passo}>
+      <Slide
+        titulo={pergunta}
+        texto={<p>Cada rota que o navegador chamou, com o total de bytes e o tempo médio.</p>}
+        acao={(
+          <>
+            <p className="aviso-fixo">Medimos o corpo das respostas; cabeçalhos HTTP não entram</p>
+            <button type="button" className="botao" onClick={() => { limpar(); recarregar() }}>Limpar</button>
+          </>
+        )}
+      >
         {resumo.length === 0
-          ? <p className="suave">Nenhuma requisição medida ainda.</p>
+          ? <p className="slide-vazio">Nenhuma requisição medida ainda.</p>
           : (
             <>
               <Barras titulo="Bytes por rota" unidade="bytes" cores={{ bytes: 'var(--serie-a)' }}
@@ -43,14 +51,12 @@ export default function AbaRede({ pergunta, agora, estado, incrementoMinimo, usu
               </table>
             </>
           )}
-      </section>
-
-      <section className="bloco-aba">
-        <h2>Últimas 30 requisições</h2>
+      </Slide>
+      <Slide titulo="As últimas 30 requisições" layout="largo">
         <Waterfall registros={lista} />
-      </section>
-
+      </Slide>
       <ExperimentoRede relogio={agora} estado={estado} incrementoMinimo={incrementoMinimo} usuario={usuario} />
-    </Aba>
+      <PorQue adr="ADR-001">{PORQUE}</PorQue>
+    </Passos>
   )
 }

@@ -37,7 +37,7 @@ export const SECOES: Secao[] = [
     ],
   },
   {
-    id: 'rede', rotulo: 'Rede', pergunta: 'Quanto custa ficar ao vivo?', convertida: false,
+    id: 'rede', rotulo: 'Rede', pergunta: 'Quanto custa ficar ao vivo?', convertida: true,
     passos: [
       { id: 'custo', titulo: 'Custo por rota' },
       { id: 'requisicoes', titulo: 'Últimas 30 requisições' },
