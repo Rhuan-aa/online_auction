@@ -1,17 +1,9 @@
 package br.edu.ifsp.leilao.ferramentas.reconstrutor;
 
-import br.edu.ifsp.leilao.estado.CacheEstadoLeilao;
-import br.edu.ifsp.leilao.estado.Checkpoint;
-import br.edu.ifsp.leilao.estado.EstadoLeilao;
-import br.edu.ifsp.leilao.estado.LeitorEventos;
-import br.edu.ifsp.leilao.estado.ObterEstado;
+import br.edu.ifsp.leilao.estado.ReconstrucaoCache;
+import br.edu.ifsp.leilao.estado.ReconstrucaoCache.Relatorio;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -35,17 +27,10 @@ import org.springframework.context.annotation.Bean;
 @SpringBootApplication(scanBasePackages = {"br.edu.ifsp.leilao.ferramentas.reconstrutor", "br.edu.ifsp.leilao.estado"})
 public class ReconstrutorCache implements CommandLineRunner {
 
-    private final LeitorEventos eventos;
-    private final ObterEstado obterEstado;
-    private final CacheEstadoLeilao cache;
-    private final Checkpoint checkpoint;
+    private final ReconstrucaoCache reconstrucao;
 
-    public ReconstrutorCache(LeitorEventos eventos, ObterEstado obterEstado, CacheEstadoLeilao cache,
-                             Checkpoint checkpoint) {
-        this.eventos = eventos;
-        this.obterEstado = obterEstado;
-        this.cache = cache;
-        this.checkpoint = checkpoint;
+    public ReconstrutorCache(ReconstrucaoCache reconstrucao) {
+        this.reconstrucao = reconstrucao;
     }
 
     public static void main(String[] args) {
@@ -64,34 +49,15 @@ public class ReconstrutorCache implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        List<UUID> leiloes = eventos.idsDosLeiloes();
-        Map<UUID, EstadoLeilao> antes = obterEstado.obterVariosParaConsulta(leiloes);
-        System.out.printf("1. Fotografia: %d leilões, como as consultas os veem hoje.%n", antes.size());
-
-        long chaves = cache.apagarTudo();
-        int checkpoints = checkpoint.apagarTodos();
-        System.out.printf("2. Apagados: %d chaves no Redis e %d checkpoints.%n", chaves, checkpoints);
-
-        Map<UUID, EstadoLeilao> refeitos = new LinkedHashMap<>();
-        for (UUID leilaoId : leiloes) {
-            obterEstado.obterDaFonte(leilaoId).ifPresent(estado -> {
-                cache.gravar(leilaoId, estado);                         // também recoloca no índice de abertos
-                checkpoint.gravarSeNecessario(leilaoId, 0, estado);     // mesma regra de sempre: a partir de N ou se terminou
-                refeitos.put(leilaoId, estado);
-            });
-        }
-        cache.repovoarAbertos(refeitos);
-        System.out.printf("3. Refeitos %d estados a partir do Event Store.%n", leiloes.size());
-
-        Map<UUID, EstadoLeilao> depois = obterEstado.obterVariosParaConsulta(leiloes);
-        List<UUID> diferentes = leiloes.stream()
-                .filter(id -> !Objects.equals(antes.get(id), depois.get(id)))
-                .toList();
-        if (diferentes.isEmpty()) {
+        Relatorio r = reconstrucao.reconstruir();
+        System.out.printf("1. Fotografia: %d leilões, como as consultas os veem hoje.%n", r.leiloes());
+        System.out.printf("2. Apagados: %d chaves no Redis e %d checkpoints.%n", r.chavesApagadas(), r.checkpointsApagados());
+        System.out.printf("3. Refeitos %d estados a partir do Event Store.%n", r.leiloes());
+        if (r.diferentes().isEmpty()) {
             System.out.println("4. Idênticos: as cópias de antes eram iguais ao que os eventos dizem.");
         } else {
             System.out.printf("4. Cópia atrás da fonte (agora corrigida) em %d leilão(ões): %s%n",
-                    diferentes.size(), diferentes);
+                    r.diferentes().size(), r.diferentes());
         }
     }
 }
