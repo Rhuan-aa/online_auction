@@ -29,3 +29,17 @@
 .checagens-grandes span { font-size: 2rem; font-weight: 700; vertical-align: middle; }
 .checagens-grandes .passou { color: var(--sucesso); }
 .checagens-grandes .falhou { color: var(--perigo); }
+
+/* Aba Desempenho */
+.config-grande { font-size: 2.25rem; font-weight: 700; margin: 0; font-family: var(--fonte-mono); }
+.aviso { color: var(--aviso); font-weight: 700; margin: 0; }
+.colunas-abc { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; margin: 0.75rem 0; }
+.coluna-abc { padding: 0.75rem; border: var(--borda-largura) solid var(--borda); border-radius: var(--raio); background: var(--superficie); }
+.coluna-abc h3 { margin: 0 0 0.5rem; font-size: 1rem; }
+.coluna-abc p { margin: 0.15rem 0; }
+.coluna-abc--vez { border-color: var(--tinta); box-shadow: 0 0 0 3px var(--tinta); }
+.graficos-comparacao { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.5rem; }
+.historico-comparacoes { display: flex; flex-direction: column; gap: 0.4rem; margin: 0; padding: 0; list-style: none; }
+.historico-comparacoes button[aria-pressed='true'] { background: var(--tinta); color: var(--fundo); border-color: var(--tinta); }
+.ao-vivo { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; }
+.ao-vivo-porta h3 { margin: 0 0 0.5rem; font-size: 1rem; }

@@ -6,7 +6,7 @@ import { ErroHttp, type Api, type ConfiguracaoCache, type Metrica, type Servico 
 export const BASES = ['redis', 'checkpoint', 'inicio', 'fonte'] as const
 export type Base = typeof BASES[number]
 
-interface Acumulado { count: number; total: number }
+export interface Acumulado { count: number; total: number }
 
 export interface Foto { obter: Acumulado; bases: Record<Base, Acumulado> }
 
@@ -46,13 +46,13 @@ export function diferenca(antes: Foto, depois: Foto): ResumoBackend {
   }
 }
 
-const CAMINHO: Record<Servico, string> = { escrita: 'comando', leitura: 'consulta' }
+export const CAMINHO: Record<Servico, string> = { escrita: 'comando', leitura: 'consulta' }
 
 /**
  * O backend registra os medidores na primeira medição, com a configuração como tag; sem medidor
  * para a combinação de tags o Actuator responde 404. Isso é "ainda não aconteceu": zero.
  */
-async function acumuladoDe(api: Api, servico: Servico, nome: string, tags: string[]): Promise<Acumulado> {
+export async function acumuladoDe(api: Api, servico: Servico, nome: string, tags: string[]): Promise<Acumulado> {
   try {
     return acumulado(await api.lerMetrica(servico, nome, tags))
   } catch (e) {

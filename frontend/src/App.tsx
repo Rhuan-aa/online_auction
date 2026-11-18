@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react'
+import AbaDesempenho from './abas/desempenho/AbaDesempenho.tsx'
 import AbaIntegridade from './abas/integridade/AbaIntegridade.tsx'
 import GavetaLeiloes from './palco/GavetaLeiloes.tsx'
 import GavetaNovoLeilao from './palco/GavetaNovoLeilao.tsx'
 import Palco from './palco/Palco.tsx'
-import PainelAdm from './PainelAdm.tsx'
 import { usePalco } from './palco/usePalco.ts'
 import { ABAS, hrefDe, useRota } from './rota.ts'
 import Aba from './shell/Aba.tsx'
@@ -56,11 +56,9 @@ export default function App() {
         <main className="conteudo">
           {rota.aba === 'integridade'
             ? <AbaIntegridade pergunta={aba.pergunta} estado={palco.estado} incrementoMinimo={palco.incrementoMinimo} />
-            : (
-              <Aba pergunta={aba.pergunta} porQue={null}>
-                {rota.aba === 'desempenho' && <PainelAdm />}
-              </Aba>
-            )}
+            : rota.aba === 'desempenho'
+              ? <AbaDesempenho pergunta={aba.pergunta} />
+              : <Aba pergunta={aba.pergunta} porQue={null} />}
         </main>
       </div>
       {gavetaAberta === 'leiloes' && <GavetaLeiloes aba={rota.aba} aoFechar={fechar} />}
