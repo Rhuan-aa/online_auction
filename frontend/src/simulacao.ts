@@ -3,6 +3,7 @@
 // (as métricas ficam em metricas.ts). A parte pura (gerador, plano, percentil, checagens) é
 // testada em test/simulacao.test.ts; a api entra por parâmetro, para os testes não dependerem do navegador.
 import type { Api, EstadoLeilao, LanceHistorico, ResultadoLance } from './api.ts'
+import { versoesContiguas } from './abas/integridade/rajada.ts'
 import { diferenca, esperarLeituraAssentar, fotografarServicos, lerConfiguracao, type ResumoBackend } from './metricas.ts'
 
 /** Parâmetros da simulação. Dinheiro em centavos. */
@@ -161,11 +162,13 @@ export interface Checagens {
   trilhaCompleta: boolean
   /** Versões e valores do histórico estritamente crescentes. */
   ordem: boolean
+  /** Versões do Event Store 1..n, sem buraco nem repetição. */
+  versoesContiguas: boolean
   problemas: string[]
 }
 
 export function checar(
-  final: Pick<EstadoLeilao, 'liderId' | 'precoAtual'>, historico: LanceHistorico[], aceitos: LanceAceito[],
+  final: Pick<EstadoLeilao, 'liderId' | 'precoAtual'>, historico: LanceHistorico[], aceitos: LanceAceito[], contiguas = true,
 ): Checagens {
   const problemas: string[] = []
 
@@ -199,7 +202,9 @@ export function checar(
     }
   }
 
-  return { umVencedor, trilhaCompleta, ordem, problemas }
+  if (!contiguas) problemas.push('As versões do Event Store têm buraco ou repetição.')
+
+  return { umVencedor, trilhaCompleta, ordem, versoesContiguas: contiguas, problemas }
 }
 
 // ---------------------------------------------------------------- execução
@@ -230,7 +235,14 @@ export interface Execucao {
   configuracao: string
   parametros: Parametros
   leilaoId: string
-  integridade: { aceitos: number; recusados: number; conflitos: number; erros: number; checagens: Checagens }
+  integridade: {
+    aceitos: number; recusados: number; conflitos: number; erros: number
+    /** Soma de (tentativas - 1) de todos os lances: quantas vezes o servidor refez por colisão de versão. */
+    colisoes: number
+    checagens: Checagens
+  }
+  /** Cada lance enviado, com `t` em ms desde o início do disparo (alimenta as raias). */
+  lances: { t: number; licitanteId: string; resultado: ResultadoLance['tipo'] }[]
   escrita: { p50: number | null; p95: number | null; lancesPorSegundo: number; backend: ResumoBackend }
   leitura: { p50: number | null; p95: number | null; consultas: number; errosConsulta: number; backend: ResumoBackend }
   /** Mediana do tempo no navegador por faixa de versão (nº de eventos do leilão). */
@@ -311,12 +323,17 @@ export async function executar(
     let precoConhecido = p.precoInicial
     let errosConsulta = 0
     let lancesTerminaram = false
+    let colisoes = 0
+    const lancesFeitos: Execucao['lances'] = []
+    let inicio = 0
 
     const enviar = async (planejado: LancePlanejado) => {
       const lance = { licitanteId: planejado.licitanteId, valor: valorDoLance(planejado, precoConhecido, p) }
       const t0 = performance.now()
       const r: ResultadoLance = await api.darLance(leilaoId, lance)
       const ms = performance.now() - t0
+      lancesFeitos.push({ t: performance.now() - inicio, licitanteId: lance.licitanteId, resultado: r.tipo })
+      if (r.tipo !== 'erro') colisoes += Math.max(0, r.tentativas - 1)
       progresso.enviados++
       if (r.tipo === 'aceito') {
         progresso.aceitos++
@@ -345,7 +362,7 @@ export async function executar(
       }
     }
 
-    const inicio = performance.now()
+    inicio = performance.now()
     const leitores = Array.from({ length: p.leitores }, leitor)
     await dispararLances(plano, p.simultaneos, enviar, () => sinal.aborted)
     const duracaoS = (performance.now() - inicio) / 1000
@@ -358,7 +375,8 @@ export async function executar(
     const ultimaVersao = aceitos.reduce((m, a) => Math.max(m, a.versao), 0)
     const final = await api.consultarLeilao(leilaoId, ultimaVersao || undefined)
     const historico = await api.historicoLances(leilaoId)
-    const checagens = checar(final, historico, aceitos)
+    const eventos = await api.eventos(leilaoId)
+    const checagens = checar(final, historico, aceitos, versoesContiguas(eventos))
 
     progresso.fase = 'Lendo as métricas'
     await esperarLeituraAssentar(api)
@@ -373,8 +391,9 @@ export async function executar(
       leilaoId,
       integridade: {
         aceitos: progresso.aceitos, recusados: progresso.recusados,
-        conflitos: progresso.conflitos, erros: progresso.erros, checagens,
+        conflitos: progresso.conflitos, erros: progresso.erros, colisoes, checagens,
       },
+      lances: lancesFeitos,
       escrita: {
         p50: percentil(ms(tempoEscrita), 50),
         p95: percentil(ms(tempoEscrita), 95),

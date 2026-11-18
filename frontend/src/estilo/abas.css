@@ -1,0 +1,31 @@
+/* Abas da apresentação: Integridade (rajada, escada de versões, checagens). Só tokens. */
+.bloco-aba { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem; }
+.rajada-controles { display: flex; flex-wrap: wrap; gap: 1rem; align-items: end; }
+.kpis { display: flex; flex-wrap: wrap; gap: 2rem; }
+
+.escada { display: flex; flex-direction: column; gap: 0.75rem; }
+.degrau {
+  display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-start;
+  padding: 0.75rem; border: var(--borda-largura) solid var(--borda); border-radius: var(--raio); background: var(--superficie);
+}
+.degrau-alto { border-color: var(--sucesso); background: var(--sucesso-fundo); }
+.degrau-versao { font-family: var(--fonte-mono); font-weight: 700; min-width: 3.5rem; color: var(--tinta); }
+.degrau ul { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+.ficha {
+  display: flex; flex-direction: column; gap: 0.1rem; padding: 0.4rem 0.6rem; font-size: 0.85rem;
+  border: var(--borda-largura) solid var(--tinta-suave); border-radius: var(--raio); background: var(--superficie); color: var(--tinta);
+}
+.ficha-aceito { border-color: var(--sucesso); }
+.ficha-recusado { border-color: var(--aviso); }
+.ficha-conflito { border-color: var(--perigo); }
+.ficha-erro { border-color: var(--tinta-suave); }
+.ficha-retentativa { color: var(--aviso); }
+.ficha-resultado { font-weight: 700; }
+.ficha-aceito .ficha-resultado { color: var(--sucesso); }
+.ficha-recusado .ficha-resultado { color: var(--aviso); }
+.ficha-conflito .ficha-resultado { color: var(--perigo); }
+
+.checagens-grandes { display: flex; flex-wrap: wrap; gap: 0.75rem 2rem; margin: 0; padding: 0; list-style: none; font-size: 1.1rem; }
+.checagens-grandes span { font-size: 2rem; font-weight: 700; vertical-align: middle; }
+.checagens-grandes .passou { color: var(--sucesso); }
+.checagens-grandes .falhou { color: var(--perigo); }

@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import AbaIntegridade from './abas/integridade/AbaIntegridade.tsx'
 import GavetaLeiloes from './palco/GavetaLeiloes.tsx'
 import GavetaNovoLeilao from './palco/GavetaNovoLeilao.tsx'
 import Palco from './palco/Palco.tsx'
@@ -53,9 +54,13 @@ export default function App() {
           aoAbrirNovo={() => setGaveta('novo')}
         />
         <main className="conteudo">
-          <Aba pergunta={aba.pergunta} porQue={null}>
-            {rota.aba === 'desempenho' && <PainelAdm />}
-          </Aba>
+          {rota.aba === 'integridade'
+            ? <AbaIntegridade pergunta={aba.pergunta} estado={palco.estado} incrementoMinimo={palco.incrementoMinimo} />
+            : (
+              <Aba pergunta={aba.pergunta} porQue={null}>
+                {rota.aba === 'desempenho' && <PainelAdm />}
+              </Aba>
+            )}
         </main>
       </div>
       {gavetaAberta === 'leiloes' && <GavetaLeiloes aba={rota.aba} aoFechar={fechar} />}

@@ -2,12 +2,13 @@
 // desempenho na configuração ativa (A/B/C) e guarda as execuções para comparar lado a lado.
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { api, type Servico } from './api.ts'
-import { dataHora, dinheiro, paraCentavos } from './formato.ts'
+import FormSimulacao, { type Campos, MAX_CONEXOES, PADRAO, validar } from './abas/integridade/FormSimulacao.tsx'
+import { dataHora, dinheiro } from './formato.ts'
 import Grafico, { type Serie } from './Grafico.tsx'
 import { carregarHistorico, chaveSimulacao, MAXIMO_HISTORICO, rotuloSimulacao, salvarHistorico } from './historico.ts'
 import { hrefDe } from './rota.ts'
 import { type Base, BASES, lerConfiguracao, type ResumoBackend } from './metricas.ts'
-import { ErroSimulacao, executar, type Execucao, type Parametros, type Progresso } from './simulacao.ts'
+import { ErroSimulacao, executar, type Execucao, type Progresso } from './simulacao.ts'
 
 const CONFIGURACOES = ['A', 'B', 'C'] as const
 type Configuracao = typeof CONFIGURACOES[number]
@@ -22,46 +23,6 @@ const COMO: Record<Configuracao, string> = {
   B: 'Só checkpoint: parte da cópia no Postgres (gravada a cada 50 eventos) e lê os eventos depois dela.',
   C: 'Redis + checkpoint: parte da cópia no Redis e lê só o que falta (quase sempre nada).',
 }
-const MAX_CONEXOES = 6
-
-interface Campos {
-  licitantes: string; lancesPorLicitante: string; simultaneos: string
-  precoInicial: string; incrementoMin: string; incrementoMax: string
-  leitores: string; semente: string
-  acompanharPreco: boolean
-}
-
-const PADRAO: Campos = {
-  licitantes: '20', lancesPorLicitante: '10', simultaneos: '6',
-  precoInicial: '100,00', incrementoMin: '1,00', incrementoMax: '50,00',
-  leitores: '4', semente: '42', acompanharPreco: true,
-}
-
-/** Campos → parâmetros; devolve a mensagem de erro se algum for inválido. */
-function validar(c: Campos): Parametros | string {
-  const inteiro = (texto: string, nome: string, min: number, max: number): number | string => {
-    const n = Number(texto)
-    return Number.isInteger(n) && n >= min && n <= max ? n : `${nome}: informe um inteiro de ${min} a ${max}.`
-  }
-  const licitantes = inteiro(c.licitantes, 'Licitantes', 1, 200)
-  const lances = inteiro(c.lancesPorLicitante, 'Lances por licitante', 1, 500)
-  const simultaneos = inteiro(c.simultaneos, 'Lances simultâneos', 1, MAX_CONEXOES)
-  const leitores = inteiro(c.leitores, 'Leitores', 1, MAX_CONEXOES)
-  const semente = inteiro(c.semente, 'Semente', 0, 2 ** 31 - 1)
-  for (const v of [licitantes, lances, simultaneos, leitores, semente]) if (typeof v === 'string') return v
-  const preco = paraCentavos(c.precoInicial)
-  const incMin = paraCentavos(c.incrementoMin)
-  const incMax = paraCentavos(c.incrementoMax)
-  if (preco === null) return 'Informe um preço inicial maior que zero.'
-  if (incMin === null || incMax === null) return 'Informe a faixa de incremento com valores maiores que zero.'
-  if (incMax < incMin) return 'O fim da faixa de incremento precisa ser maior ou igual ao início.'
-  return {
-    licitantes: licitantes as number, lancesPorLicitante: lances as number, simultaneos: simultaneos as number,
-    precoInicial: preco, incrementoMin: incMin, incrementoMax: incMax,
-    leitores: leitores as number, semente: semente as number, acompanharPreco: c.acompanharPreco,
-  }
-}
-
 const ms = (v: number | null | undefined) => (v == null ? '—' : `${v.toFixed(1)} ms`)
 const num = (v: number | null | undefined, casas = 1) =>
   v == null ? '—' : v.toLocaleString('pt-BR', { maximumFractionDigits: casas })
@@ -165,9 +126,6 @@ export default function PainelAdm() {
   useEffect(atualizarConfig, [atualizarConfig])
   useEffect(() => () => controle.current?.abort(), []) // sair da tela interrompe a simulação
 
-  const mudar = (campo: Exclude<keyof Campos, 'acompanharPreco'>) => (e: { target: { value: string } }) =>
-    setCampos((c) => ({ ...c, [campo]: e.target.value }))
-
   const configOk = config?.escrita != null && config.escrita === config.leitura
   const avisoConfig = !config ? null
     : !config.escrita || !config.leitura
@@ -253,21 +211,7 @@ export default function PainelAdm() {
 
       <h2>Simulação</h2>
       <form className="simulacao" onSubmit={iniciar}>
-        <fieldset disabled={rodando}>
-          <label>Licitantes<input inputMode="numeric" value={campos.licitantes} onChange={mudar('licitantes')} /></label>
-          <label>Lances por licitante<input inputMode="numeric" value={campos.lancesPorLicitante} onChange={mudar('lancesPorLicitante')} /></label>
-          <label>Lances simultâneos (1–{MAX_CONEXOES})<input inputMode="numeric" value={campos.simultaneos} onChange={mudar('simultaneos')} /></label>
-          <label>Leitores (1–{MAX_CONEXOES})<input inputMode="numeric" value={campos.leitores} onChange={mudar('leitores')} /></label>
-          <label>Preço inicial (R$)<input inputMode="decimal" value={campos.precoInicial} onChange={mudar('precoInicial')} /></label>
-          <label>Incremento de (R$)<input inputMode="decimal" value={campos.incrementoMin} onChange={mudar('incrementoMin')} /></label>
-          <label>até (R$)<input inputMode="decimal" value={campos.incrementoMax} onChange={mudar('incrementoMax')} /></label>
-          <label>Semente<input inputMode="numeric" value={campos.semente} onChange={mudar('semente')} /></label>
-          <label className="opcao" title="Envia o maior entre o valor planejado e o último preço conhecido + incremento mínimo. Desligado, quase todo lance é recusado e o leilão fica curto.">
-            <input type="checkbox" checked={campos.acompanharPreco}
-              onChange={(e) => setCampos((c) => ({ ...c, acompanharPreco: e.target.checked }))} />
-            Lance acompanha o preço (leilão longo)
-          </label>
-        </fieldset>
+        <FormSimulacao valor={campos} onChange={setCampos} desabilitado={rodando} />
         <div className="simulacao-botoes">
           {rodando
             ? <button type="button" className="perigo" onClick={() => controle.current?.abort()}>■ Parar</button>
