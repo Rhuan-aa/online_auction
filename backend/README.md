@@ -15,7 +15,20 @@ Não use `-am` junto com `spring-boot:run`: ele tenta rodar também os módulos 
 
 Os serviços expõem `/actuator/health`. Escrita e leitura expõem também `/actuator/metrics` (ex.: `leilao.estado.obter` e `leilao.estado.eventos.lidos`).
 
-Para comparar as configurações do cache (ADR-003), suba escrita e leitura com a mesma `CACHE_CONFIGURACAO`: `A` (sem cópia), `B` (só checkpoint) ou `C` (Redis + checkpoint, o padrão).
+Para comparar as configurações do cache (ADR-003): `A` (sem cópia), `B` (só checkpoint) ou `C` (Redis + checkpoint, o padrão). `CACHE_CONFIGURACAO` (`leilao.cache.configuracao`) é só o valor **inicial**: a troca em execução é feita pelas rotas abaixo, sem reiniciar.
+
+## Rotas de administração e apoio
+
+| Serviço | Rota | O que faz |
+|---|---|---|
+| escrita e leitura | `GET /admin/cache/configuracao` | Configuração ativa: `{"configuracao":"C"}` |
+| escrita e leitura | `PUT /admin/cache/configuracao` | Troca A/B/C. Ao ligar o Redis (C), ele é limpo antes; se estiver fora do ar, responde 503 `REDIS_INDISPONIVEL` e a configuração não muda. Cada serviço troca só a sua: o front chama os dois |
+| escrita | `POST /admin/cache/reconstruir` | Apaga Redis e checkpoints, refaz a partir dos eventos e devolve o relatório da comparação |
+| leitura | `GET /leiloes/{id}/eventos` | Eventos do leilão, para a linha do tempo da Auditoria |
+| leitura | `GET /leiloes/{id}?ateVersao=N` | Estado do leilão na versão N (viagem no tempo) |
+| leitura | `GET /infra/saude` | Estado de Postgres, Redis e Kafka; responde sempre 200, com o status de cada um |
+
+`POST /leiloes/{id}/lances` também devolve `tentativas` (quantas vezes o comando foi tentado por conflito de versão), e as mensagens SSE trazem `evento: {tipo, versao}`. As rotas `/admin` e o actuator aceitam CORS de `http://localhost:5173`.
 
 ## Módulos
 

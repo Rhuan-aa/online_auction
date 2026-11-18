@@ -10,7 +10,7 @@ Plataforma de leilão online com lances em tempo real. Os comandos geram eventos
 
 ```
 backend/    Java 21 + Spring Boot 4, Maven multi-módulo  → backend/README.md
-frontend/   Vite + React + TypeScript                     → frontend/README.md
+frontend/   Vite + React + TypeScript (UI de apresentação) → frontend/README.md
 infra/      docker-compose (Postgres, Redis, Kafka, Kafka UI) + SQL
 docs/       plano, divisão, C4, ADRs
 .github/    CI (backend, frontend e infra em jobs separados)
@@ -28,9 +28,9 @@ cd frontend && npm install && npm run dev          # front em http://localhost:5
 
 | Serviço | Endereço | Descrição |
 |---|---|---|
-| leilao-escrita | http://localhost:8081 | API de comandos: agregado, Event Store, outbox, atualização das cópias do estado |
-| leilao-leitura | http://localhost:8082 | API de consulta (REST + SSE) pelo cache; notificações |
-| agendador-leilao | http://localhost:8084 | Worker que abre e encerra os leilões no horário |
+| leilao-escrita | http://localhost:8081 | API de comandos: agregado, Event Store, outbox, atualização das cópias do estado. Também `GET`/`PUT /admin/cache/configuracao` (troca A/B/C sem reiniciar) e `POST /admin/cache/reconstruir` |
+| leilao-leitura | http://localhost:8082 | API de consulta (REST + SSE) pelo cache; notificações. Também `GET /leiloes/{id}/eventos`, `GET /leiloes/{id}?ateVersao=N` (auditoria), `GET /infra/saude` e `GET`/`PUT /admin/cache/configuracao` |
+| agendador-leilao | http://localhost:8084 | Worker que abre e encerra os leilões no horário (`/actuator/health` com CORS para o front) |
 | PostgreSQL | `localhost:5432`, banco `leilao` | Event Store (`event_store`) e checkpoints (`checkpoint`); usuários em `backend/.env.example` |
 | Redis | `localhost:6379` | Cópia do estado e índice de abertos; descartável, sem volume |
 | Kafka | `localhost:9092` | Tópicos `leilao.eventos` e `leilao.comandos-agendador` |

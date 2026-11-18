@@ -135,7 +135,7 @@ Há três jeitos de pedir o estado:
 - Elas são descartáveis: o `ReconstrutorCache` (módulo `ferramentas`) apaga e refaz tudo a partir dos eventos.
 - Se o Redis cair, tudo continua funcionando pelo checkpoint e pelos eventos, só mais devagar. O health do Redis fica desligado para não marcar o serviço como fora do ar.
 - O checkpoint fica num schema próprio, separado do `event_store`, porque pode ser apagado (ADR-002). O `command_svc` grava e apaga; o `query_svc` só lê.
-- **Configurações A/B/C** (`CACHE_CONFIGURACAO`, a mesma nos dois serviços): `A` = sem cópia, `B` = só checkpoint, `C` = Redis + checkpoint (padrão). Uma cópia desligada se comporta como vazia, então o código segue o mesmo caminho.
+- **Configurações A/B/C** (`CACHE_CONFIGURACAO` é o valor inicial; `PUT /admin/cache/configuracao` troca em execução, nos dois serviços): `A` = sem cópia, `B` = só checkpoint, `C` = Redis + checkpoint (padrão). Uma cópia desligada se comporta como vazia, então o código segue o mesmo caminho.
 - **Métricas** em `/actuator/metrics`, marcadas com a configuração ativa: `leilao.estado.obter` (tempo por caminho) e `leilao.estado.eventos.lidos` (eventos lidos por origem da cópia; taxa de acerto do cache = `count(base=redis) / total`).
 
 ---
