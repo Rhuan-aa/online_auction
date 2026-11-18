@@ -28,7 +28,13 @@ function ehAba(s: string): s is Aba {
 export function lerRota(hash: string): Rota {
   const [caminho, query = ''] = hash.replace(/^#\/?/, '').split('?')
   const [primeiro, id] = caminho.split('/')
-  if (primeiro === 'leilao' && id) return { aba: PADRAO, leilaoId: decodeURIComponent(id) }
+  if (primeiro === 'leilao' && id) {
+    try {
+      return { aba: PADRAO, leilaoId: decodeURIComponent(id) }
+    } catch {
+      return { aba: PADRAO, leilaoId: null } // id com escape malformado não serve como id de leilão
+    }
+  }
   const leilao = new URLSearchParams(query).get('leilao')
   return { aba: ehAba(primeiro) ? primeiro : PADRAO, leilaoId: leilao || null }
 }

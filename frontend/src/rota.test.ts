@@ -12,3 +12,11 @@ test('seis abas com rótulo e pergunta', () => {
   expect(ABAS.map((a) => a.id)).toEqual(['integridade', 'desempenho', 'rede', 'auditoria', 'arquitetura', 'e-se-fosse'])
   expect(ABAS.every((a) => a.rotulo && a.pergunta)).toBe(true)
 })
+test('id malformado em #/leilao/ não quebra', () => {
+  expect(lerRota('#/leilao/%')).toEqual({ aba: 'integridade', leilaoId: null })
+  expect(lerRota('#/leilao/%E0%A4%A')).toEqual({ aba: 'integridade', leilaoId: null })
+})
+test('query malformada não quebra e mantém a aba', () => {
+  expect(() => lerRota('#/rede?leilao=%')).not.toThrow()
+  expect(lerRota('#/rede?leilao=%').aba).toBe('rede')
+})
