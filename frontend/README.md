@@ -25,7 +25,7 @@ npm run build    # tsc + vite build
 5. **Por onde passa um lance?**: um lance real no sistema (8081 → Kafka → 8082 → SSE), num leilão aberto escolhido ou criado na hora.
 6. **Dá para voltar no tempo?**: linha do tempo dos eventos e o estado em qualquer versão, no mesmo leilão.
 
-O leilão das seções 5 e 6 fica no hash (`#?leilao={id}`).
+O leilão das seções 5 e 6 fica no hash (`#?leilao={id}`). As seções 5 e 6 precisam do `agendador-leilao` (8084) rodando, para o leilão de demonstração abrir, além de 8081 e 8082.
 
 ## Código
 

@@ -1,5 +1,7 @@
 # Plano — Painel de ADM (simulação e desempenho)
 
+> **Substituído:** o painel de ADM foi trocado pela página única "corrida de arquiteturas" (`frontend/`, com o laboratório `leilao-corrida` na 8085). Este documento fica como histórico do desenho e da lógica de medição; veja `docs/superpowers/specs/2026-11-19-corrida-arquiteturas-design.md`.
+
 > **Atualização:** o painel deixou de ser uma tela à parte (`#/adm` e `PainelAdm.tsx` foram removidos). A simulação e as checagens de integridade estão na aba **Integridade**, e a comparação A × B × C na aba **Desempenho** (veja `frontend/README.md`). A comparação não exige mais reiniciar nada: o botão "Comparar A × B × C" troca a configuração com `PUT /admin/cache/configuracao` nos dois serviços, roda a mesma simulação em cada uma e restaura a anterior. O restante deste texto descreve a lógica de medição, que continua valendo; os trechos sobre a tela e os arquivos são do desenho original.
 >
 > Status original: implementado em `#/adm` (`src/PainelAdm.tsx`, `src/simulacao.ts`, `src/historico.ts`, `src/Grafico.tsx`; arquivos removidos; hoje nas abas Integridade e Desempenho). Falta o ensaio com um leilão longo nas três configurações.

@@ -7,8 +7,8 @@ Corpo:
 ```json
 { "licitantes": 20, "lancesPorLicitante": 10, "simultaneos": 6, "leitores": 4, "precoInicial": 10000, "incremento": 100 }
 ```
-- Valida que todos são inteiros ≥ 1 (`simultaneos` e `leitores` podem ser ≥ 1; `leitores` pode ser 0). Inválido → 400 `{"erro":"PARAMETRO_INVALIDO","mensagem":"..."}`.
-- Já existe corrida rodando → 409 `{"erro":"CORRIDA_EM_ANDAMENTO","mensagem":"..."}`.
+- Valida que todos são inteiros ≥ 1 (`simultaneos` e `leitores` podem ser ≥ 1; `leitores` pode ser 0). Inválido → 400 `{"erro":"PARAMETRO_INVALIDO","mensagem":"..."}`. Também 400, só no servidor (a tela não tem máximo), se `6 × (simultaneos + leitores)` passar do teto de threads (padrão 2000) ou `licitantes × lancesPorLicitante` passar do teto de lances (padrão 2.000.000).
+- Já existe corrida rodando → 409 `{"erro":"CORRIDA_EM_ANDAMENTO","mensagem":"...","corridaId":"..."}` (o id da que está rodando, para acompanhar ou parar).
 - OK → 201 `{"corridaId":"<uuid>"}`.
 
 ## POST /corrida/{id}/parar → 204 (idempotente). 404 se não existe.
@@ -43,7 +43,7 @@ Corpo:
   "escrita": { "p50": 4.2, "p95": 11.8, "amostras": 120 },
   "leitura": { "p50": 1.1, "p95": 3.0, "consultas": 900, "desatualizadas": 0, "pctDesatualizadas": 0.0, "atrasoMedioVersoes": 0.0, "atrasoMedioMs": 0.0 },
   "curva": [ { "versao": 10, "ms": 3.9 }, { "versao": 20, "ms": 4.1 } ],   // média do tempo de escrita por faixa de 10 versões
-  "operacoes": { "leiturasBanco": 300, "escritasBanco": 80, "opsRedis": 200, "porLance": 7.25 },
+  "operacoes": { "leiturasBanco": 300, "escritasBanco": 80, "opsRedis": 200, "porLance": 4.83 }   // (300 + 80 + 200) ÷ 120 enviados,
   "precoAtual": 18000, "liderAtual": "licitante-3", "versaoAtual": 81
 }
 ```

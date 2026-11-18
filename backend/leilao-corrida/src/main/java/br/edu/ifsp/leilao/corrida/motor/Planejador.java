@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.function.DoubleSupplier;
 
 /**
- * Plano de lances a partir de uma semente: porte fiel de {@code gerador} e {@code planejarLances}
- * de frontend/src/simulacao.ts (mesma semente, mesmos valores e mesma rotação). Os passos de cada
+ * Plano de lances a partir de uma semente: porte do gerador mulberry32 e do planejamento de lances
+ * do antigo simulador do front (já removido): mesma semente, mesmos valores e mesma rotação. Os passos de cada
  * lance são sorteados em [incremento, incremento x 50].
  */
 public final class Planejador {

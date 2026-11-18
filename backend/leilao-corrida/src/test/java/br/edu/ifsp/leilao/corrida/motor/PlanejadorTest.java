@@ -10,8 +10,8 @@ import java.util.function.DoubleSupplier;
 import org.junit.jupiter.api.Test;
 
 /**
- * Paridade com frontend/src/simulacao.ts. Os valores esperados foram gerados rodando o
- * {@code gerador} e o {@code planejarLances} do TS no Node (mesmo código, copiado).
+ * Paridade com o antigo simulador do front (removido). Os valores esperados foram gerados rodando o
+ * {@code gerador} e o {@code planejarLances} dele no Node (mesmo código, copiado).
  */
 class PlanejadorTest {
 
