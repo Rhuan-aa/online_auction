@@ -58,7 +58,7 @@ export default function ExperimentoRede({ estado, incrementoMinimo, usuario }: P
 
   async function darLance() {
     const e = estadoRef.current
-    if (!e || !exp.current) return
+    if (!e || incrementoMinimo === null || !exp.current) return
     const licitante = usuario === VENDEDOR ? 'licitante-1' : usuario
     const r = await api.darLance(e.leilaoId, { licitanteId: licitante, valor: proximoLance(e, incrementoMinimo) })
     if (r.tipo === 'aceito') { exp.current?.aceitou(r.versao); setAviso(null) }
@@ -79,7 +79,7 @@ export default function ExperimentoRede({ estado, incrementoMinimo, usuario }: P
         {!rodando
           ? <button type="button" onClick={iniciar} disabled={!estado || !intervaloOk}>▶ Iniciar ({DURACAO_S} s)</button>
           : <button type="button" onClick={encerrar}>■ Parar</button>}
-        <button type="button" onClick={darLance} disabled={!rodando || !permissao.pode}>Dar lance agora</button>
+        <button type="button" onClick={darLance} disabled={!rodando || !permissao.pode || incrementoMinimo === null}>Dar lance agora</button>
         {rodando && <span className="config-grande">{restante} s</span>}
       </div>
       {!estado && <p className="aviso">Sem leilão em foco: escolha um leilão para rodar o experimento.</p>}
