@@ -24,22 +24,26 @@ public class Checkpoint {
     private final JdbcClient jdbc;
     private final JsonMapper json;
     private final int aCadaEventos;
-    /** Falso na configuração A: sem checkpoint, como se a tabela estivesse vazia. */
-    private final boolean ligado;
+    /** Na configuração A: sem checkpoint, como se a tabela estivesse vazia. */
+    private final ConfiguracaoAtiva configuracao;
 
     /** N vem de leilao.checkpoint.a-cada-eventos (padrão 50), para ajustar nos experimentos A/B/C. */
     public Checkpoint(JdbcClient jdbc, JsonMapper json,
                       @Value("${leilao.checkpoint.a-cada-eventos:50}") int aCadaEventos,
-                      @Value("${leilao.cache.configuracao:C}") Configuracao configuracao) {
+                      ConfiguracaoAtiva configuracao) {
         this.jdbc = jdbc;
         this.json = json;
         this.aCadaEventos = aCadaEventos;
-        this.ligado = configuracao.usaCheckpoint();
+        this.configuracao = configuracao;
+    }
+
+    private boolean ligado() {
+        return configuracao.atual().usaCheckpoint();
     }
 
     /** Só devolve checkpoints gravados no formato atual (EstadoLeilao.SCHEMA_VERSION). */
     public Optional<EstadoLeilao> ler(UUID leilaoId) {
-        if (!ligado) {
+        if (!ligado()) {
             return Optional.empty();
         }
         return jdbc.sql("SELECT estado FROM checkpoint.estados WHERE leilao_id = ? AND schema_version = ?")
@@ -57,7 +61,7 @@ public class Checkpoint {
      * que valeu e poderia repeti-lo.
      */
     public void gravarSeNecessario(UUID leilaoId, int versaoAnterior, EstadoLeilao atual) {
-        if (!ligado || !deveGravar(versaoAnterior, atual, aCadaEventos)) {
+        if (!ligado() || !deveGravar(versaoAnterior, atual, aCadaEventos)) {
             return;
         }
         try {

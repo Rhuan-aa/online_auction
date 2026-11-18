@@ -42,17 +42,28 @@ class ObterEstadoTest {
     static class CacheFalso extends CacheEstadoLeilao {
         final Map<UUID, EstadoLeilao> guardado = new HashMap<>();
 
-        CacheFalso() {
-            super(null, null, Configuracao.C);
+        final ConfiguracaoAtiva configuracao;
+
+        CacheFalso(ConfiguracaoAtiva configuracao) {
+            super(null, null, configuracao);
+            this.configuracao = configuracao;
+        }
+
+        /** Como o cache de verdade: nas configurações A e B é como se o Redis estivesse vazio. */
+        boolean ligado() {
+            return configuracao.atual().usaRedis();
         }
 
         @Override
         public Optional<EstadoLeilao> ler(UUID leilaoId) {
-            return Optional.ofNullable(guardado.get(leilaoId));
+            return ligado() ? Optional.ofNullable(guardado.get(leilaoId)) : Optional.empty();
         }
 
         @Override
         public Map<UUID, EstadoLeilao> lerVarios(List<UUID> leiloes) {
+            if (!ligado()) {
+                return Map.of();
+            }
             Map<UUID, EstadoLeilao> achados = new HashMap<>();
             leiloes.stream().filter(guardado::containsKey).forEach(id -> achados.put(id, guardado.get(id)));
             return achados;
@@ -60,6 +71,9 @@ class ObterEstadoTest {
 
         @Override
         public boolean gravar(UUID leilaoId, EstadoLeilao estado) {
+            if (!ligado()) {
+                return false;
+            }
             EstadoLeilao atual = guardado.get(leilaoId);
             if (atual != null && atual.versao() >= estado.versao()) {
                 return false;
@@ -73,21 +87,26 @@ class ObterEstadoTest {
     static class CheckpointFalso extends Checkpoint {
         final Map<UUID, EstadoLeilao> guardado = new HashMap<>();
 
-        CheckpointFalso() {
-            super(null, null, 50, Configuracao.C);
+        final ConfiguracaoAtiva configuracao;
+
+        CheckpointFalso(ConfiguracaoAtiva configuracao) {
+            super(null, null, 50, configuracao);
+            this.configuracao = configuracao;
         }
 
+        /** Como o checkpoint de verdade: na configuração A é como se a tabela estivesse vazia. */
         @Override
         public Optional<EstadoLeilao> ler(UUID leilaoId) {
-            return Optional.ofNullable(guardado.get(leilaoId));
+            return configuracao.atual().usaCheckpoint() ? Optional.ofNullable(guardado.get(leilaoId)) : Optional.empty();
         }
     }
 
     final EventStoreFalso eventStore = new EventStoreFalso();
-    final CacheFalso cache = new CacheFalso();
-    final CheckpointFalso checkpoint = new CheckpointFalso();
+    final ConfiguracaoAtiva configuracao = new ConfiguracaoAtiva(Configuracao.C);
+    final CacheFalso cache = new CacheFalso(configuracao);
+    final CheckpointFalso checkpoint = new CheckpointFalso(configuracao);
     final SimpleMeterRegistry metricas = new SimpleMeterRegistry();
-    final ObterEstado obterEstado = new ObterEstado(cache, checkpoint, eventStore, metricas);
+    final ObterEstado obterEstado = new ObterEstado(cache, checkpoint, eventStore, metricas, configuracao);
 
     @Test
     void semCopiaLeTodosOsEventosEGuardaNoCache() {
@@ -113,21 +132,58 @@ class ObterEstadoTest {
         obterEstado.obter(ID);      // completa a partir do Redis: lê 2 eventos
         obterEstado.obterDaFonte(ID); // relê tudo: 6 eventos
 
-        var doRedis = metricas.get("leilao.estado.eventos.lidos").tag("base", "redis").summary();
-        var daFonte = metricas.get("leilao.estado.eventos.lidos").tag("base", "fonte").summary();
+        var doRedis = metricas.get("leilao.estado.eventos.lidos").tag("base", "redis").tag("configuracao", "C").summary();
+        var daFonte = metricas.get("leilao.estado.eventos.lidos").tag("base", "fonte").tag("configuracao", "C").summary();
         assertEquals(1, doRedis.count());
         assertEquals(2, doRedis.totalAmount());
         assertEquals(6, daFonte.totalAmount());
-        assertEquals(1, metricas.get("leilao.estado.obter").tag("caminho", "comando").timer().count());
+        assertEquals(1, metricas.get("leilao.estado.obter").tag("caminho", "comando").tag("configuracao", "C").timer().count());
+    }
+
+    /** Em A o cache e o checkpoint (que honram a configuração) são ignorados: relê tudo e marca a tag A. */
+    @Test
+    void emATodaObtencaoReleTodosOsEventosEMarcaATag() {
+        cache.guardado.put(ID, ATUAL); // o "Redis" até tem a cópia, mas em A não pode ser usado
+        checkpoint.guardado.put(ID, ATUAL);
+        configuracao.trocar(Configuracao.A);
+
+        obterEstado.obter(ID);
+
+        assertEquals(List.of(0), eventStore.pedidosAPartirDe);
+        var lidos = metricas.get("leilao.estado.eventos.lidos").tag("configuracao", "A").summaries();
+        assertEquals(EVENTOS.size(), (int) lidos.stream().mapToDouble(s -> s.totalAmount()).sum());
+        assertEquals(1, metricas.get("leilao.estado.obter").tag("caminho", "comando").tag("configuracao", "A").timer().count());
+    }
+
+    /** A tag acompanha a troca: medições antes e depois ficam em séries separadas. */
+    @Test
+    void trocarDeConfiguracaoSeparaAsMedicoes() {
+        obterEstado.obter(ID);
+        configuracao.trocar(Configuracao.B);
+        obterEstado.obter(ID);
+
+        assertEquals(1, metricas.get("leilao.estado.obter").tag("caminho", "comando").tag("configuracao", "C").timer().count());
+        assertEquals(1, metricas.get("leilao.estado.obter").tag("caminho", "comando").tag("configuracao", "B").timer().count());
+    }
+
+    @Test
+    void estadoObtidoEIgualNasTresConfiguracoes() {
+        for (Configuracao c : Configuracao.values()) {
+            configuracao.trocar(c);
+            cache.guardado.put(ID, EstadoLeilao.INICIAL.aplicarTodos(EVENTOS.subList(0, 4)));
+            checkpoint.guardado.put(ID, EstadoLeilao.INICIAL.aplicarTodos(EVENTOS.subList(0, 3)));
+            assertEquals(Optional.of(ATUAL), obterEstado.obter(ID), "configuração " + c);
+        }
     }
 
     /** Configuração A: Redis e checkpoint desligados se comportam como vazios, e o resultado é o mesmo. */
     @Test
     void configuracaoASemCopiasRelêTudoEDaOMesmoEstado() {
-        CacheEstadoLeilao redisDesligado = new CacheEstadoLeilao(null, null, Configuracao.A);
-        Checkpoint checkpointDesligado = new Checkpoint(null, null, 50, Configuracao.A);
+        ConfiguracaoAtiva a = new ConfiguracaoAtiva(Configuracao.A);
+        CacheEstadoLeilao redisDesligado = new CacheEstadoLeilao(null, null, a);
+        Checkpoint checkpointDesligado = new Checkpoint(null, null, 50, a);
 
-        ObterEstado configuracaoA = new ObterEstado(redisDesligado, checkpointDesligado, eventStore, metricas);
+        ObterEstado configuracaoA = new ObterEstado(redisDesligado, checkpointDesligado, eventStore, metricas, a);
 
         assertEquals(Optional.of(ATUAL), configuracaoA.obter(ID));
         assertEquals(List.of(0), eventStore.pedidosAPartirDe); // releu desde o início
@@ -202,7 +258,7 @@ class ObterEstadoTest {
                 return List.of();
             }
         };
-        assertTrue(new ObterEstado(cache, checkpoint, vazio, metricas).obter(ID).isEmpty());
+        assertTrue(new ObterEstado(cache, checkpoint, vazio, metricas, configuracao).obter(ID).isEmpty());
         assertTrue(cache.guardado.isEmpty()); // nada é guardado para um leilão que não existe
     }
 }

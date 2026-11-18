@@ -10,7 +10,6 @@ import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
@@ -43,19 +42,22 @@ public class CacheEstadoLeilao {
 
     private final StringRedisTemplate redis;
     private final JsonMapper json;
-    /** Falso nas configurações A e B: todo método se comporta como "Redis sem cópia nenhuma". */
-    private final boolean ligado;
+    /** Nas configurações A e B todo método se comporta como "Redis sem cópia nenhuma". */
+    private final ConfiguracaoAtiva configuracao;
 
-    public CacheEstadoLeilao(StringRedisTemplate redis, JsonMapper json,
-                             @Value("${leilao.cache.configuracao:C}") Configuracao configuracao) {
+    public CacheEstadoLeilao(StringRedisTemplate redis, JsonMapper json, ConfiguracaoAtiva configuracao) {
         this.redis = redis;
         this.json = json;
-        this.ligado = configuracao.usaRedis();
+        this.configuracao = configuracao;
+    }
+
+    private boolean ligado() {
+        return configuracao.atual().usaRedis();
     }
 
     /** GET leilao:{id}:estado:v1 */
     public Optional<EstadoLeilao> ler(UUID leilaoId) {
-        if (!ligado) {
+        if (!ligado()) {
             return Optional.empty();
         }
         try {
@@ -72,7 +74,7 @@ public class CacheEstadoLeilao {
      * Leilões sem cópia ficam de fora do mapa; com o Redis fora do ar, o mapa vem vazio.
      */
     public Map<UUID, EstadoLeilao> lerVarios(List<UUID> leiloes) {
-        if (!ligado || leiloes.isEmpty()) {
+        if (!ligado() || leiloes.isEmpty()) {
             return Map.of();
         }
         try {
@@ -108,7 +110,7 @@ public class CacheEstadoLeilao {
      * trocar por WATCH/MULTI/EXEC ou um script Lua.
      */
     public boolean gravar(UUID leilaoId, EstadoLeilao estado) {
-        if (!ligado) {
+        if (!ligado()) {
             return false;
         }
         try {
@@ -135,7 +137,7 @@ public class CacheEstadoLeilao {
      * Store e chama repovoarAbertos.
      */
     public Optional<List<UUID>> abertos() {
-        if (!ligado) {
+        if (!ligado()) {
             return Optional.empty();
         }
         try {
@@ -155,7 +157,7 @@ public class CacheEstadoLeilao {
 
 
     public void repovoarAbertos(Map<UUID, EstadoLeilao> estados) {
-        if (!ligado) {
+        if (!ligado()) {
             return;
         }
         List<String> membros = new ArrayList<>();

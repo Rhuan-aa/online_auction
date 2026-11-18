@@ -2,7 +2,7 @@ package br.edu.ifsp.leilao.estado;
 
 /**
  * Quais cópias do estado estão ligadas, para comparar o custo de cada camada (ADR-003 e painel de ADM).
- * Escolhida pela propriedade leilao.cache.configuracao (padrão C), igual nos dois serviços.
+ * Começa pela propriedade leilao.cache.configuracao (padrão C) e pode ser trocada em tempo de execução (ConfiguracaoAtiva).
  *
  * Uma cópia desligada se comporta como vazia: o código segue o mesmo caminho e só cai para a
  * próxima camada. Por isso trocar a configuração não muda nenhuma regra, só o desempenho.
@@ -16,11 +16,11 @@ public enum Configuracao {
     /** Redis + checkpoint (o normal): na maior parte das vezes, lê 0 ou 1 evento. */
     C;
 
-    boolean usaRedis() {
+    public boolean usaRedis() {
         return this == C;
     }
 
-    boolean usaCheckpoint() {
+    public boolean usaCheckpoint() {
         return this != A;
     }
 }

@@ -4,7 +4,6 @@ import br.edu.ifsp.leilao.contratos.EventoLeilao;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,34 +39,37 @@ public class ObterEstado {
     private final Checkpoint checkpoint;
     private final LeitorEventos eventos;
 
-    private final Timer tempoComando;
-    private final Timer tempoConsulta;
-    private final Timer tempoFonte;
-    private final Map<Base, DistributionSummary> eventosLidos = new EnumMap<>(Base.class);
+    private final MeterRegistry metricas;
+    private final ConfiguracaoAtiva configuracao;
 
     /** Reconstruções em andamento, por leilão (ver umaReconstrucaoPorVez). */
     private final Map<UUID, CompletableFuture<Optional<EstadoLeilao>>> emAndamento = new ConcurrentHashMap<>();
 
-    public ObterEstado(CacheEstadoLeilao cache, Checkpoint checkpoint, LeitorEventos eventos, MeterRegistry metricas) {
+    public ObterEstado(CacheEstadoLeilao cache, Checkpoint checkpoint, LeitorEventos eventos, MeterRegistry metricas,
+                       ConfiguracaoAtiva configuracao) {
         this.cache = cache;
         this.checkpoint = checkpoint;
         this.eventos = eventos;
-        this.tempoComando = tempo(metricas, "comando");
-        this.tempoConsulta = tempo(metricas, "consulta");
-        this.tempoFonte = tempo(metricas, "fonte");
-        for (Base base : Base.values()) {
-            eventosLidos.put(base, DistributionSummary.builder("leilao.estado.eventos.lidos")
-                    .description("Eventos lidos do Event Store para obter o estado")
-                    .tag("base", base.name().toLowerCase())
-                    .register(metricas));
-        }
+        this.metricas = metricas;
+        this.configuracao = configuracao;
     }
 
-    private static Timer tempo(MeterRegistry metricas, String caminho) {
+    /** Medidores levam a tag da configuração em vigor na hora da medição; o registry reaproveita o existente. */
+    private Timer tempo(String caminho) {
         return Timer.builder("leilao.estado.obter")
                 .description("Tempo para obter o estado de um leilão")
                 .tag("caminho", caminho)
+                .tag("configuracao", configuracao.atual().name())
                 .register(metricas);
+    }
+
+    private void registrarEventosLidos(Base base, int quantidade) {
+        DistributionSummary.builder("leilao.estado.eventos.lidos")
+                .description("Eventos lidos do Event Store para obter o estado")
+                .tag("base", base.name().toLowerCase())
+                .tag("configuracao", configuracao.atual().name())
+                .register(metricas)
+                .record(quantidade);
     }
 
     /**
@@ -75,7 +77,7 @@ public class ObterEstado {
      * eventos posteriores, para decidir sobre o estado mais recente. Vazio se o leilão não existe.
      */
     public Optional<EstadoLeilao> obter(UUID leilaoId) {
-        return tempoComando.record(() -> completarCopia(leilaoId, cache.ler(leilaoId)));
+        return tempo("comando").record(() -> completarCopia(leilaoId, cache.ler(leilaoId)));
     }
 
     /**
@@ -85,10 +87,10 @@ public class ObterEstado {
      * Com versaoMinima = 0, qualquer cópia serve.
      */
     public Optional<EstadoLeilao> obterParaConsulta(UUID leilaoId, int versaoMinima) {
-        return tempoConsulta.record(() -> {
+        return tempo("consulta").record(() -> {
             Optional<EstadoLeilao> copia = cache.ler(leilaoId);
             if (copia.isPresent() && copia.get().versao() >= versaoMinima) {
-                eventosLidos.get(Base.REDIS).record(0); // confiou na cópia: nenhum evento lido
+                registrarEventosLidos(Base.REDIS, 0); // confiou na cópia: nenhum evento lido
                 return copia;
             }
             return completarCopia(leilaoId, copia);
@@ -106,7 +108,7 @@ public class ObterEstado {
         for (UUID leilaoId : leiloes) {
             Optional<EstadoLeilao> estado;
             if (copias.containsKey(leilaoId)) {
-                eventosLidos.get(Base.REDIS).record(0);
+                registrarEventosLidos(Base.REDIS, 0);
                 estado = Optional.of(copias.get(leilaoId));
             } else {
                 estado = completarCopia(leilaoId, Optional.empty());
@@ -132,7 +134,7 @@ public class ObterEstado {
      * cópia nenhuma: depois de um conflito de versão e no encerramento (quem venceu).
      */
     public Optional<EstadoLeilao> obterDaFonte(UUID leilaoId) {
-        return tempoFonte.record(() -> completar(leilaoId, EstadoLeilao.INICIAL, Base.FONTE));
+        return tempo("fonte").record(() -> completar(leilaoId, EstadoLeilao.INICIAL, Base.FONTE));
     }
 
     /** Sem cópia no Redis: parte do checkpoint; sem checkpoint, do começo (versão 0). */
@@ -143,7 +145,7 @@ public class ObterEstado {
     /** Aplica sobre a base os eventos que vieram depois dela (e anota quantos foram lidos). */
     private Optional<EstadoLeilao> completar(UUID leilaoId, EstadoLeilao base, Base origem) {
         List<EventoLeilao> posteriores = eventos.posteriores(leilaoId, base.versao());
-        eventosLidos.get(origem).record(posteriores.size());
+        registrarEventosLidos(origem, posteriores.size());
         EstadoLeilao estado = base.aplicarTodos(posteriores);
         return estado.existe() ? Optional.of(estado) : Optional.empty();
     }
