@@ -7,6 +7,7 @@ import FormSimulacao, { PADRAO, validar, type Campos } from '../integridade/Form
 import AoVivo from './AoVivo.tsx'
 import { compararABC, type AndamentoComparacao, type Comparacao } from './comparacao.ts'
 import ComparacaoAoVivo from './ComparacaoAoVivo.tsx'
+import type { Progresso } from '../../simulacao.ts'
 import GraficosComparacao from './GraficosComparacao.tsx'
 
 type Ativa = Record<Servico, ConfiguracaoCache>
@@ -30,6 +31,7 @@ export default function AbaDesempenho({ pergunta }: { pergunta: string }) {
   const [erroAtiva, setErroAtiva] = useState<string | null>(null)
   const [rodando, setRodando] = useState(false)
   const [andamento, setAndamento] = useState<AndamentoComparacao | null>(null)
+  const [finais, setFinais] = useState<Partial<Record<ConfiguracaoCache, Progresso>>>({}) // último progresso de cada coluna
   const [erro, setErro] = useState<string | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
   const [historico, setHistorico] = useState<Comparacao[]>(carregarComparacoes)
@@ -61,11 +63,15 @@ export default function AbaDesempenho({ pergunta }: { pergunta: string }) {
     setErro(null)
     setAviso(null)
     setAndamento(null)
+    setFinais({})
     setRodando(true)
     const ctrl = new AbortController()
     controle.current = ctrl
     try {
-      const c = await compararABC(api, p, setAndamento, ctrl.signal)
+      const c = await compararABC(api, p, (a) => {
+        setAndamento(a)
+        setFinais((f) => ({ ...f, [a.configuracao]: a.progresso }))
+      }, ctrl.signal)
       if (c.restauracaoFalhou) setAviso('Não foi possível devolver os serviços à configuração anterior. Confira a configuração ativa.')
       if (Object.keys(c.execucoes).length > 0) {
         const novo = [c, ...historico]
@@ -104,7 +110,7 @@ export default function AbaDesempenho({ pergunta }: { pergunta: string }) {
             {!rodando && <button type="submit" className="botao botao--destaque">▶ Comparar A × B × C</button>}
           </div>
         </form>
-        {rodando && <ComparacaoAoVivo andamento={andamento} aoInterromper={() => controle.current?.abort()} />}
+        {rodando && <ComparacaoAoVivo andamento={andamento} finais={finais} aoInterromper={() => controle.current?.abort()} />}
         {erro && <p className="erro" role="alert">{erro}</p>}
         {aviso && <p className="aviso" role="alert">{aviso}</p>}
       </section>
