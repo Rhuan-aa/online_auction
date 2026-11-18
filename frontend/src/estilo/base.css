@@ -6,11 +6,12 @@ body {
   font-size: var(--texto-base);
   line-height: 1.5;
   color: var(--tinta);
-  background: var(--fundo);
-  transition: background-color var(--transicao-longa), color var(--transicao-longa);
+  background: var(--fundo) var(--fundo-gradiente) fixed;
+  min-height: 100vh;
+  transition: color var(--transicao-longa);
 }
 
-h1, h2, h3 { font-family: var(--fonte-titulo); font-weight: 600; line-height: 1.15; margin: 0 0 0.5em; }
+h1, h2, h3 { font-family: var(--fonte-titulo); font-weight: 700; line-height: 1.15; margin: 0 0 0.5em; }
 a { color: var(--destaque); }
 table { border-collapse: collapse; font-variant-numeric: tabular-nums; }
 code, pre, .id { font-family: var(--fonte-mono); font-size: 0.85em; }
@@ -27,26 +28,28 @@ code, pre, .id { font-family: var(--fonte-mono); font-size: 0.85em; }
 }
 a.cartao:hover { border-color: var(--destaque); box-shadow: var(--sombra); }
 
-/* controles: tudo que é botão ou campo já nasce com o visual do projeto (só tokens) */
+/* controles: tudo que é botão ou campo já nasce com o visual do projeto (só tokens).
+   Botões em pílula; o primário é o destaque (amarelo no palco) com texto escuro. */
 :where(button), .botao {
   display: inline-block;
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--tinta);
   background: var(--superficie);
-  border: var(--borda-largura) solid var(--tinta);
-  border-radius: var(--raio);
-  padding: 0.5rem 1.1rem;
+  border: var(--borda-largura) solid var(--borda);
+  border-radius: 999px;
+  padding: 0.5rem 1.2rem;
   cursor: pointer;
   text-decoration: none;
   transition: background-color var(--transicao-curta), color var(--transicao-curta), border-color var(--transicao-curta);
 }
-button:where(:hover), .botao:hover { background: var(--superficie-2); }
-button:where(:focus-visible), .botao:focus-visible,
+button:where(:hover), .botao:hover { background: var(--superficie-2); border-color: var(--tinta-suave); }
+button:where(:focus-visible), .botao:focus-visible, a:focus-visible,
 input:where(:focus-visible), select:where(:focus-visible), textarea:where(:focus-visible) { outline: 3px solid var(--destaque); outline-offset: 2px; }
 button:where(:disabled), .botao:disabled { opacity: 0.5; cursor: not-allowed; }
 .botao--destaque { background: var(--destaque-forte); border-color: var(--destaque-forte); color: var(--sobre-destaque); }
 .botao--destaque:hover { background: var(--tinta); border-color: var(--tinta); color: var(--fundo); }
+.botao--destaque:disabled:hover { background: var(--destaque-forte); border-color: var(--destaque-forte); color: var(--sobre-destaque); }
 .botao--perigo { background: var(--perigo); border-color: var(--perigo); color: var(--sobre-destaque); }
 .botao--perigo:hover { background: var(--tinta); border-color: var(--tinta); color: var(--fundo); }
 
@@ -56,9 +59,11 @@ button:where(:disabled), .botao:disabled { opacity: 0.5; cursor: not-allowed; }
   color: var(--tinta);
   background: var(--superficie);
   border: var(--borda-largura) solid var(--borda);
-  border-radius: var(--raio);
-  padding: 0.4rem 0.6rem;
+  border-radius: var(--raio-pequeno);
+  padding: 0.4rem 0.7rem;
 }
+:where(input, select, textarea):hover { border-color: var(--tinta-suave); }
+:where(select) option { color: var(--tinta); background: var(--superficie-solida); }
 input[type='checkbox'], input[type='radio'], input[type='range'] { accent-color: var(--destaque); padding: 0; }
 input:where(:disabled), select:where(:disabled), textarea:where(:disabled) { opacity: 0.6; }
 fieldset { border: var(--borda-largura) solid var(--borda); border-radius: var(--raio); background: var(--superficie); padding: 0.75rem 1rem; margin: 0; }
@@ -97,9 +102,9 @@ label { font-size: 0.95rem; }
 
 .kpi { display: flex; flex-direction: column; gap: 0.15rem; }
 .kpi > :first-child {
-  font-family: var(--fonte-titulo);
+  font-family: var(--fonte-mono);
   font-size: var(--texto-kpi);
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
@@ -107,11 +112,12 @@ label { font-size: 0.95rem; }
 
 .pergunta {
   font-family: var(--fonte-titulo);
-  font-style: italic;
   font-size: 1.5rem;
   color: var(--tinta-suave);
   margin: 0 0 1rem;
 }
+
+[hidden] { display: none !important; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

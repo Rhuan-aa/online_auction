@@ -13,7 +13,7 @@ export default function Topo({ rota, usuario, aoTrocarUsuario }: Props) {
   const [tema, setTema] = useState<Tema>(lerTema)
 
   function alternarTema() {
-    const novo: Tema = tema === 'claro' ? 'escuro' : 'claro'
+    const novo: Tema = tema === 'palco' ? 'claro' : 'palco'
     aplicarTema(novo)
     setTema(novo)
   }
@@ -36,9 +36,9 @@ export default function Topo({ rota, usuario, aoTrocarUsuario }: Props) {
             {USUARIOS.map((u) => <option key={u} value={u}>{u}</option>)}
           </select>
         </label>
-        <button className="botao botao-tema" onClick={alternarTema} aria-pressed={tema === 'escuro'}
-          aria-label="Alternar tema claro e escuro" title="Alternar tema">
-          {tema === 'claro' ? '☾' : '☀'}
+        <button className="botao botao-tema" onClick={alternarTema} aria-pressed={tema === 'claro'}
+          aria-label="Usar tema claro" title="Alternar tema">
+          ◐
         </button>
       </div>
     </header>

@@ -15,19 +15,20 @@ beforeEach(() => {
 })
 afterEach(() => vi.unstubAllGlobals())
 
-test('tema padrão é claro mesmo com storage quebrado', () => {
+test('tema padrão é palco mesmo com storage quebrado', () => {
   vi.stubGlobal('localStorage', { getItem: () => { throw new Error('bloqueado') } })
-  expect(lerTema()).toBe('claro')
+  expect(lerTema()).toBe('palco')
 })
-test('padrão claro sem nada salvo', () => expect(lerTema()).toBe('claro'))
-test('valor inválido cai em claro', () => { guardado['tema'] = 'roxo'; expect(lerTema()).toBe('claro') })
+test('padrão palco sem nada salvo', () => expect(lerTema()).toBe('palco'))
+test('valor inválido cai em palco', () => { guardado['tema-apresentacao'] = 'roxo'; expect(lerTema()).toBe('palco') })
+test('o "claro" gravado pela versão antiga (outra chave) não vale', () => { guardado['tema'] = 'claro'; expect(lerTema()).toBe('palco') })
 test('aplicar define o atributo e salva', () => {
-  aplicarTema('escuro')
-  expect(dataset.tema).toBe('escuro')
-  expect(lerTema()).toBe('escuro')
+  aplicarTema('claro')
+  expect(dataset.tema).toBe('claro')
+  expect(lerTema()).toBe('claro')
 })
 test('aplicar não quebra com storage que lança', () => {
   vi.stubGlobal('localStorage', { setItem: () => { throw new Error('cheio') } })
-  aplicarTema('escuro')
-  expect(dataset.tema).toBe('escuro')
+  aplicarTema('claro')
+  expect(dataset.tema).toBe('claro')
 })

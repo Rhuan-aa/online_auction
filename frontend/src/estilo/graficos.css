@@ -7,8 +7,8 @@
 .grafico-texto-suave { fill: var(--tinta-suave); }
 .grafico-grade { stroke: var(--grade); stroke-width: 1; }
 .grafico-eixo { stroke: var(--eixo); stroke-width: 1; }
-.grafico-ponto { stroke: var(--superficie); stroke-width: 2; }
-.grafico-segmento { stroke: var(--superficie); stroke-width: 2; }
+.grafico-ponto { stroke: var(--superficie-solida); stroke-width: 2; }
+.grafico-segmento { stroke: var(--superficie-solida); stroke-width: 2; }
 .grafico-vazio { margin: 0; padding: 24px 0; color: var(--tinta-suave); font-size: 14px; }
 .grafico-legenda { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 10px 0 0; padding: 0; list-style: none; font-size: 14px; color: var(--tinta); }
 .grafico-legenda li { display: inline-flex; align-items: center; gap: 6px; }
