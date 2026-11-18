@@ -70,53 +70,6 @@ fieldset { border: var(--borda-largura) solid var(--borda); border-radius: var(-
 fieldset:disabled { opacity: 0.7; }
 label { font-size: 0.95rem; }
 
-/* simulação: campos em grade, cada rótulo em cima do seu campo */
-.simulacao fieldset { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.75rem 1rem; min-width: 0; }
-.simulacao label { display: flex; flex-direction: column; gap: 0.25rem; }
-.simulacao label.opcao { flex-direction: row; align-items: center; gap: 0.5rem; grid-column: 1 / -1; }
-.simulacao-botoes { margin-top: 0.75rem; }
-.rajada-controles label { display: flex; flex-direction: column; gap: 0.25rem; }
-.rajada-controles label.opcao { flex-direction: row; align-items: center; gap: 0.5rem; }
-
-/* selo que marca um dado como ilustração (simulado), nunca medição real */
-.selo-ilustracao {
-  display: inline-block;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--aviso);
-  background: var(--aviso-fundo);
-  border: var(--borda-largura) solid var(--aviso);
-  border-radius: 999px;
-  padding: 0.1rem 0.6rem;
-}
-
-.gaveta {
-  background: var(--superficie-2);
-  border: var(--borda-largura) solid var(--borda);
-  border-radius: var(--raio);
-  padding: 1rem 1.25rem;
-  transition: transform var(--transicao-longa), opacity var(--transicao-longa);
-}
-
-.kpi { display: flex; flex-direction: column; gap: 0.15rem; }
-.kpi > :first-child {
-  font-family: var(--fonte-mono);
-  font-size: var(--texto-kpi);
-  font-weight: 700;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-.kpi > :last-child { color: var(--tinta-suave); font-size: 0.85rem; }
-
-.pergunta {
-  font-family: var(--fonte-titulo);
-  font-size: 1.5rem;
-  color: var(--tinta-suave);
-  margin: 0 0 1rem;
-}
-
 [hidden] { display: none !important; }
 
 @media (prefers-reduced-motion: reduce) {

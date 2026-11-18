@@ -24,8 +24,8 @@ export default function Sparkline({ valores: brutos, titulo = 'Tendência', unid
       <svg className="grafico-spark" viewBox={`0 0 ${L} ${A}`} width="100%" height={A} role="img" aria-label={resumo}>
         <title>{resumo}</title>
         <polyline fill="none" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round"
-          style={{ stroke: 'var(--serie-a)' }} points={valores.map((v, i) => `${x(i)},${y(v)}`).join(' ')} />
-        <circle cx={x(valores.length - 1)} cy={y(ultimo)} r={3} style={{ fill: 'var(--serie-a)' }} />
+          style={{ stroke: 'var(--destaque)' }} points={valores.map((v, i) => `${x(i)},${y(v)}`).join(' ')} />
+        <circle cx={x(valores.length - 1)} cy={y(ultimo)} r={3} style={{ fill: 'var(--destaque)' }} />
       </svg>
     </span>
   )
