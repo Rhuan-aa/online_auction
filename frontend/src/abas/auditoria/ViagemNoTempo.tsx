@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { api, type EstadoLeilao } from '../../api.ts'
+import Slide from '../../shell/Slide.tsx'
 import { mudancas, ROTULO_CAMPO, valorDoCampo } from './diferencas.ts'
 
 interface Props { leilaoId: string; atual: number; versao: number; aoMudar: (v: number) => void }
@@ -36,8 +37,9 @@ export default function ViagemNoTempo({ leilaoId, atual, versao, aoMudar }: Prop
   const atrasado = r !== null && r.chave !== chave
   const lista = r ? mudancas(r.anterior, r.estado) : []
 
-  return (
-    <div className={atrasado ? 'viagem viagem--carregando' : 'viagem'}>
+  const classe = atrasado ? 'viagem viagem--carregando' : 'viagem'
+  const acao = (
+    <div className={classe}>
       <div className="viagem-controle">
         <button type="button" className="botao" aria-label="Versão anterior" disabled={versao <= 1} onClick={() => aoMudar(versao - 1)}>◀</button>
         <input type="range" min={1} max={atual} value={versao} aria-label="Versão" aria-valuetext={`versão ${versao} de ${atual}`} onChange={(e) => aoMudar(Number(e.target.value))} />
@@ -46,27 +48,33 @@ export default function ViagemNoTempo({ leilaoId, atual, versao, aoMudar }: Prop
       </div>
       {erro?.chave === chave && <p role="alert" className="erro">{erro.msg}</p>}
       {r && (
-        <>
-          <dl className="viagem-estado">
-            <dt>Título</dt><dd>{r.estado.titulo}</dd>
-            <dt>Status</dt><dd>{valorDoCampo('status', r.estado.status)}</dd>
-            <dt>Preço</dt><dd>{valorDoCampo('precoAtual', r.estado.precoAtual)}</dd>
-            <dt>Líder</dt><dd>{valorDoCampo('liderId', r.estado.liderId)}</dd>
-            <dt>Fim</dt><dd>{valorDoCampo('fimEm', r.estado.fimEm)}</dd>
-          </dl>
-          {r.estado.versao === 1
-            ? <p className="suave">Estado inicial</p>
-            : lista.length === 0
-              ? <p className="suave">Nada mudou em relação à versão {r.estado.versao - 1}.</p>
-              : (
-                <ul className="viagem-mudancas">
-                  {lista.map((m) => (
-                    <li key={m.campo}>{ROTULO_CAMPO[m.campo]}: {valorDoCampo(m.campo, m.de)} → {valorDoCampo(m.campo, m.para)}</li>
-                  ))}
-                </ul>
-              )}
-        </>
+        <dl className="viagem-estado">
+          <dt>Título</dt><dd>{r.estado.titulo}</dd>
+          <dt>Status</dt><dd>{valorDoCampo('status', r.estado.status)}</dd>
+          <dt>Preço</dt><dd>{valorDoCampo('precoAtual', r.estado.precoAtual)}</dd>
+          <dt>Líder</dt><dd>{valorDoCampo('liderId', r.estado.liderId)}</dd>
+          <dt>Fim</dt><dd>{valorDoCampo('fimEm', r.estado.fimEm)}</dd>
+        </dl>
       )}
     </div>
+  )
+
+  return (
+    <Slide titulo="Voltar no tempo" texto={<p>Arraste a versão: o servidor refaz o estado naquele ponto, aplicando só os eventos até ela.</p>} acao={acao}>
+      <div className={classe}>
+        {!r && <p className="slide-vazio">O que mudou em cada versão aparece aqui.</p>}
+        {r && (r.estado.versao === 1
+          ? <p className="suave">Estado inicial</p>
+          : lista.length === 0
+            ? <p className="suave">Nada mudou em relação à versão {r.estado.versao - 1}.</p>
+            : (
+              <ul className="viagem-mudancas">
+                {lista.map((m) => (
+                  <li key={m.campo}>{ROTULO_CAMPO[m.campo]}: {valorDoCampo(m.campo, m.de)} → {valorDoCampo(m.campo, m.para)}</li>
+                ))}
+              </ul>
+            ))}
+      </div>
+    </Slide>
   )
 }

@@ -46,7 +46,7 @@ export const SECOES: Secao[] = [
     ],
   },
   {
-    id: 'auditoria', rotulo: 'Auditoria', pergunta: 'Dá para voltar no tempo?', convertida: false,
+    id: 'auditoria', rotulo: 'Auditoria', pergunta: 'Dá para voltar no tempo?', convertida: true,
     passos: [
       { id: 'linha-do-tempo', titulo: 'Linha do tempo' },
       { id: 'viagem', titulo: 'Viagem no tempo' },

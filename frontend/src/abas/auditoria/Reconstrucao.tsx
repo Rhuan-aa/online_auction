@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, type ConfiguracaoCache, type RelatorioReconstrucao } from '../../api.ts'
 import Confirmar from '../../Confirmar.tsx'
+import Slide from '../../shell/Slide.tsx'
 import { movimentoReduzido, passosDaReconstrucao } from './diferencas.ts'
 
 const INTERVALO_MS = 400
@@ -43,10 +44,23 @@ export default function Reconstrucao() {
 
   const passos = relatorio ? passosDaReconstrucao(relatorio, configuracao) : []
 
-  return (
-    <div>
+  const acao = (
+    <>
       <button type="button" className="botao botao--destaque" disabled={rodando} onClick={() => setConfirmando(true)}>Reconstruir cache</button>
       {erro && <p role="alert" className="erro">{erro}</p>}
+      <Confirmar aberto={confirmando} titulo="Reconstruir cache" perigo rotuloConfirmar="Reconstruir"
+        texto="Apagar as cópias (Redis e checkpoints) e refazer a partir dos eventos?"
+        aoConfirmar={() => { void reconstruir() }} aoCancelar={() => setConfirmando(false)} />
+    </>
+  )
+
+  return (
+    <Slide
+      titulo="Apagar as cópias e refazer"
+      texto={<p>Apaga as cópias (Redis e checkpoints) e refaz o estado só a partir dos eventos gravados.</p>}
+      acao={acao}
+    >
+      {passos.length === 0 && <p className="slide-vazio">As 4 etapas aparecem aqui depois de reconstruir.</p>}
       <ol className="reconstrucao" aria-live="polite">
         {passos.slice(0, visiveis).map((p, i) => (
           <li key={i} className={p.ok ? 'passo' : 'passo passo--aviso'}>
@@ -54,9 +68,6 @@ export default function Reconstrucao() {
           </li>
         ))}
       </ol>
-      <Confirmar aberto={confirmando} titulo="Reconstruir cache" perigo rotuloConfirmar="Reconstruir"
-        texto="Apagar as cópias (Redis e checkpoints) e refazer a partir dos eventos?"
-        aoConfirmar={() => { void reconstruir() }} aoCancelar={() => setConfirmando(false)} />
-    </div>
+    </Slide>
   )
 }

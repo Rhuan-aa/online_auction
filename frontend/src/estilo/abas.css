@@ -139,3 +139,6 @@
 .historico-comparacoes { flex-direction: row; flex-wrap: wrap; }
 .colunas-abc--duas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .slide--dividido .aviso-fixo { margin-bottom: 0; }
+/* a linha do tempo rola por dentro do visual do slide (o scroll até a versão escolhida depende disso) */
+.slide-visual .linha-tempo { flex: 1; min-height: 0; max-height: none; }
+.slide-visual .viagem { width: 100%; }
