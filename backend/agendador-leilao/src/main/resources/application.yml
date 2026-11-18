@@ -10,3 +10,7 @@ management:
     web:
       exposure:
         include: health
+      # O painel de arquitetura (front) lê /actuator/health direto do navegador.
+      cors:
+        allowed-origins: http://localhost:5173
+        allowed-methods: GET
