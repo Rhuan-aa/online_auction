@@ -72,3 +72,6 @@ export function corDe(id: string): string {
   const i = ARQUITETURAS.findIndex((a) => a.id === id)
   return i < 0 ? 'var(--tinta-suave)' : `var(--arq-${i + 1})`
 }
+
+/** Selo obrigatório ao lado de toda medição da corrida. */
+export const SELO = 'medido nesta máquina; as 6 rodaram juntas e disputaram CPU e banco'

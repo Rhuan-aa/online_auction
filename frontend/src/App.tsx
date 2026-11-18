@@ -1,10 +1,11 @@
 import Formulario from './corrida/Formulario.tsx'
+import Graficos from './corrida/Graficos.tsx'
+import Placar from './corrida/Placar.tsx'
 import Raias, { ResumoCorrida } from './corrida/Raias.tsx'
+import { SELO } from './corrida/tipos.ts'
 import { useCorrida } from './corrida/useCorrida.ts'
 import Secao from './Secao.tsx'
 import Topo from './Topo.tsx'
-
-export const SELO = 'medido nesta máquina; as 6 rodaram juntas e disputaram CPU e banco'
 
 export default function App() {
   const corrida = useCorrida()
@@ -33,6 +34,17 @@ export default function App() {
             </div>
           )}
           <Raias foto={corrida.foto} fase={corrida.fase} />
+        </Secao>
+
+        <Secao id="comparacao" kicker="3 · Comparação" titulo="Onde cada arquitetura ganha e perde"
+          explicacao="Os mesmos números das raias, lado a lado; cada cor é sempre a mesma arquitetura.">
+          <Graficos foto={corrida.foto} />
+        </Secao>
+
+        <Secao id="placar" kicker="4 · Placar" titulo="E o vencedor é…"
+          explicacao="O melhor valor de cada critério fica destacado com ★; integridade diz se o resultado final está certo.">
+          <div className="placar-topo"><span className="selo-medido">{SELO}</span></div>
+          <Placar foto={corrida.foto} />
         </Secao>
       </main>
     </>
