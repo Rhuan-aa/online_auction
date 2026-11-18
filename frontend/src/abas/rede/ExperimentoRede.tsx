@@ -7,7 +7,7 @@ import { atrasos, iniciarExperimento, maximo, media, type Custo, type Experiment
 const DURACAO_S = 30
 const MIN_INTERVALO = 250
 
-interface Props { estado: EstadoLeilao | null; incrementoMinimo: number; usuario: UsuarioId }
+interface Props { estado: EstadoLeilao | null; incrementoMinimo: number | null; usuario: UsuarioId }
 
 const ms = (n: number | null) => (n === null ? '—' : `${Math.round(n)} ms`)
 

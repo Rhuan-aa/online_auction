@@ -14,7 +14,7 @@ const PORQUE = (
   </p>
 )
 
-interface Props { pergunta: string; estado: EstadoLeilao | null; incrementoMinimo: number; usuario: UsuarioId }
+interface Props { pergunta: string; estado: EstadoLeilao | null; incrementoMinimo: number | null; usuario: UsuarioId }
 
 export default function AbaRede({ pergunta, estado, incrementoMinimo, usuario }: Props) {
   const [lista, recarregar] = useRegistros()
