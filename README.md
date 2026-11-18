@@ -31,6 +31,7 @@ cd frontend && npm install && npm run dev          # front em http://localhost:5
 | leilao-escrita | http://localhost:8081 | API de comandos: agregado, Event Store, outbox, atualização das cópias do estado. Também `GET`/`PUT /admin/cache/configuracao` (troca A/B/C sem reiniciar) e `POST /admin/cache/reconstruir` |
 | leilao-leitura | http://localhost:8082 | API de consulta (REST + SSE) pelo cache; notificações. Também `GET /leiloes/{id}/eventos`, `GET /leiloes/{id}?ateVersao=N` (auditoria), `GET /infra/saude` e `GET`/`PUT /admin/cache/configuracao` |
 | agendador-leilao | http://localhost:8084 | Worker que abre e encerra os leilões no horário (`/actuator/health` com CORS para o front) |
+| leilao-corrida | http://localhost:8085 | Laboratório "corrida de arquiteturas": o mesmo leilão em 6 arquiteturas ao mesmo tempo, com métricas ao vivo por SSE. **Só local**: sem autenticação e usa o superusuário `postgres` (schemas próprios `corrida_*`). Veja `backend/README.md` |
 | PostgreSQL | `localhost:5432`, banco `leilao` | Event Store (`event_store`) e checkpoints (`checkpoint`); usuários em `backend/.env.example` |
 | Redis | `localhost:6379` | Cópia do estado e índice de abertos; descartável, sem volume |
 | Kafka | `localhost:9092` | Tópicos `leilao.eventos` e `leilao.comandos-agendador` |

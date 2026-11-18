@@ -9,6 +9,7 @@ cp .env.example .env
 ./mvnw -pl leilao-escrita spring-boot:run          # sobe o serviço de escrita (8081)
 ./mvnw -pl leilao-leitura spring-boot:run          # sobe o serviço de leitura (8082)
 ./mvnw -pl agendador-leilao spring-boot:run        # sobe o agendador de prazos (8084)
+./mvnw -pl leilao-corrida spring-boot:run          # sobe o laboratório "corrida de arquiteturas" (8085)
 ```
 
 Não use `-am` junto com `spring-boot:run`: ele tenta rodar também os módulos sem `main` e falha. Depois de mudar `estado` ou `contratos`, rode o `install` de novo.
@@ -41,6 +42,7 @@ leilao-escrita/    escrita: domain / application / infrastructure (event store +
 leilao-leitura/    leitura: api (GET + SSE) / consultas (lista, históricos) / notificacoes (8082)
 agendador-leilao/  worker que monitora prazos e emite comandos de abertura/fechamento (8084)
 ferramentas/       simulador de lances concorrentes e reconstrutor do cache
+leilao-corrida/    laboratório: o mesmo leilão em 6 arquiteturas ao mesmo tempo, métricas por SSE (8085)
 ```
 
 ## Ferramentas
@@ -56,3 +58,13 @@ java -jar ferramentas/target/ferramentas-0.1.0-SNAPSHOT.jar
 java -cp ferramentas/target/classes:$(cat ferramentas/target/cp.txt) \
   br.edu.ifsp.leilao.ferramentas.simulador.SimuladorLances <leilaoId> <bots> <lancesPorBot>
 ```
+
+## Laboratório `leilao-corrida` (8085)
+
+**Só para uso local: sem autenticação e conectado como o superusuário `postgres`.** Corre o mesmo leilão, com a mesma sequência de lances (semente + mulberry32, igual ao `simulacao.ts` do front), ao mesmo tempo em 6 arquiteturas: `crud` (sem controle de concorrência, de propósito), `crud-cache`, `es`, `es-snapshot`, `es-cache` e `es-cqrs`. Não depende de `leilao-escrita`, `leilao-leitura` nem `estado`.
+
+- Desenho: `docs/superpowers/specs/2026-11-19-corrida-arquiteturas-design.md`. Contrato da API e do SSE: `docs/superpowers/specs/2026-11-19-corrida-contrato.md`.
+- Rotas: `POST /corrida` (201, 400 `PARAMETRO_INVALIDO`, 409 `CORRIDA_EM_ANDAMENTO`), `GET /corrida/{id}/stream` (SSE `foto` a cada 250 ms e um `fim`), `POST /corrida/{id}/parar` (204) e `GET /corrida/{id}`. CORS para `http://localhost:5173`. Uma corrida por vez.
+- Isolamento: cria na subida os schemas `corrida_crud`, `corrida_crud_cache`, `corrida_es`, `corrida_es_snapshot`, `corrida_es_cache` e `corrida_es_cqrs`; usa só as chaves `corrida:<arquitetura>:*` no Redis e o tópico `corrida.cqrs` (3 partições, criado pela aplicação). Nunca toca em `event_store`, `checkpoint`, `read_model` nem em `leilao:*`.
+- Cada arquitetura tem o próprio pool de conexões (`CORRIDA_POOL_POR_ARQUITETURA`, padrão 8; as 6 juntas usam 48 conexões) e o próprio pool de threads.
+- Variáveis: `CORRIDA_DB_URL` (padrão `jdbc:postgresql://localhost:5433/leilao`), `CORRIDA_DB_USER` e `CORRIDA_DB_PASSWORD` (padrão `postgres`/`postgres`), `REDIS_HOST`/`REDIS_PORT` e `KAFKA_BOOTSTRAP_SERVERS`.
