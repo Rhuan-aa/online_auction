@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import { dominioRaias, escalaLinear, finito, marcas, truncar } from './escalas.ts'
-import { larguraEfetiva } from './useLargura.ts'
+import { larguraEfetiva, proximaLargura } from './useLargura.ts'
 
 test('escala mapeia extremos', () => {
   const s = escalaLinear([0, 10], [100, 0])
@@ -30,4 +30,10 @@ test('larguraEfetiva cai em 640 sem medida válida', () => {
   expect(larguraEfetiva(undefined)).toBe(640)
   expect(larguraEfetiva(NaN)).toBe(640)
   expect(larguraEfetiva(360.4)).toBe(360)
+})
+test('proximaLargura ignora 0 (passo escondido) e mantém a atual', () => {
+  expect(proximaLargura(820, 0)).toBe(820)
+  expect(proximaLargura(820, undefined)).toBe(820)
+  expect(proximaLargura(820, NaN)).toBe(820)
+  expect(proximaLargura(640, 912.6)).toBe(913)
 })

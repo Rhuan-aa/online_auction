@@ -41,7 +41,7 @@
 
   --texto-base: 18px;
   --texto-titulo-slide: clamp(34px, 2.2vw + 14px, 48px);
-  --texto-kicker: 13px;
+  --texto-kicker: 12px;
   --texto-preco-palco: 56px;
   --texto-kpi: 40px;
   --borda-largura: 1.5px;

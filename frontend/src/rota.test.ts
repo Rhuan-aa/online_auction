@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { ABAS, anterior, hrefDe, lerRota, proximo, type Rota } from './rota.ts'
+import { ABAS, anterior, hrefDe, lerRota, proximo, temAnterior, temProximo, type Rota } from './rota.ts'
 import { kickerDe, passosVisiveis, SECOES } from './secoes.ts'
 
 test('aba e leilão da URL', () => expect(lerRota('#/auditoria?leilao=abc')).toEqual({ aba: 'auditoria', passo: 1, leilaoId: 'abc' }))
@@ -53,6 +53,16 @@ test('para nas pontas', () => {
   expect(anterior(em('integridade', 1))).toEqual(em('integridade', 1))
   const ultima = SECOES[SECOES.length - 1].id
   expect(proximo(em(ultima, passosVisiveis(ultima)))).toEqual(em(ultima, passosVisiveis(ultima)))
+})
+test('temProximo / temAnterior: falsos só nas pontas', () => {
+  const ultima = SECOES[SECOES.length - 1].id
+  expect(temAnterior(em('integridade', 1))).toBe(false)
+  expect(temProximo(em('integridade', 1))).toBe(true)
+  expect(temAnterior(em('integridade', 2))).toBe(true)
+  expect(temAnterior(em('desempenho', 1))).toBe(true)
+  expect(temProximo(em('integridade', passosVisiveis('integridade')))).toBe(true)
+  expect(temProximo(em(ultima, passosVisiveis(ultima)))).toBe(false)
+  expect(temAnterior(em(ultima, passosVisiveis(ultima)))).toBe(true)
 })
 test('percorrer tudo com próximo e voltar com anterior passa por todos os slides', () => {
   const total = SECOES.reduce((n, s) => n + passosVisiveis(s.id), 0)

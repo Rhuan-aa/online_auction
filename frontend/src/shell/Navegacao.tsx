@@ -1,17 +1,15 @@
-import { anterior, hrefDe, irPara, proximo, type Rota } from '../rota.ts'
+import { anterior, hrefDe, irPara, proximo, temAnterior, temProximo, type Rota } from '../rota.ts'
 import { passosVisiveis, secaoDe } from '../secoes.ts'
 
 /** ← → (cruzam seções) e as bolinhas dos passos da seção atual. */
 export default function Navegacao({ rota }: { rota: Rota }) {
-  const antes = anterior(rota)
-  const depois = proximo(rota)
   const secao = secaoDe(rota.aba)
   const total = passosVisiveis(rota.aba)
   return (
     <nav className="navegacao" aria-label="Slides">
-      <button type="button" className="nav-seta" onClick={() => irPara(antes)} disabled={antes === rota}
+      <button type="button" className="nav-seta" onClick={() => irPara(anterior(rota))} disabled={!temAnterior(rota)}
         aria-label="Slide anterior" title="Slide anterior (←)">←</button>
-      <button type="button" className="nav-seta" onClick={() => irPara(depois)} disabled={depois === rota}
+      <button type="button" className="nav-seta" onClick={() => irPara(proximo(rota))} disabled={!temProximo(rota)}
         aria-label="Próximo slide" title="Próximo slide (→)">→</button>
       {total > 1 && (
         <ol className="nav-passos">

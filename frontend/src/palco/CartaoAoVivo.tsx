@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { dinheiro, ROTULO_STATUS, tempoRestante } from '../formato.ts'
 import type { UsuarioId } from '../usuarios.ts'
 import Palco from './Palco.tsx'
@@ -9,6 +9,9 @@ interface Props {
   palco: DadosPalco
   agora: number
   usuario: UsuarioId
+  /** Painel aberto? Fica no App, que desliga as teclas de slide enquanto ele está aberto. */
+  aberto: boolean
+  aoMudarAberto: (aberto: boolean) => void
   aoAbrirLeiloes: () => void
   aoAbrirNovo: () => void
 }
@@ -16,38 +19,46 @@ interface Props {
 /**
  * Leilão em foco num cartão compacto (preço, líder · versão, contagem). Clicar abre o painel com o
  * palco completo (lance, cancelar, eventos, trocar/novo leilão). O painel fica montado quando fechado,
- * então o valor digitado e o último aviso continuam lá ao reabrir.
+ * então o valor digitado e o último aviso continuam lá ao reabrir. Ao abrir, o foco vai para o painel;
+ * ao fechar (✕ ou Esc), volta para o cartão.
  */
-export default function CartaoAoVivo({ leilaoId, palco, agora, usuario, aoAbrirLeiloes, aoAbrirNovo }: Props) {
-  const [aberto, setAberto] = useState(false)
+export default function CartaoAoVivo({ leilaoId, palco, agora, usuario, aberto, aoMudarAberto, aoAbrirLeiloes, aoAbrirNovo }: Props) {
   const idPainel = useId()
+  const painel = useRef<HTMLElement>(null)
+  const gatilho = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => { if (aberto) painel.current?.focus() }, [aberto])
 
   useEffect(() => {
     if (!aberto) return
     // o Esc da janela "Cancelar este leilão?" fecha só a janela, não o painel
     const aoTecla = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !(e.target instanceof Element && e.target.closest('dialog'))) setAberto(false)
+      if (e.key !== 'Escape' || (e.target instanceof Element && e.target.closest('dialog'))) return
+      aoMudarAberto(false)
+      gatilho.current?.focus()
     }
     window.addEventListener('keydown', aoTecla)
     return () => window.removeEventListener('keydown', aoTecla)
-  }, [aberto])
+  }, [aberto, aoMudarAberto])
 
+  const fechar = () => { aoMudarAberto(false); gatilho.current?.focus() }
   // abrir uma gaveta fecha o painel, para a gaveta não abrir por baixo dele
-  const abrirLeiloes = () => { setAberto(false); aoAbrirLeiloes() }
-  const abrirNovo = () => { setAberto(false); aoAbrirNovo() }
+  const abrirLeiloes = () => { aoMudarAberto(false); aoAbrirLeiloes() }
+  const abrirNovo = () => { aoMudarAberto(false); aoAbrirNovo() }
 
   return (
     <div className="vivo">
-      <section id={idPainel} className="painel-vivo" aria-label="Leilão em foco" hidden={!aberto}>
-        <button type="button" className="painel-vivo-fechar" onClick={() => setAberto(false)} aria-label="Fechar painel">✕</button>
+      <button ref={gatilho} type="button" className="cartao-vivo" aria-expanded={aberto} aria-controls={idPainel}
+        title={aberto ? 'Fechar o painel do leilão' : 'Abrir o painel do leilão'}
+        onClick={() => (palco.situacao === 'sem-leilao' ? abrirLeiloes() : aoMudarAberto(!aberto))}>
+        <Resumo palco={palco} agora={agora} />
+      </button>
+      {/* depois do cartão no DOM: o Tab segue do cartão para dentro do painel */}
+      <section ref={painel} id={idPainel} className="painel-vivo" aria-label="Leilão em foco" hidden={!aberto} tabIndex={-1}>
+        <button type="button" className="painel-vivo-fechar" onClick={fechar} aria-label="Fechar painel">✕</button>
         <Palco leilaoId={leilaoId} palco={palco} agora={agora} usuario={usuario}
           aoAbrirLeiloes={abrirLeiloes} aoAbrirNovo={abrirNovo} />
       </section>
-      <button type="button" className="cartao-vivo" aria-expanded={aberto} aria-controls={idPainel}
-        title={aberto ? 'Fechar o painel do leilão' : 'Abrir o painel do leilão'}
-        onClick={() => (palco.situacao === 'sem-leilao' ? abrirLeiloes() : setAberto((a) => !a))}>
-        <Resumo palco={palco} agora={agora} />
-      </button>
     </div>
   )
 }
@@ -87,7 +98,7 @@ function Resumo({ palco, agora }: { palco: DadosPalco; agora: number }) {
 function Mensagem({ texto, detalhe, perigo }: { texto: string; detalhe?: string; perigo?: boolean }) {
   return (
     <>
-      <span className={`cartao-vivo-rotulo ${perigo ? 'cartao-vivo-rotulo--perigo' : 'cartao-vivo-rotulo--parado'}`}>ao vivo</span>
+      <span className={`cartao-vivo-rotulo ${perigo ? 'cartao-vivo-rotulo--perigo' : 'cartao-vivo-rotulo--parado'}`}>leilão</span>
       <span className="cartao-vivo-detalhe">{detalhe}</span>
       <span className="cartao-vivo-mensagem">{texto}</span>
     </>

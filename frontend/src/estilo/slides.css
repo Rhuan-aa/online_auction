@@ -25,7 +25,7 @@
 
 .slide-kicker {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--texto-kicker);
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;

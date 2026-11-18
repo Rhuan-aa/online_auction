@@ -45,7 +45,7 @@ export function hrefDe(r: { aba: Aba; passo?: number; leilaoId: string | null })
   return r.leilaoId ? `${base}?leilao=${encodeURIComponent(r.leilaoId)}` : base
 }
 
-/** Próximo slide: o passo seguinte ou, no último passo, o primeiro da próxima seção. Para no fim. */
+/** Próximo slide: o passo seguinte ou, no último passo, o primeiro da próxima seção. No fim, devolve a mesma rota (veja temProximo). */
 export function proximo(r: Rota): Rota {
   if (r.passo < passosVisiveis(r.aba)) return { ...r, passo: r.passo + 1 }
   const i = SECOES.findIndex((s) => s.id === r.aba)
@@ -53,7 +53,17 @@ export function proximo(r: Rota): Rota {
   return seguinte ? { ...r, aba: seguinte.id, passo: 1 } : r
 }
 
-/** Slide anterior: o passo de antes ou, no primeiro passo, o último da seção anterior. Para no começo. */
+/** Há slide depois deste? (false só no último passo da última seção) */
+export function temProximo(r: Rota): boolean {
+  return r.passo < passosVisiveis(r.aba) || SECOES.findIndex((s) => s.id === r.aba) < SECOES.length - 1
+}
+
+/** Há slide antes deste? (false só no primeiro passo da primeira seção) */
+export function temAnterior(r: Rota): boolean {
+  return r.passo > 1 || SECOES.findIndex((s) => s.id === r.aba) > 0
+}
+
+/** Slide anterior: o passo de antes ou, no primeiro passo, o último da seção anterior. No começo, devolve a mesma rota (veja temAnterior). */
 export function anterior(r: Rota): Rota {
   if (r.passo > 1) return { ...r, passo: r.passo - 1 }
   const i = SECOES.findIndex((s) => s.id === r.aba)

@@ -24,6 +24,7 @@ export default function App() {
   const rota = useRota()
   const [usuario, setUsuario] = useState<UsuarioId>(usuarioSalvo)
   const [gaveta, setGaveta] = useState<Gaveta>(null)
+  const [painelAberto, setPainelAberto] = useState(false)
 
   // Sem leilão em foco, o palco abre a lista para escolher um (até a pessoa fechá-la).
   const palco = usePalco(rota.leilaoId)
@@ -38,7 +39,9 @@ export default function App() {
   const gavetaAberta: Gaveta = gaveta ?? (precisaEscolher && !dispensouLista ? 'leiloes' : null)
 
   const fechar = useCallback(() => { setGaveta(null); setDispensouLista(true) }, [])
-  useTeclasSlides(rota.aba, rota.passo, rota.leilaoId, gavetaAberta === null)
+  // só a gaveta aberta pela pessoa e o painel do cartão bloqueiam as teclas; a lista que abre sozinha
+  // no primeiro acesso (sem leilão) não, senão as setas não funcionariam até escolher um leilão
+  useTeclasSlides(rota.aba, rota.passo, rota.leilaoId, gaveta === null && !painelAberto)
 
   function trocarUsuario(novo: UsuarioId) {
     setUsuario(novo)
@@ -78,6 +81,8 @@ export default function App() {
           palco={palco}
           agora={agora}
           usuario={usuario}
+          aberto={painelAberto}
+          aoMudarAberto={setPainelAberto}
           aoAbrirLeiloes={() => setGaveta('leiloes')}
           aoAbrirNovo={() => setGaveta('novo')}
         />
