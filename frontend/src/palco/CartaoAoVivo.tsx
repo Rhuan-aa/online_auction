@@ -24,7 +24,10 @@ export default function CartaoAoVivo({ leilaoId, palco, agora, usuario, aoAbrirL
 
   useEffect(() => {
     if (!aberto) return
-    const aoTecla = (e: KeyboardEvent) => { if (e.key === 'Escape') setAberto(false) }
+    // o Esc da janela "Cancelar este leilão?" fecha só a janela, não o painel
+    const aoTecla = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !(e.target instanceof Element && e.target.closest('dialog'))) setAberto(false)
+    }
     window.addEventListener('keydown', aoTecla)
     return () => window.removeEventListener('keydown', aoTecla)
   }, [aberto])
