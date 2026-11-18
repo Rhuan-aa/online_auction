@@ -1,6 +1,11 @@
 /* Abas da apresentação: Integridade (rajada, escada de versões, checagens). Só tokens. */
 .bloco-aba { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem; }
 .rajada-controles { display: flex; flex-wrap: wrap; gap: 1rem; align-items: end; }
+/* formulário da simulação na coluna de texto do slide: compacto, em 2 colunas, para caber em 1366×768 */
+.slide-acao .simulacao fieldset { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem 0.75rem; padding: 0.75rem; }
+.slide-acao .simulacao label { font-size: 0.85rem; }
+.slide-acao .simulacao input:not([type='checkbox']) { padding: 0.3rem 0.6rem; font-size: 0.95rem; min-width: 0; }
+.slide-visual .resultado { margin: 0; font-family: var(--fonte-mono); font-size: 0.95rem; }
 .kpis { display: flex; flex-wrap: wrap; gap: 2rem; }
 
 .escada { display: flex; flex-direction: column; gap: 0.75rem; }

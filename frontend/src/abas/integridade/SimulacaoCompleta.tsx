@@ -1,8 +1,9 @@
-// Simulação completa da aba Integridade: cria o próprio leilão, mostra raias, contadores e checagens.
+// Simulação completa da aba Integridade (passo 2): cria o próprio leilão, mostra raias, contadores e checagens.
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { api } from '../../api.ts'
 import Raias from '../../graficos/Raias.tsx'
-import { hrefDe } from '../../rota.ts'
+import { hrefDe, lerRota } from '../../rota.ts'
+import Slide from '../../shell/Slide.tsx'
 import { ErroSimulacao, executar, lerConfiguracaoAtiva, type Execucao, type Progresso } from '../../simulacao.ts'
 import FormSimulacao, { PADRAO, validar, type Campos } from './FormSimulacao.tsx'
 
@@ -28,7 +29,8 @@ export default function SimulacaoCompleta() {
     setProgresso(p)
     if (p.leilaoId && focado.current !== p.leilaoId) { // o leilão criado vira o foco do palco
       focado.current = p.leilaoId
-      window.location.hash = hrefDe({ aba: 'integridade', passo: 2, leilaoId: p.leilaoId }) // fica no slide da simulação
+      // troca só o leilão: quem já foi para outro passo da seção continua nele
+      window.location.hash = hrefDe({ ...lerRota(window.location.hash), aba: 'integridade', leilaoId: p.leilaoId })
     }
   }
 
@@ -61,10 +63,8 @@ export default function SimulacaoCompleta() {
     : []
   const duracao = execucao ? Math.max(0, ...execucao.lances.map((l) => l.t)) : 0
 
-  return (
-    <section className="bloco-aba">
-      <h2>Simulação completa</h2>
-      <p className="suave">Cria um leilão novo, dispara os lances com N simultâneos e confere o resultado no fim.</p>
+  const formulario = (
+    <>
       <form className="simulacao" onSubmit={iniciar}>
         <FormSimulacao valor={campos} onChange={setCampos} desabilitado={rodando} />
         <div className="simulacao-botoes">
@@ -73,13 +73,22 @@ export default function SimulacaoCompleta() {
             : <button type="submit" className="botao botao--destaque">▶ Executar simulação</button>}
         </div>
       </form>
+      {erro && <p className="erro" role="alert">{erro}</p>}
+    </>
+  )
+
+  return (
+    <Slide
+      titulo="Simulação completa"
+      texto={<p>Cria um leilão novo, dispara os lances com N simultâneos e confere o resultado no fim.</p>}
+      acao={formulario}
+    >
       {progresso && (
         <p className="resultado" role="status">
           {progresso.fase}… {progresso.enviados}/{progresso.total} enviados · {progresso.aceitos} aceitos ·{' '}
           {progresso.recusados} recusados · {progresso.conflitos} conflitos
         </p>
       )}
-      {erro && <p className="erro" role="alert">{erro}</p>}
       {execucao && (
         <>
           <div className="kpis">
@@ -100,6 +109,7 @@ export default function SimulacaoCompleta() {
           <Raias titulo="Lances por licitante" raias={raias} duracaoMs={duracao} />
         </>
       )}
-    </section>
+      {!progresso && !execucao && <p className="slide-vazio">As raias dos licitantes e as checagens aparecem aqui ao executar a simulação.</p>}
+    </Slide>
   )
 }
