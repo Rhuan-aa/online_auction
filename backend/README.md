@@ -22,7 +22,7 @@ Para comparar as configurações do cache (ADR-003): `A` (sem cópia), `B` (só 
 | Serviço | Rota | O que faz |
 |---|---|---|
 | escrita e leitura | `GET /admin/cache/configuracao` | Configuração ativa: `{"configuracao":"C"}` |
-| escrita e leitura | `PUT /admin/cache/configuracao` | Troca A/B/C. Ao ligar o Redis (C), ele é limpo antes; se estiver fora do ar, responde 503 `REDIS_INDISPONIVEL` e a configuração não muda. Cada serviço troca só a sua: o front chama os dois |
+| escrita e leitura | `PUT /admin/cache/configuracao` | Troca A/B/C. Ao ligar o Redis (C), ele é limpo antes; qualquer falha ao limpar o Redis (ex.: fora do ar), responde 503 `REDIS_INDISPONIVEL` e a configuração não muda. Cada serviço troca só a sua: o front chama os dois |
 | escrita | `POST /admin/cache/reconstruir` | Apaga Redis e checkpoints, refaz a partir dos eventos e devolve o relatório da comparação |
 | leitura | `GET /leiloes/{id}/eventos` | Eventos do leilão, para a linha do tempo da Auditoria |
 | leitura | `GET /leiloes/{id}?ateVersao=N` | Estado do leilão na versão N (viagem no tempo) |

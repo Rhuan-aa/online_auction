@@ -6,7 +6,7 @@
 
 ## 1. Objetivo
 
-Uma tela de administração para **demonstrar a arquitetura**, ao lado das telas de usuário (lista, detalhe, criar leilão). O ADM configura uma simulação de leilão, o painel dispara lances e mostra, medido de verdade:
+Uma tela de administração para **demonstrar a arquitetura**, ao lado do palco do leilão. O ADM configura uma simulação de leilão, o painel dispara lances e mostra, medido de verdade:
 
 - **Integridade:** um único vencedor e nenhum lance aceito perdido.
 - **Desempenho:** tempo para obter o estado e eventos lidos por pedido, **nas configurações A, B e C** do cache (ADR-003).
@@ -14,6 +14,8 @@ Uma tela de administração para **demonstrar a arquitetura**, ao lado das telas
 Não há mais métrica de "consistência eventual": sem banco de leitura separado, a leitura usa o mesmo estado da escrita (ver PLANO.md, seção 1).
 
 ## 2. A tela
+
+> Esboço do desenho original, em uma tela só. Hoje o formulário e o resultado estão na aba Integridade, e o gráfico e o histórico de comparações na aba Desempenho.
 
 ```
 ┌─ SIMULAÇÃO ────────────────────────────────────────────────────────────┐
@@ -93,16 +95,18 @@ Rotas usadas: `POST /leiloes`, `POST /leiloes/{id}/lances`, `GET /leiloes/{id}`,
 
 ## 5. Frontend (o mais simples possível)
 
-Sem bibliotecas novas. React puro, CSS próprio, gráfico em SVG. Hoje essas peças vivem nas abas Integridade e Desempenho.
+Sem bibliotecas novas além das fontes. React puro, CSS próprio, gráficos em SVG. As peças vivem nas abas Integridade e Desempenho.
 
 | Arquivo | Conteúdo |
 |---|---|
-| `src/api.ts` | `lerMetrica(servico, nome, tag)` para `/actuator/metrics`, além das rotas de sempre |
-| `src/simulacao.ts` | Gerador com semente (mulberry32), plano de lances, disparo com N simultâneos sem dois do mesmo licitante ao mesmo tempo, leitores, p50/p95, checagens e diferença das métricas |
-| `src/historico.ts` | Até 20 execuções no `localStorage` deste navegador; "mesma simulação" = mesmos parâmetros e semente |
-| `src/Grafico.tsx` | Linhas em SVG: mediana do tempo no navegador por faixa de nº de eventos, uma por configuração (a última de cada uma com a mesma simulação) |
-| `src/PainelAdm.tsx` | Formulário, resultado, gráfico (consultas ou lances) e histórico para comparar lado a lado |
-| `test/simulacao.test.ts` | `npm test` (`node --test`, sem biblioteca): percentil, semente e checagens |
+| `src/api.ts` | `lerMetrica(servico, nome, tags)` para `/actuator/metrics`, a configuração do cache (`/admin/cache/configuracao`) e as rotas de sempre |
+| `src/simulacao.ts` | Gerador com semente (mulberry32), plano de lances, disparo com N simultâneos sem dois do mesmo licitante ao mesmo tempo, leitores, p50/p95 e checagens |
+| `src/metricas.ts` | Leitura de `/actuator/metrics` nas duas portas e diferença entre antes e depois da execução |
+| `src/historico.ts` | Até 10 comparações no `localStorage` deste navegador (`leilao.adm.comparacoes`); o rótulo da simulação inclui parâmetros e semente |
+| `src/abas/integridade/` | Aba Integridade: formulário da simulação, rajada de lances, escada de versões e resultado com as checagens |
+| `src/abas/desempenho/` | Aba Desempenho: `comparacao.ts` (roda A, B e C em sequência e restaura a configuração), `ComparacaoAoVivo`, `GraficosComparacao`, `dadosComparacao.ts` e o painel ao vivo (`aoVivo.ts`) |
+| `src/graficos/` | Barras, linhas, raias e sparkline em SVG |
+| `src/*.test.ts` e `src/abas/**/*.test.ts` | `npm test` (Vitest): percentil, semente, checagens, comparação, métricas e rotas |
 
 ## 6. Limites (dizer se a banca perguntar)
 
@@ -110,7 +114,7 @@ Sem bibliotecas novas. React puro, CSS próprio, gráfico em SVG. Hoje essas pe�
 - O navegador abre ~6 conexões por porta, **somando todas as abas**. Escrita (8081) e leitura (8082) são portas diferentes, por isso os dois campos vão até 6: acima disso os pedidos esperariam na fila do navegador e o tempo medido incluiria a espera. Uma aba de detalhe aberta prende uma conexão SSE na 8082. Basta para gerar conflitos reais em demo, mas não é teste de carga de produção (para carga, use o `SimuladorLances`).
 - As métricas são do serviço inteiro: outras abas, o agendador ou outro leilão rodando ao mesmo tempo entram na diferença. Rode o painel sozinho.
 - Trocar de configuração não exige reiniciar, mas a troca é feita nos dois serviços; com o Redis fora do ar, a troca para C é recusada (503).
-- O histórico fica só no navegador em que as execuções foram feitas.
+- O histórico das comparações fica só no navegador em que foram feitas.
 - Cada execução cria um leilão de 10 min, que aparece na lista e é encerrado pelo agendador.
 
 ## 7. Próximos passos
