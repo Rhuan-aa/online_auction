@@ -105,18 +105,17 @@
 .barra { height: 10px; border-radius: 999px; background: var(--superficie-2); overflow: hidden; }
 .barra span { display: block; height: 100%; border-radius: inherit; background: var(--cor, var(--destaque)); transition: width 250ms linear; }
 .raia-contagem { font-family: var(--fonte-mono); font-size: 0.8rem; color: var(--tinta-suave); }
-.raia-metrica { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
-.raia-metrica .raia-valor { overflow: hidden; text-overflow: ellipsis; }
+.raia-metrica { display: flex; flex-direction: column; min-width: 0; }
 .raia-valor { font-family: var(--fonte-mono); font-size: 1.05rem; font-weight: 700; white-space: nowrap; }
 .raia-valor small { font-size: 0.8rem; font-weight: 500; color: var(--tinta-suave); }
-.raia-valor small.quebra { display: block; margin-top: 0.15rem; white-space: nowrap; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; }
+.raia-valor small.quebra { display: block; margin-top: 0.15rem; white-space: nowrap; line-height: 1.2; }
 .raias-nota, .ressalvas, .placar-nota { margin: 0.6rem 0 0; font-size: 0.85rem; max-width: 70ch; }
 .raia-rotulo { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .raia-status { min-width: 0; }
 .estado { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 700; color: var(--tinta-suave); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .estado--rodando { color: var(--tinta); }
 .estado--rodando::before { content: ''; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--cor); animation: piscar 1s ease-in-out infinite alternate; }
-.estado--terminou { color: var(--sucesso); }
+.estado--terminou { color: var(--sucesso); overflow: visible; }
 .estado--parada { color: var(--aviso); }
 .estado--erro { color: var(--perigo); white-space: normal; }
 @keyframes piscar { from { opacity: 1; } to { opacity: 0.25; } }
@@ -184,3 +183,14 @@
 /* Escape esconde a dica (WCAG 1.4.13); vem depois das regras de hover/foco */
 .formulario-corrida[data-dica-oculta] .campo .dica,
 .com-dica[data-dica-oculta] .dica { opacity: 0; visibility: hidden; }
+
+/* tempo em ms: ao passar o mouse (ou focar), mostra o mesmo valor em s ou min */
+.ms-conv { position: relative; cursor: help; text-decoration: underline dotted color-mix(in srgb, currentColor 45%, transparent); text-underline-offset: 3px; outline-offset: 2px; }
+.ms-conv:hover::after, .ms-conv:focus-visible::after {
+  content: attr(data-conv);
+  position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%); z-index: 20;
+  padding: 0.3rem 0.55rem; border-radius: 6px;
+  background: var(--tinta); color: var(--fundo, #111);
+  font-family: var(--fonte-texto); font-size: 0.78rem; font-weight: 700; white-space: nowrap; pointer-events: none;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.35);
+}

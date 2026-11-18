@@ -1,3 +1,4 @@
+import { convertido } from '../corrida/medidas.ts'
 import Moldura from './Moldura.tsx'
 import { descreverBarras, escalaLinear, finito, marcas, mensagemVazia, rotuloNumero, truncar } from './escalas.ts'
 import { useLargura } from './useLargura.ts'
@@ -58,7 +59,7 @@ export default function Barras({ titulo, unidade, simbolo, grupos: brutos, cores
                 return (
                   <rect key={v.serie} x={x + 1} y={yy} width={Math.max(1, w - 2)} height={h} rx={3}
                     style={{ fill: cores[v.serie] ?? 'var(--tinta-suave)' }}>
-                    <title>{`${g.rotulo ? `${g.rotulo} · ` : ''}${v.serie}: ${rotuloNumero(v.valor)} ${simbolo}`}</title>
+                    <title>{`${g.rotulo ? `${g.rotulo} · ` : ''}${v.serie}: ${rotuloNumero(v.valor)} ${simbolo}${simbolo === 'ms' ? ` (= ${convertido(v.valor)})` : ''}`}</title>
                   </rect>
                 )
               })}

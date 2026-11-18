@@ -18,6 +18,8 @@ export interface Criterio {
   sentido: Sentido
   valor: (a: ArqFoto) => number | null
   texto: (a: ArqFoto) => string
+  /** Valor é um tempo em ms: o placar mostra a conversão para s/min ao passar o mouse. */
+  tempo?: boolean
 }
 
 const escrita = (k: 'p50' | 'p95') => (a: ArqFoto) => (temEscrita(a) ? a.escrita[k] : null)
@@ -28,10 +30,10 @@ const porLance = (a: ArqFoto) => (a.enviados > 0 ? a.operacoes.porLance : null)
 const espaco = (a: ArqFoto) => a.espaco?.bytes ?? null
 
 export const CRITERIOS: Criterio[] = [
-  { id: 'tipico', rotulo: 'Tempo típico de registro', sentido: 'menor', valor: escrita('p50'), texto: (a) => ms(escrita('p50')(a)) },
-  { id: 'pior', rotulo: 'Pior caso', sentido: 'menor', valor: escrita('p95'), texto: (a) => ms(escrita('p95')(a)) },
+  { id: 'tipico', rotulo: 'Tempo típico de registro', sentido: 'menor', valor: escrita('p50'), texto: (a) => ms(escrita('p50')(a)), tempo: true },
+  { id: 'pior', rotulo: 'Pior caso', sentido: 'menor', valor: escrita('p95'), texto: (a) => ms(escrita('p95')(a)), tempo: true },
   { id: 'vazao', rotulo: 'Lances por segundo', sentido: 'maior', valor: vazao, texto: (a) => porSegundo(vazao(a)) },
-  { id: 'consulta', rotulo: 'Consulta (típico)', sentido: 'menor', valor: consulta, texto: (a) => ms(consulta(a)) },
+  { id: 'consulta', rotulo: 'Consulta (típico)', sentido: 'menor', valor: consulta, texto: (a) => ms(consulta(a)), tempo: true },
   { id: 'desatualizadas', rotulo: 'Leituras desatualizadas', sentido: 'menor', valor: pctDesatualizadas, texto: (a) => pct(pctDesatualizadas(a)) },
   { id: 'operacoes', rotulo: 'Operações por lance', sentido: 'menor', valor: porLance, texto: (a) => porLanceOps(porLance(a)) },
   { id: 'espaco', rotulo: 'Espaço (após VACUUM)', sentido: 'menor', valor: espaco, texto: (a) => bytes(espaco(a)) },

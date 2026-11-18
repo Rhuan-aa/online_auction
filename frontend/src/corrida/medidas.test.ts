@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { bytes, ms, pct, pctDesatualizadas, progresso, textoStatus } from './medidas.ts'
+import { bytes, convertido, ms, pct, pctDesatualizadas, progresso, textoStatus } from './medidas.ts'
 import type { ArqFoto } from './tipos.ts'
 
 test('formatos com vírgula e traço sem dado', () => {
@@ -22,7 +22,15 @@ test('progresso entre 0 e 1', () => {
 })
 test('status', () => {
   expect(textoStatus({ status: 'rodando', terminouEmMs: null, erro: null })).toBe('rodando')
-  expect(textoStatus({ status: 'terminou', terminouEmMs: 3400, erro: null })).toBe('terminou em 3,4 s')
+  expect(textoStatus({ status: 'terminou', terminouEmMs: 3400, erro: null })).toBe('terminou em 3.400,0 ms')
   expect(textoStatus({ status: 'parada', terminouEmMs: null, erro: null })).toBe('parada')
   expect(textoStatus({ status: 'erro', terminouEmMs: null, erro: 'Redis fora' })).toBe('erro: Redis fora')
+})
+
+test('tempo em ms convertido para s ou min ao passar o mouse', () => {
+  expect(convertido(27)).toBe('0,027 s (menos de 1 segundo)')
+  expect(convertido(1368)).toBe('1,37 segundos')
+  expect(convertido(59_999)).toBe('60,00 segundos')
+  expect(convertido(123_400)).toBe('2 min 3,4 s (2,06 minutos)')
+  expect(convertido(null)).toBeNull()
 })

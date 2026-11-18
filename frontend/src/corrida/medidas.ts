@@ -13,6 +13,19 @@ export const pct = (v: number | null | undefined) => (v == null || !Number.isFin
 /** Taxa: quantos lances a cada 1 segundo. */
 export const porSegundo = (v: number | null | undefined) => (v == null || !Number.isFinite(v) ? '—' : `${UMA.format(v)} lances/s`)
 export const porLanceOps = (v: number | null | undefined) => (v == null || !Number.isFinite(v) ? '—' : `${UMA.format(v)} op/lance`)
+const DUAS = fmt(2)
+const TRES = fmt(3)
+/**
+ * Um tempo em ms convertido para leitura humana, mostrado ao passar o mouse:
+ * 27 → "0,027 s (menos de 1 segundo)"; 1368 → "1,37 segundos"; 123400 → "2 min 3,4 s (2,06 minutos)".
+ */
+export function convertido(v: number | null | undefined): string | null {
+  if (v == null || !Number.isFinite(v)) return null
+  if (v < 1000) return `${TRES.format(v / 1000)} s (menos de 1 segundo)`
+  if (v < 60_000) return `${DUAS.format(v / 1000)} segundos`
+  const min = Math.floor(v / 60_000)
+  return `${min} min ${UMA.format((v - min * 60_000) / 1000)} s (${DUAS.format(v / 60_000)} minutos)`
+}
 export const segundos = (msTotal: number) => `${UMA.format(msTotal / 1000)} s`
 
 /** 49152 → "48,0 KB"; acima de 1 MB, em MB. */
@@ -36,7 +49,7 @@ export const progresso = (a: Pick<ArqFoto, 'enviados' | 'total'>) => (a.total > 
 export function textoStatus(a: Pick<ArqFoto, 'status' | 'terminouEmMs' | 'erro'>): string {
   switch (a.status) {
     case 'rodando': return 'rodando'
-    case 'terminou': return a.terminouEmMs == null ? 'terminou' : `terminou em ${segundos(a.terminouEmMs)}`
+    case 'terminou': return a.terminouEmMs == null ? 'terminou' : `terminou em ${ms(a.terminouEmMs)}`
     case 'parada': return 'parada'
     case 'erro': return a.erro ? `erro: ${a.erro}` : 'erro'
   }

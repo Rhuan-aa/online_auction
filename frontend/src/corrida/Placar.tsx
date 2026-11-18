@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import Ms from './Ms.tsx'
 import { useDicaDispensavel } from './dicas.ts'
 import { CRITERIOS, detalheIntegridade, excluidas, vencedores } from './melhores.ts'
 import { inteiro } from './medidas.ts'
@@ -36,7 +37,7 @@ export default function Placar({ foto }: { foto: Foto | null }) {
                 const melhor = v[c.id].has(i)
                 return (
                   <td key={c.id} className={melhor ? 'placar-melhor' : undefined}>
-                    <ValorComUnidade texto={c.texto(a)} />{c.id === 'espaco' && a.espaco && <small>{linhasDoEspaco(a.espaco)}</small>}{melhor && <span aria-hidden="true"> ★</span>}
+                    {c.tempo ? <Ms v={c.valor(a)} /> : <ValorComUnidade texto={c.texto(a)} />}{c.id === 'espaco' && a.espaco && <small>{linhasDoEspaco(a.espaco)}</small>}{melhor && <span aria-hidden="true"> ★</span>}
                     {melhor && <span className="visualmente-oculto"> (melhor)</span>}
                   </td>
                 )

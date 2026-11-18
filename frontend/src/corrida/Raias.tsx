@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react'
-import { decimal, inteiro, ms, pct, pctDesatualizadas, progresso, segundos, temEscrita, textoStatus } from './medidas.ts'
+import Ms from './Ms.tsx'
+import { decimal, inteiro, pct, pctDesatualizadas, progresso, segundos, temEscrita, textoStatus } from './medidas.ts'
 import { ARQUITETURAS, corDe, NOTA_CRUD, type ArqFoto, type Foto } from './tipos.ts'
 import type { Fase } from './useCorrida.ts'
 
@@ -57,7 +58,7 @@ function Raia({ a }: { a: ArqFoto }) {
         <span className="raia-contagem">{inteiro(a.enviados)} / {inteiro(a.total)}</span>
       </div>
       <Metrica rotulo="Tempo para registrar um lance (típico · pior caso)">
-        {temEscrita(a) ? <>{ms(a.escrita.p50)}<small className="quebra">pior caso {ms(a.escrita.p95)}</small></> : '—'}
+        {temEscrita(a) ? <><Ms v={a.escrita.p50} /><small className="quebra">pior caso <Ms v={a.escrita.p95} /></small></> : '—'}
       </Metrica>
       <Metrica rotulo="Lances por segundo">{a.enviados > 0 ? <>{decimal(a.lancesPorSegundo)}<small className="quebra">lances/s</small></> : '—'}</Metrica>
       <Metrica rotulo="Conflitos">
@@ -70,7 +71,9 @@ function Raia({ a }: { a: ArqFoto }) {
       </Metrica>
       <div className="raia-status" title={a.erro ?? undefined}>
         <span className="raia-rotulo">Status</span>
-        <span className={`estado estado--${a.status}`}>{textoStatus(a)}</span>
+        <span className={`estado estado--${a.status}`}>
+          {a.status === 'terminou' && a.terminouEmMs != null ? <>terminou em <Ms v={a.terminouEmMs} /></> : textoStatus(a)}
+        </span>
       </div>
     </li>
   )
