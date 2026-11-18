@@ -54,8 +54,8 @@ const CAMINHO: Record<Servico, string> = { escrita: 'comando', leitura: 'consult
 
 async function fotografar(api: Api, servico: Servico): Promise<Foto> {
   const [obter, ...bases] = await Promise.all([
-    api.lerMetrica(servico, 'leilao.estado.obter', `caminho:${CAMINHO[servico]}`),
-    ...BASES.map((b) => api.lerMetrica(servico, 'leilao.estado.eventos.lidos', `base:${b}`)),
+    api.lerMetrica(servico, 'leilao.estado.obter', [`caminho:${CAMINHO[servico]}`]),
+    ...BASES.map((b) => api.lerMetrica(servico, 'leilao.estado.eventos.lidos', [`base:${b}`])),
   ])
   return {
     obter: acumulado(obter),
