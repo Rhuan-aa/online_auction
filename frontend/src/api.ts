@@ -79,7 +79,7 @@ const CORRIDA = import.meta.env.VITE_CORRIDA_API ?? 'http://localhost:8085'
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
 
 /** Lê {erro, mensagem}; o 404 da leitura vem no formato padrão do Spring, então o corpo é opcional. */
-export async function erroDe(r: Response, rotulo: string): Promise<ErroHttp> {
+async function erroDe(r: Response, rotulo: string): Promise<ErroHttp> {
   const corpo = await r.json().catch(() => null) as { erro?: string; mensagem?: string } | null
   return new ErroHttp(r.status, corpo?.mensagem ?? `${rotulo} → ${r.status}`, corpo?.erro)
 }

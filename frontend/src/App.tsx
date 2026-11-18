@@ -34,9 +34,9 @@ export default function App() {
             <ResumoCorrida foto={corrida.foto} />
             <span className="selo-medido">{SELO}</span>
           </div>
-          {(corrida.aviso || corrida.erro) && (
+          {(corrida.aviso || (corrida.erro && corrida.foto)) && (
             <div className="corrida-alertas">
-              {corrida.erro && <p className="alerta">{corrida.erro}</p>}
+              {corrida.erro && corrida.foto && <p className="alerta">{corrida.erro}</p>}
               {corrida.aviso && <p className="alerta alerta--aviso" role="status">{corrida.aviso}</p>}
             </div>
           )}
