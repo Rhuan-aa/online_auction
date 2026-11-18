@@ -2,7 +2,7 @@
 
 > **Atualização:** o painel deixou de ser uma tela à parte (`#/adm` e `PainelAdm.tsx` foram removidos). A simulação e as checagens de integridade estão na aba **Integridade**, e a comparação A × B × C na aba **Desempenho** (veja `frontend/README.md`). A comparação não exige mais reiniciar nada: o botão "Comparar A × B × C" troca a configuração com `PUT /admin/cache/configuracao` nos dois serviços, roda a mesma simulação em cada uma e restaura a anterior. O restante deste texto descreve a lógica de medição, que continua valendo; os trechos sobre a tela e os arquivos são do desenho original.
 >
-> Status original: implementado em `#/adm` (`src/PainelAdm.tsx`, `src/simulacao.ts`, `src/historico.ts`, `src/Grafico.tsx`). Falta o ensaio com um leilão longo nas três configurações.
+> Status original: implementado em `#/adm` (`src/PainelAdm.tsx`, `src/simulacao.ts`, `src/historico.ts`, `src/Grafico.tsx`; arquivos removidos; hoje nas abas Integridade e Desempenho). Falta o ensaio com um leilão longo nas três configurações.
 
 ## 1. Objetivo
 
@@ -105,8 +105,8 @@ Sem bibliotecas novas além das fontes. React puro, CSS próprio, gráficos em S
 | `src/historico.ts` | Até 10 comparações no `localStorage` deste navegador (`leilao.adm.comparacoes`); o rótulo da simulação inclui parâmetros e semente |
 | `src/abas/integridade/` | Aba Integridade: formulário da simulação, rajada de lances, escada de versões e resultado com as checagens |
 | `src/abas/desempenho/` | Aba Desempenho: `comparacao.ts` (roda A, B e C em sequência e restaura a configuração), `ComparacaoAoVivo`, `GraficosComparacao`, `dadosComparacao.ts` e o painel ao vivo (`aoVivo.ts`) |
-| `src/graficos/` | Barras, linhas, raias e sparkline em SVG |
-| `src/*.test.ts` e `src/abas/**/*.test.ts` | `npm test` (Vitest): percentil, semente, checagens, comparação, métricas e rotas |
+| `src/graficos/` | Em SVG: `Barras`, `BarrasEmpilhadas`, `Linhas`, `Sparkline`, `Raias`, `Moldura` (legenda e quadro), `escalas` e `useLargura` |
+| `src/simulacao.test.ts` (e os demais `src/*.test.ts` e `src/abas/**/*.test.ts`) | `npm test` (Vitest): percentil, semente, checagens, comparação, métricas e rotas |
 
 ## 6. Limites (dizer se a banca perguntar)
 
