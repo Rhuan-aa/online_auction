@@ -15,6 +15,7 @@
   --aviso-fundo: #f8ecd0;
   --perigo: #c8321f;
   --perigo-fundo: #f9e0db;
+  --veu: rgb(22 19 15 / 0.4);
   --sombra: 0 1px 2px rgb(22 19 15 / 0.06), 0 6px 18px rgb(22 19 15 / 0.06);
 
   /* gráfico do painel de ADM: uma cor por configuração, com contraste sobre o fundo claro */
@@ -57,6 +58,7 @@
   --aviso-fundo: #3d2f12;
   --perigo: #ff7a66;
   --perigo-fundo: #4a1f19;
+  --veu: rgb(0 0 0 / 0.6);
   --sombra: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 18px rgb(0 0 0 / 0.35);
   --serie-a: #6aa6f0;
   --serie-b: #f08a5a;

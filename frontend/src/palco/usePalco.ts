@@ -57,10 +57,19 @@ export function usePalco(leilaoId: string | null): Palco {
       () => atualizar((d) => ({ ...d, sseCaiu: true })),
     )
 
-    // O SSE fica mudo se o leilão não existe; uma consulta avisa.
-    api.consultarLeilao(leilaoId).catch((e) => {
-      if (e instanceof ErroHttp && e.status === 404) atualizar((d) => ({ ...d, erro: e }))
+    // O SSE fica mudo se o leilão não existe ou o serviço está fora: uma consulta avisa e, se
+    // falhar por outro motivo que não 404, repete a cada 3 s até conseguir. O último estado fica.
+    const parar404 = () => clearInterval(timer)
+    const tentar = () => api.consultarLeilao(leilaoId).then((e) => {
+      atualizar((d) => ({ ...d, estado: d.estado ?? e, erro: null }))
+      parar404()
+    }).catch((e) => {
+      const erro = e instanceof ErroHttp ? e : new ErroHttp(0, 'Sem conexão com o servidor')
+      atualizar((d) => ({ ...d, erro }))
+      if (erro.status === 404) parar404()
     })
+    const timer = setInterval(tentar, 3000)
+    tentar()
 
     api.eventos(leilaoId).then((lista) => {
       const criado = lista.find((e) => e.tipo.startsWith('LeilaoCriado'))?.dados as
@@ -78,7 +87,7 @@ export function usePalco(leilaoId: string | null): Palco {
       })
     }).catch(() => { /* sem histórico: o palco funciona, só sem os 5 últimos eventos */ })
 
-    return () => { ativo = false; parar() }
+    return () => { ativo = false; clearInterval(timer); parar() }
   }, [leilaoId])
 
   const d = leilaoId && dados?.leilaoId === leilaoId ? dados : null

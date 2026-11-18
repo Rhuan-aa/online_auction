@@ -11,7 +11,7 @@ export default function Gaveta({ titulo, aoFechar, children }: { titulo: string;
   return (
     <>
       <div className="gaveta-fundo" onClick={aoFechar} />
-      <aside className="gaveta gaveta-lateral" role="dialog" aria-label={titulo}>
+      <aside className="gaveta gaveta-lateral" role="dialog" aria-modal="true" aria-label={titulo}>
         <div className="gaveta-cabecalho">
           <h2>{titulo}</h2>
           <button className="botao" onClick={aoFechar} aria-label="Fechar">✕</button>

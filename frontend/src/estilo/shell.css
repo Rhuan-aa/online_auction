@@ -81,8 +81,8 @@
   line-height: 1.05;
   font-variant-numeric: tabular-nums;
   margin: 0.25rem 0 0;
-  animation: pulso-preco 600ms ease-out;
 }
+.palco-preco--pulso { animation: pulso-preco 600ms ease-out; }
 @keyframes pulso-preco {
   0% { color: var(--destaque); transform: scale(1.06); transform-origin: left center; }
   100% { color: var(--tinta); transform: scale(1); }
@@ -126,7 +126,7 @@
 .porque-adr { margin-left: 0.5rem; color: var(--tinta-suave); font-weight: 400; }
 
 /* gavetas */
-.gaveta-fundo { position: fixed; inset: 0; background: rgb(22 19 15 / 0.35); z-index: 10; }
+.gaveta-fundo { position: fixed; inset: 0; background: var(--veu); z-index: 10; }
 .gaveta-lateral {
   position: fixed;
   top: 0;
@@ -172,7 +172,7 @@
   padding: 1.25rem;
   max-width: 380px;
 }
-.modal::backdrop { background: rgb(22 19 15 / 0.45); }
+.modal::backdrop { background: var(--veu); }
 .modal-botoes { display: flex; justify-content: flex-end; gap: 0.5rem; }
 .modal-botoes button {
   font: inherit;

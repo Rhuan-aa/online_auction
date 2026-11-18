@@ -3,6 +3,7 @@ import GavetaLeiloes from './palco/GavetaLeiloes.tsx'
 import GavetaNovoLeilao from './palco/GavetaNovoLeilao.tsx'
 import Palco from './palco/Palco.tsx'
 import PainelAdm from './PainelAdm.tsx'
+import { usePalco } from './palco/usePalco.ts'
 import { ABAS, hrefDe, useRota } from './rota.ts'
 import Aba from './shell/Aba.tsx'
 import Topo from './shell/Topo.tsx'
@@ -16,8 +17,15 @@ export default function App() {
   const [gaveta, setGaveta] = useState<Gaveta>(null)
 
   // Sem leilão em foco, o palco abre a lista para escolher um (até a pessoa fechá-la).
+  const palco = usePalco(rota.leilaoId)
   const [dispensouLista, setDispensouLista] = useState(false)
-  const gavetaAberta: Gaveta = gaveta ?? (!rota.leilaoId && !dispensouLista ? 'leiloes' : null)
+  const [leilaoVisto, setLeilaoVisto] = useState(rota.leilaoId)
+  if (leilaoVisto !== rota.leilaoId) { // outro leilão em foco: a lista pode abrir sozinha de novo
+    setLeilaoVisto(rota.leilaoId)
+    setDispensouLista(false)
+  }
+  const precisaEscolher = !rota.leilaoId || palco.situacao === 'nao-encontrado'
+  const gavetaAberta: Gaveta = gaveta ?? (precisaEscolher && !dispensouLista ? 'leiloes' : null)
 
   const fechar = useCallback(() => { setGaveta(null); setDispensouLista(true) }, [])
 
@@ -39,6 +47,7 @@ export default function App() {
       <div className="corpo">
         <Palco
           leilaoId={rota.leilaoId}
+          palco={palco}
           usuario={usuario}
           aoAbrirLeiloes={() => setGaveta('leiloes')}
           aoAbrirNovo={() => setGaveta('novo')}

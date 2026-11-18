@@ -4,10 +4,11 @@ import { api, ErroHttp, type EstadoLeilao } from '../api.ts'
 import { dinheiro, paraCentavos, ROTULO_STATUS, tempoRestante } from '../formato.ts'
 import { isVendedor, type UsuarioId } from '../usuarios.ts'
 import { podeDarLance, proximoLance } from './palco.ts'
-import { usePalco } from './usePalco.ts'
+import type { Palco as DadosPalco } from './usePalco.ts'
 
 interface Props {
   leilaoId: string | null
+  palco: DadosPalco
   usuario: UsuarioId
   aoAbrirLeiloes: () => void
   aoAbrirNovo: () => void
@@ -38,10 +39,10 @@ function traduzirMensagem(codigo: string | undefined, mensagem: string | undefin
 /** 10500 → "105,00", o formato que o campo de lance aceita. */
 const paraCampo = (centavos: number) => (centavos / 100).toFixed(2).replace('.', ',')
 
-const ROTULO_SITUACAO = { 'ao-vivo': 'ao vivo', desatualizado: 'desatualizado', carregando: 'carregando', 'nao-encontrado': '', 'sem-leilao': '' }
+const ROTULO_SITUACAO = { 'ao-vivo': 'ao vivo', desatualizado: 'desatualizado', carregando: 'carregando', indisponivel: 'serviço indisponível', 'nao-encontrado': '', 'sem-leilao': '' }
 
-export default function Palco({ leilaoId, usuario, aoAbrirLeiloes, aoAbrirNovo }: Props) {
-  const { estado, eventos, situacao, incrementoMinimo, precoInicial } = usePalco(leilaoId)
+export default function Palco({ leilaoId, palco, usuario, aoAbrirLeiloes, aoAbrirNovo }: Props) {
+  const { estado, eventos, situacao, incrementoMinimo, precoInicial } = palco
   const agora = useAgora(estado?.status === 'ABERTO')
   const vendedor = isVendedor(usuario)
 
@@ -66,6 +67,7 @@ export default function Palco({ leilaoId, usuario, aoAbrirLeiloes, aoAbrirNovo }
         </div>
       )}
       {situacao === 'carregando' && <p className="suave">Carregando…</p>}
+      {situacao === 'indisponivel' && <p className="erro" role="alert">Serviço indisponível — tentando de novo</p>}
 
       {estado && (
         <CorpoPalco
@@ -120,6 +122,7 @@ function CorpoPalco({ estado, agora, usuario, vendedor, desatualizado, increment
   const [enviando, setEnviando] = useState(false)
   const [confirmando, setConfirmando] = useState(false)
   const [aviso, setAviso] = useState<Aviso | null>(null)
+  const [precoNaEntrada] = useState(estado.precoAtual) // não pulsa na primeira exibição
 
   const sugestao = incrementoMinimo !== null || estado.precoAtual === null
     ? proximoLance(estado, incrementoMinimo ?? 0, precoInicial)
@@ -152,7 +155,7 @@ function CorpoPalco({ estado, agora, usuario, vendedor, desatualizado, increment
     } catch (err) {
       const texto = err instanceof ErroHttp && err.codigo === 'LEILAO_COM_LANCES'
         ? 'Não dá para cancelar: o leilão já tem lances.'
-        : err instanceof Error ? err.message : 'Não foi possível cancelar.'
+        : err instanceof Error && err.name !== 'TypeError' ? err.message : 'Não foi possível falar com o servidor.'
       setAviso({ tipo: 'erro', texto })
     }
     setEnviando(false)
@@ -167,7 +170,7 @@ function CorpoPalco({ estado, agora, usuario, vendedor, desatualizado, increment
       </p>
 
       {/* a chave faz o elemento remontar a cada novo preço e a animação CSS pulsa de novo */}
-      <p className="palco-preco" key={estado.precoAtual ?? 'sem-lance'}>{dinheiro(estado.precoAtual ?? precoInicial)}</p>
+      <p className={`palco-preco${estado.precoAtual !== precoNaEntrada ? ' palco-preco--pulso' : ''}`} key={estado.precoAtual ?? 'sem-lance'}>{dinheiro(estado.precoAtual ?? precoInicial)}</p>
       <p className="palco-meta">
         {estado.liderId ?? 'sem lances'} · v{estado.versao}
       </p>

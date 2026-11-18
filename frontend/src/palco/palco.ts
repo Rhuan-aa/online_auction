@@ -3,7 +3,7 @@ import { ErroHttp, type EstadoLeilao } from '../api.ts'
 
 export interface EventoVisto { tipo: string; versao: number; quando: number }
 
-export type SituacaoPalco = 'sem-leilao' | 'carregando' | 'ao-vivo' | 'desatualizado' | 'nao-encontrado'
+export type SituacaoPalco = 'sem-leilao' | 'carregando' | 'ao-vivo' | 'desatualizado' | 'nao-encontrado' | 'indisponivel'
 
 export function podeDarLance(e: EstadoLeilao | null, agora: number): { pode: boolean; motivo?: string } {
   if (!e) return { pode: false, motivo: 'Sem leilão em foco' }
@@ -34,6 +34,9 @@ export function situacaoDoPalco(entrada: {
 }): SituacaoPalco {
   const { leilaoId, estado, erro, sseCaiu } = entrada
   if (!leilaoId) return 'sem-leilao'
-  if (!estado) return erro?.status === 404 ? 'nao-encontrado' : 'carregando'
+  if (!estado) {
+    if (erro?.status === 404) return 'nao-encontrado'
+    return erro || sseCaiu ? 'indisponivel' : 'carregando'
+  }
   return erro || sseCaiu ? 'desatualizado' : 'ao-vivo'
 }
