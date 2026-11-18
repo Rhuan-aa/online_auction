@@ -1,5 +1,6 @@
 import Moldura from './Moldura.tsx'
-import { escalaLinear, marcas, rotuloNumero, type Serie } from './escalas.ts'
+import { escalaLinear, finito, marcas, rotuloNumero, type Serie } from './escalas.ts'
+import { useLargura } from './useLargura.ts'
 
 interface Props {
   titulo: string
@@ -9,9 +10,11 @@ interface Props {
   rotuloY: string
 }
 
-const L = 640, A = 320, ME = 64, MD = 16, MT = 12, MB = 56
+const A = 320, ME = 64, MD = 16, MT = 12, MB = 56
 
-export default function Linhas({ titulo, unidade, series, rotuloX, rotuloY }: Props) {
+export default function Linhas({ titulo, unidade, series: brutas, rotuloX, rotuloY }: Props) {
+  const [medida, L] = useLargura()
+  const series = brutas.map((s) => ({ ...s, pontos: s.pontos.filter((p) => finito(p.x) !== null && finito(p.y) !== null) }))
   const pts = series.flatMap((s) => s.pontos)
   const vazio = pts.length === 0
   const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y)
@@ -22,7 +25,7 @@ export default function Linhas({ titulo, unidade, series, rotuloX, rotuloY }: Pr
   const resumo = `${titulo}: ${rotuloY} por ${rotuloX}. ${series.map((s) => `${s.nome}, ${s.pontos.length} pontos`).join('; ')}`
 
   return (
-    <Moldura titulo={titulo} unidade={unidade ?? rotuloY} vazio={vazio} legenda={series.map((s) => ({ nome: s.nome, cor: s.cor }))}>
+    <Moldura titulo={titulo} unidade={unidade ?? rotuloY} vazio={vazio} medida={medida} legenda={series.map((s) => ({ nome: s.nome, cor: s.cor }))}>
       <svg viewBox={`0 0 ${L} ${A}`} width="100%" height={A} preserveAspectRatio="xMidYMid meet" role="img" aria-label={resumo}>
         <title>{resumo}</title>
         {ty.map((t) => (

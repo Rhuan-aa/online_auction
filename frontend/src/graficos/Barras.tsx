@@ -1,5 +1,6 @@
 import Moldura from './Moldura.tsx'
-import { escalaLinear, marcas, rotuloNumero } from './escalas.ts'
+import { escalaLinear, finito, marcas, rotuloNumero, truncar } from './escalas.ts'
+import { useLargura } from './useLargura.ts'
 
 interface Props {
   titulo: string
@@ -8,9 +9,11 @@ interface Props {
   cores: Record<string, string>
 }
 
-const L = 640, A = 300, ME = 64, MD = 12, MT = 12, MB = 36
+const A = 300, ME = 64, MD = 12, MT = 12, MB = 36
 
-export default function Barras({ titulo, unidade, grupos, cores }: Props) {
+export default function Barras({ titulo, unidade, grupos: brutos, cores }: Props) {
+  const [medida, L] = useLargura()
+  const grupos = brutos.map((g) => ({ ...g, valores: g.valores.map((v) => ({ ...v, valor: finito(v.valor) })) }))
   const todos = grupos.flatMap((g) => g.valores.map((v) => v.valor).filter((v): v is number => v !== null))
   const ticks = marcas(0, Math.max(0, ...todos))
   const topo = ticks[ticks.length - 1] || 1
@@ -20,7 +23,7 @@ export default function Barras({ titulo, unidade, grupos, cores }: Props) {
   const resumo = `${titulo}, em ${unidade}: ${grupos.map((g) => `${g.rotulo}: ${g.valores.map((v) => `${v.serie} ${v.valor === null ? 'sem dado' : rotuloNumero(v.valor)}`).join(', ')}`).join('; ')}`
 
   return (
-    <Moldura titulo={titulo} unidade={unidade} vazio={grupos.length === 0}
+    <Moldura titulo={titulo} unidade={unidade} vazio={grupos.length === 0} medida={medida}
       legenda={series.map((s) => ({ nome: s, cor: cores[s] ?? 'var(--tinta-suave)' }))}>
       <svg viewBox={`0 0 ${L} ${A}`} width="100%" height={A} preserveAspectRatio="xMidYMid meet" role="img" aria-label={resumo}>
         <title>{resumo}</title>
@@ -56,7 +59,7 @@ export default function Barras({ titulo, unidade, grupos, cores }: Props) {
                   </rect>
                 )
               })}
-              <text x={x0 + largG / 2} y={A - MB + 22} textAnchor="middle" className="grafico-texto">{g.rotulo}</text>
+              <text x={x0 + largG / 2} y={A - MB + 22} textAnchor="middle" className="grafico-texto">{truncar(g.rotulo, Math.floor(largG / 8))}</text>
             </g>
           )
         })}

@@ -41,3 +41,21 @@ export function rotuloNumero(v: number): string {
   if (a >= 1e4) return `${(v / 1e3).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mil`
   return v.toLocaleString('pt-BR', { maximumFractionDigits: 2 })
 }
+
+/** Número utilizável (finito) ou null. */
+export function finito(v: number | null | undefined): number | null {
+  return typeof v === 'number' && Number.isFinite(v) ? v : null
+}
+
+/** Corta o texto com reticências para caber em `max` caracteres; '' se não houver espaço. */
+export function truncar(txt: string, max: number): string {
+  if (txt.length <= max) return txt
+  if (max < 2) return ''
+  return `${txt.slice(0, max - 1)}…`
+}
+
+/** Domínio x das raias: a última marca redonda, sempre >= duracaoMs. */
+export function dominioRaias(duracaoMs: number): number {
+  const m = marcas(0, Math.max(1, duracaoMs))
+  return m[m.length - 1]
+}

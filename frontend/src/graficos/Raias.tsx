@@ -1,5 +1,6 @@
 import Moldura from './Moldura.tsx'
-import { escalaLinear, marcas, rotuloNumero } from './escalas.ts'
+import { dominioRaias, escalaLinear, finito, marcas, rotuloNumero } from './escalas.ts'
+import { useLargura } from './useLargura.ts'
 
 type Resultado = 'aceito' | 'recusado' | 'conflito' | 'erro'
 
@@ -18,18 +19,21 @@ const COR: Record<Resultado, string> = {
 const ROTULO: Record<Resultado, string> = { aceito: 'Aceito', recusado: 'Recusado', conflito: 'Conflito', erro: 'Erro' }
 const ORDEM: Resultado[] = ['aceito', 'recusado', 'conflito', 'erro']
 
-const L = 640, ME = 110, MD = 16, MT = 8, MB = 34, LINHA = 36
+const ME = 110, MD = 16, MT = 8, MB = 34, LINHA = 36
 
-export default function Raias({ titulo, raias, duracaoMs }: Props) {
-  const x = escalaLinear([0, Math.max(1, duracaoMs)], [ME, L - MD])
-  const ticks = marcas(0, Math.max(1, duracaoMs))
+export default function Raias({ titulo, raias: brutas, duracaoMs }: Props) {
+  const [medida, L] = useLargura()
+  const raias = brutas.map((r) => ({ ...r, marcas: r.marcas.filter((m) => finito(m.t) !== null) }))
+  const dominio = dominioRaias(finito(duracaoMs) ?? 0)
+  const x = escalaLinear([0, dominio], [ME, L - MD])
+  const ticks = marcas(0, dominio)
   const A = MT + raias.length * LINHA + MB
   const total = raias.reduce((s, r) => s + r.marcas.length, 0)
   const resumo = `${titulo}, em ms: ${raias.map((r) => `${r.nome}, ${r.marcas.length} lances`).join('; ')}`
   const legenda = ORDEM.map((r) => ({ nome: ROTULO[r], cor: COR[r] }))
 
   return (
-    <Moldura titulo={titulo} unidade="ms" vazio={total === 0} legenda={legenda}>
+    <Moldura titulo={titulo} unidade="ms" vazio={total === 0} medida={medida} legenda={legenda}>
       <svg viewBox={`0 0 ${L} ${A}`} width="100%" height={A} preserveAspectRatio="xMidYMid meet" role="img" aria-label={resumo}>
         <title>{resumo}</title>
         {ticks.map((t) => (
@@ -45,7 +49,7 @@ export default function Raias({ titulo, raias, duracaoMs }: Props) {
               <text x={ME - 8} y={cy} textAnchor="end" dominantBaseline="middle" className="grafico-texto">{r.nome}</text>
               <line x1={ME} x2={L - MD} y1={cy} y2={cy} className="grafico-eixo" />
               {r.marcas.map((m, k) => (
-                <circle key={k} cx={x(m.t)} cy={cy} r={6} className="grafico-ponto" style={{ fill: COR[m.resultado] }}>
+                <circle key={k} cx={x(Math.min(Math.max(m.t, 0), dominio))} cy={cy} r={6} className="grafico-ponto" style={{ fill: COR[m.resultado] }}>
                   <title>{`${r.nome} · ${ROTULO[m.resultado]} em ${rotuloNumero(m.t)} ms`}</title>
                 </circle>
               ))}

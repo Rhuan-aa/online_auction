@@ -1,5 +1,6 @@
 import Moldura from './Moldura.tsx'
-import { escalaLinear, marcas, rotuloNumero } from './escalas.ts'
+import { escalaLinear, finito, marcas, rotuloNumero } from './escalas.ts'
+import { useLargura } from './useLargura.ts'
 
 interface Props {
   titulo: string
@@ -10,9 +11,11 @@ interface Props {
 // cor por ordem de primeira aparição do nome, nunca por tamanho
 const PALETA = ['var(--serie-a)', 'var(--serie-b)', 'var(--serie-c)', 'var(--tinta-suave)']
 
-const L = 640, ME = 110, MD = 16, MT = 8, MB = 34, LINHA = 40
+const ME = 110, MD = 16, MT = 8, MB = 34, LINHA = 40
 
-export default function BarrasEmpilhadas({ titulo, unidade, itens }: Props) {
+export default function BarrasEmpilhadas({ titulo, unidade, itens: brutos }: Props) {
+  const [medida, L] = useLargura()
+  const itens = brutos.map((i) => ({ ...i, partes: i.partes.filter((p) => finito(p.valor) !== null) }))
   const nomes = [...new Set(itens.flatMap((i) => i.partes.map((p) => p.nome)))]
   const cor = (n: string) => PALETA[nomes.indexOf(n) % PALETA.length]
   const totais = itens.map((i) => i.partes.reduce((s, p) => s + Math.max(0, p.valor), 0))
@@ -23,7 +26,7 @@ export default function BarrasEmpilhadas({ titulo, unidade, itens }: Props) {
   const resumo = `${titulo}, em ${unidade}: ${itens.map((i) => `${i.rotulo}: ${i.partes.map((p) => `${p.nome} ${rotuloNumero(p.valor)}`).join(', ')}`).join('; ')}`
 
   return (
-    <Moldura titulo={titulo} unidade={unidade} vazio={itens.length === 0}
+    <Moldura titulo={titulo} unidade={unidade} vazio={itens.length === 0} medida={medida}
       legenda={nomes.map((n) => ({ nome: n, cor: cor(n) }))}>
       <svg viewBox={`0 0 ${L} ${A}`} width="100%" height={A} preserveAspectRatio="xMidYMid meet" role="img" aria-label={resumo}>
         <title>{resumo}</title>

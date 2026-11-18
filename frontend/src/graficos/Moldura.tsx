@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ReactNode, Ref } from 'react'
 
 export interface ItemLegenda {
   nome: string
@@ -6,15 +6,16 @@ export interface ItemLegenda {
 }
 
 /** Figura com título visível, unidade, legenda (se houver mais de uma série) e estado vazio. */
-export default function Moldura({ titulo, unidade, legenda, vazio, children }: {
+export default function Moldura({ titulo, unidade, legenda, vazio, medida, children }: {
   titulo: string
   unidade?: string
   legenda?: ItemLegenda[]
   vazio?: boolean
+  medida?: Ref<HTMLElement>
   children: ReactNode
 }) {
   return (
-    <figure className="grafico">
+    <figure className="grafico" ref={medida}>
       <figcaption className="grafico-titulo">
         <strong>{titulo}</strong>
         {unidade && <span className="grafico-unidade"> ({unidade})</span>}
