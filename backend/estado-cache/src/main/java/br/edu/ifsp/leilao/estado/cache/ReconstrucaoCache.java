@@ -1,5 +1,6 @@
-package br.edu.ifsp.leilao.estado;
+package br.edu.ifsp.leilao.estado.cache;
 
+import br.edu.ifsp.leilao.estado.EstadoLeilao;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;

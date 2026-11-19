@@ -7,10 +7,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import br.edu.ifsp.leilao.estado.CacheEstadoLeilao;
-import br.edu.ifsp.leilao.estado.Configuracao;
-import br.edu.ifsp.leilao.estado.ConfiguracaoAtiva;
-import br.edu.ifsp.leilao.estado.TrocaDeConfiguracao;
+import br.edu.ifsp.leilao.estado.cache.CacheEstadoLeilao;
+import br.edu.ifsp.leilao.estado.cache.Configuracao;
+import br.edu.ifsp.leilao.estado.cache.ConfiguracaoAtiva;
+import br.edu.ifsp.leilao.estado.cache.TrocaDeConfiguracao;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;

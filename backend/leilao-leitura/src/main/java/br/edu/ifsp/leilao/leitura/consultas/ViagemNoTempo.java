@@ -1,7 +1,7 @@
 package br.edu.ifsp.leilao.leitura.consultas;
 
 import br.edu.ifsp.leilao.estado.EstadoLeilao;
-import br.edu.ifsp.leilao.estado.LeitorEventos;
+import br.edu.ifsp.leilao.estado.cache.LeitorEventos;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Component;

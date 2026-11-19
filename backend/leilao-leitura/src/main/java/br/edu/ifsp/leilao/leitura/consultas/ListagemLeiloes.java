@@ -1,9 +1,9 @@
 package br.edu.ifsp.leilao.leitura.consultas;
 
-import br.edu.ifsp.leilao.estado.CacheEstadoLeilao;
+import br.edu.ifsp.leilao.estado.cache.CacheEstadoLeilao;
 import br.edu.ifsp.leilao.estado.EstadoLeilao;
-import br.edu.ifsp.leilao.estado.LeitorEventos;
-import br.edu.ifsp.leilao.estado.ObterEstado;
+import br.edu.ifsp.leilao.estado.cache.LeitorEventos;
+import br.edu.ifsp.leilao.estado.cache.ObterEstado;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;

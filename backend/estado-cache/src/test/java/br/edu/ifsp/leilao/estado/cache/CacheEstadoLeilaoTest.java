@@ -1,5 +1,6 @@
-package br.edu.ifsp.leilao.estado;
+package br.edu.ifsp.leilao.estado.cache;
 
+import br.edu.ifsp.leilao.estado.EstadoLeilao;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
@@ -17,7 +18,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 class CacheEstadoLeilaoTest {
     static final UUID ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
-    static final EstadoLeilao ESTADO = EstadoLeilao.INICIAL.aplicarTodos(EstadoLeilaoTest.EVENTOS);
+    static final EstadoLeilao ESTADO = EstadoLeilao.INICIAL.aplicarTodos(EventosDeTeste.EVENTOS);
 
     final JsonMapper json = JsonMapper.builder().build();
     LettuceConnectionFactory fabrica;

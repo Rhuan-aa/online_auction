@@ -1,4 +1,4 @@
-package br.edu.ifsp.leilao.estado;
+package br.edu.ifsp.leilao.estado.cache;
 
 import java.util.concurrent.atomic.AtomicReference;
 import org.springframework.beans.factory.annotation.Value;

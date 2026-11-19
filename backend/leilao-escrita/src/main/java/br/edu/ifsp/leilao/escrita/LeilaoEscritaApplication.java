@@ -4,7 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-@SpringBootApplication(scanBasePackages = {"br.edu.ifsp.leilao.escrita", "br.edu.ifsp.leilao.estado"})
+@SpringBootApplication(scanBasePackages = {"br.edu.ifsp.leilao.escrita", "br.edu.ifsp.leilao.estado.cache"})
 @EnableScheduling
 public class LeilaoEscritaApplication {
     public static void main(String[] args) {

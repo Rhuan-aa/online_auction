@@ -1,4 +1,4 @@
-package br.edu.ifsp.leilao.estado;
+package br.edu.ifsp.leilao.estado.cache;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

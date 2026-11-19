@@ -1,8 +1,8 @@
 package br.edu.ifsp.leilao.leitura.api;
 
-import br.edu.ifsp.leilao.estado.Configuracao;
-import br.edu.ifsp.leilao.estado.ConfiguracaoAtiva;
-import br.edu.ifsp.leilao.estado.TrocaDeConfiguracao;
+import br.edu.ifsp.leilao.estado.cache.Configuracao;
+import br.edu.ifsp.leilao.estado.cache.ConfiguracaoAtiva;
+import br.edu.ifsp.leilao.estado.cache.TrocaDeConfiguracao;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

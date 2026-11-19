@@ -1,5 +1,6 @@
-package br.edu.ifsp.leilao.estado;
+package br.edu.ifsp.leilao.estado.cache;
 
+import br.edu.ifsp.leilao.estado.EstadoLeilao;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.Test;
 
 class ObterEstadoTest {
     static final UUID ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
-    static final List<EventoLeilao> EVENTOS = EstadoLeilaoTest.EVENTOS;
+    static final List<EventoLeilao> EVENTOS = EventosDeTeste.EVENTOS;
     static final EstadoLeilao ATUAL = EstadoLeilao.INICIAL.aplicarTodos(EVENTOS);
 
     static class EventStoreFalso extends LeitorEventos {

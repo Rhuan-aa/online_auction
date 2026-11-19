@@ -1,4 +1,4 @@
-package br.edu.ifsp.leilao.estado;
+package br.edu.ifsp.leilao.estado.cache;
 
 public enum Configuracao {
     A,

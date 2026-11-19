@@ -1,8 +1,8 @@
 package br.edu.ifsp.leilao.leitura.api;
 
-import br.edu.ifsp.leilao.estado.LeitorEventos;
-import br.edu.ifsp.leilao.estado.LeitorEventos.EventoGravado;
-import br.edu.ifsp.leilao.estado.ObterEstado;
+import br.edu.ifsp.leilao.estado.cache.LeitorEventos;
+import br.edu.ifsp.leilao.estado.cache.LeitorEventos.EventoGravado;
+import br.edu.ifsp.leilao.estado.cache.ObterEstado;
 import br.edu.ifsp.leilao.leitura.consultas.HistoricoLances;
 import br.edu.ifsp.leilao.leitura.consultas.HistoricoLances.Atividade;
 import br.edu.ifsp.leilao.leitura.consultas.HistoricoLances.Lance;

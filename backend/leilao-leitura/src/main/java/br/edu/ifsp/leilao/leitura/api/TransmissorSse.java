@@ -1,7 +1,7 @@
 package br.edu.ifsp.leilao.leitura.api;
 
 import br.edu.ifsp.leilao.contratos.Topicos;
-import br.edu.ifsp.leilao.estado.ObterEstado;
+import br.edu.ifsp.leilao.estado.cache.ObterEstado;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;

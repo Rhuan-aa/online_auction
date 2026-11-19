@@ -1,7 +1,7 @@
 package br.edu.ifsp.leilao.escrita.api;
 
-import br.edu.ifsp.leilao.estado.ReconstrucaoCache;
-import br.edu.ifsp.leilao.estado.ReconstrucaoCache.Relatorio;
+import br.edu.ifsp.leilao.estado.cache.ReconstrucaoCache;
+import br.edu.ifsp.leilao.estado.cache.ReconstrucaoCache.Relatorio;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

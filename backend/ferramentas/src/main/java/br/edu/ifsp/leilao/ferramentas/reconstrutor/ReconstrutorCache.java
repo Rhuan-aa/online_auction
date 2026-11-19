@@ -1,7 +1,7 @@
 package br.edu.ifsp.leilao.ferramentas.reconstrutor;
 
-import br.edu.ifsp.leilao.estado.ReconstrucaoCache;
-import br.edu.ifsp.leilao.estado.ReconstrucaoCache.Relatorio;
+import br.edu.ifsp.leilao.estado.cache.ReconstrucaoCache;
+import br.edu.ifsp.leilao.estado.cache.ReconstrucaoCache.Relatorio;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.springframework.boot.CommandLineRunner;
@@ -9,7 +9,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
-@SpringBootApplication(scanBasePackages = {"br.edu.ifsp.leilao.ferramentas.reconstrutor", "br.edu.ifsp.leilao.estado"})
+@SpringBootApplication(scanBasePackages = {"br.edu.ifsp.leilao.ferramentas.reconstrutor", "br.edu.ifsp.leilao.estado.cache"})
 public class ReconstrutorCache implements CommandLineRunner {
     private final ReconstrucaoCache reconstrucao;
 

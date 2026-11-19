@@ -1,12 +1,13 @@
-package br.edu.ifsp.leilao.estado;
+package br.edu.ifsp.leilao.estado.cache;
 
-import static br.edu.ifsp.leilao.estado.ObterEstadoTest.ATUAL;
-import static br.edu.ifsp.leilao.estado.ObterEstadoTest.EVENTOS;
-import static br.edu.ifsp.leilao.estado.ObterEstadoTest.ID;
+import br.edu.ifsp.leilao.estado.EstadoLeilao;
+import static br.edu.ifsp.leilao.estado.cache.ObterEstadoTest.ATUAL;
+import static br.edu.ifsp.leilao.estado.cache.ObterEstadoTest.EVENTOS;
+import static br.edu.ifsp.leilao.estado.cache.ObterEstadoTest.ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import br.edu.ifsp.leilao.estado.ReconstrucaoCache.Relatorio;
+import br.edu.ifsp.leilao.estado.cache.ReconstrucaoCache.Relatorio;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.List;
 import java.util.Map;

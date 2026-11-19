@@ -1,5 +1,6 @@
-package br.edu.ifsp.leilao.estado;
+package br.edu.ifsp.leilao.estado.cache;
 
+import br.edu.ifsp.leilao.estado.EstadoLeilao;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -16,7 +17,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 
 class CheckpointTest {
     static EstadoLeilao abertoNaVersao(int versao) {
-        List<EventoLeilao> eventos = new ArrayList<>(EstadoLeilaoTest.EVENTOS.subList(0, 2));
+        List<EventoLeilao> eventos = new ArrayList<>(EventosDeTeste.EVENTOS.subList(0, 2));
         while (eventos.size() < versao) {
             eventos.add(new EventoLeilao.LanceRegistrado("licitante-1", 10_000L + eventos.size()));
         }

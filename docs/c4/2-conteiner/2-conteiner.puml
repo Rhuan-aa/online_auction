@@ -12,7 +12,7 @@ Person(adm, "ADM / Apresentador", "Painel de simulação e desempenho.")
 System_Boundary(sistema, "Sistema de Leilão Online") {
   Container(front, "Frontend", "React 19, Vite, TypeScript (:5173)","Lista, detalhe (valor ao vivo), criação de leilão e lances; painel de ADM para simulação e desempenho (A, B e C). Usuários fixos, sem login.")
   Container(escrita, "leilao-escrita", "Java 21, Spring Boot 4 (:8081)", "Comandos (criar, lance, cancelar). Agregado Leilao, event store, outbox, checkpoint e cache.")
-  Container(leitura, "leilao-leitura", "Java 21, Spring Boot 4 (:8082)", "Consultas pelo cache (módulo compartilhado estado, versão mínima opcional), lista pelo índice de abertos, históricos pelo Event Store, SSE e notificações (log).")
+  Container(leitura, "leilao-leitura", "Java 21, Spring Boot 4 (:8082)", "Consultas pelo cache (módulo compartilhado estado-cache, versão mínima opcional), lista pelo índice de abertos, históricos pelo Event Store, SSE e notificações (log).")
   Container(agendador, "agendador-leilao", "Java 21, Spring Boot 4 (:8084)", "Abre e encerra leilões no horário, emitindo comandos.")
   Container(ferramentas, "ferramentas", "Java, CLI", "Reconstrução do cache e dos checkpoints a partir do event store.")
   ContainerDb(postgres, "PostgreSQL 16", "Postgres (:5432)", "event_store (eventos append-only e outbox: fonte da verdade) e checkpoint (derivado).")
