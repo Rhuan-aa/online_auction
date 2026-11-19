@@ -10,7 +10,7 @@ export interface Parametros {
   incremento: number
 }
 
-export type StatusArq = 'rodando' | 'terminou' | 'parada' | 'erro'
+type StatusArq = 'rodando' | 'terminou' | 'parada' | 'erro'
 
 export interface Tempos { p50: number; p95: number }
 

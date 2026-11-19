@@ -16,7 +16,7 @@ export const PADRAO: Campos = {
   licitantes: '20', lancesPorLicitante: '10', simultaneos: '6', leitores: '4', precoInicial: '100,00', incremento: '1,00',
 }
 
-export interface DefCampo { campo: keyof Campos; rotulo: string; dica: string; dinheiro?: boolean }
+interface DefCampo { campo: keyof Campos; rotulo: string; dica: string; dinheiro?: boolean }
 
 /** Ordem, rótulo e a frase do tooltip de cada campo. */
 export const CAMPOS: DefCampo[] = [

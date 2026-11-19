@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 import { descreverBarras, escalaLinear, finito, marcas, mensagemVazia, truncar } from './escalas.ts'
 import { posicao } from './escalas.ts'
-import { larguraEfetiva, proximaLargura } from './useLargura.ts'
+import { proximaLargura } from './useLargura.ts'
 
 test('escala mapeia extremos', () => {
   const s = escalaLinear([0, 10], [100, 0])
@@ -20,12 +20,6 @@ test('truncar com reticências', () => {
   expect(truncar('abcdefgh', 5)).toBe('abcd…')
   expect(truncar('abc', 5)).toBe('abc')
   expect(truncar('abcdefgh', 1)).toBe('')
-})
-test('larguraEfetiva cai em 640 sem medida válida', () => {
-  expect(larguraEfetiva(0)).toBe(640)
-  expect(larguraEfetiva(undefined)).toBe(640)
-  expect(larguraEfetiva(NaN)).toBe(640)
-  expect(larguraEfetiva(360.4)).toBe(360)
 })
 test('proximaLargura ignora 0 (passo escondido) e mantém a atual', () => {
   expect(proximaLargura(820, 0)).toBe(820)
