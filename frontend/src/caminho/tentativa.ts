@@ -1,9 +1,9 @@
 // Estado da aba: só a tentativa em curso é exibida; as medições antigas servem apenas para casar o SSE.
 import { casarSse, trechos, type Fase, type Medicao } from './caminho.ts'
 
-export const MAX_MEDICOES = 10
+const MAX_MEDICOES = 10
 
-export interface Tentativa {
+interface Tentativa {
   cliqueEm: number
   situacao: 'gravando' | 'recusada' | 'aceita'
   mensagem?: string
@@ -48,7 +48,7 @@ export function reduzir(s: EstadoAba, a: Acao): EstadoAba {
   }
 }
 
-export interface Visao { fase: Fase | null; gravacaoMs: number | null; propagacaoMs: number | null; mensagem: string | null; nota: string | null }
+interface Visao { fase: Fase | null; gravacaoMs: number | null; propagacaoMs: number | null; mensagem: string | null; nota: string | null }
 
 export function visao(s: EstadoAba): Visao {
   const t = s.tentativa

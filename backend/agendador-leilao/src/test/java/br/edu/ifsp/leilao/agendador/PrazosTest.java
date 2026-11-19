@@ -8,9 +8,7 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
-/** Regras do agendador, sem Kafka. O "agora" é passado como parâmetro. */
 class PrazosTest {
-
     static final UUID ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
     static final Instant INICIO = Instant.parse("2026-11-16T18:00:00Z");
     static final Instant FIM = Instant.parse("2026-11-16T19:00:00Z");
@@ -56,8 +54,8 @@ class PrazosTest {
     void prorrogacaoDepoisDoEncerrarEnviadoReenviaNoNovoFim() {
         prazos.registrar(ID, INICIO, FIM);
         prazos.aberto(ID);
-        prazos.vencidos(FIM);                         // Encerrar enviado no fim antigo...
-        prazos.prorrogado(ID, FIM.plusSeconds(30));   // ...mas um lance de última hora prorrogou
+        prazos.vencidos(FIM);
+        prazos.prorrogado(ID, FIM.plusSeconds(30));
         assertEquals(List.of(Prazos.ENCERRAR), tipos(prazos.vencidos(FIM.plusSeconds(30))));
     }
 

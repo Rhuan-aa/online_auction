@@ -1,7 +1,7 @@
 package br.edu.ifsp.leilao.ferramentas.reconstrutor;
 
-import br.edu.ifsp.leilao.estado.ReconstrucaoCache;
-import br.edu.ifsp.leilao.estado.ReconstrucaoCache.Relatorio;
+import br.edu.ifsp.leilao.estado.cache.ReconstrucaoCache;
+import br.edu.ifsp.leilao.estado.cache.ReconstrucaoCache.Relatorio;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.springframework.boot.CommandLineRunner;
@@ -9,24 +9,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
-/**
- * Apaga as cópias do estado (Redis e checkpoints) e as refaz só com os eventos do Event Store.
- * Prova do Event Sourcing com cache: as cópias são descartáveis, a verdade são os eventos.
- *
- * Passos:
- *   1. fotografa o estado de cada leilão como as consultas o veem hoje (pelas cópias);
- *   2. apaga o Redis (estados e índice de abertos) e a tabela de checkpoints;
- *   3. refaz cada estado relendo todos os eventos e grava as cópias de novo;
- *   4. compara com a fotografia: devem ser idênticos. Se não forem, a cópia estava atrás da fonte.
- *
- * Pode rodar com os serviços no ar: cópias versionadas nunca ficam erradas, só incompletas.
- * Uso (em backend/):
- *   ./mvnw -q -pl ferramentas -am package -DskipTests
- *   java -jar ferramentas/target/ferramentas-0.1.0-SNAPSHOT.jar
- */
-@SpringBootApplication(scanBasePackages = {"br.edu.ifsp.leilao.ferramentas.reconstrutor", "br.edu.ifsp.leilao.estado"})
+@SpringBootApplication(scanBasePackages = {"br.edu.ifsp.leilao.ferramentas.reconstrutor", "br.edu.ifsp.leilao.estado.cache"})
 public class ReconstrutorCache implements CommandLineRunner {
-
     private final ReconstrucaoCache reconstrucao;
 
     public ReconstrutorCache(ReconstrucaoCache reconstrucao) {
@@ -37,11 +21,6 @@ public class ReconstrutorCache implements CommandLineRunner {
         SpringApplication.run(ReconstrutorCache.class, args);
     }
 
-    /**
-     * O ObterEstado registra métricas; aqui, sem Actuator, elas só ficam em memória.
-     * static: o Spring cria o bean sem precisar criar esta classe antes (ela depende do ObterEstado,
-     * que depende deste bean; sem o static, seria uma dependência circular).
-     */
     @Bean
     static MeterRegistry metricas() {
         return new SimpleMeterRegistry();

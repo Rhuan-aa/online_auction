@@ -12,7 +12,7 @@ import br.edu.ifsp.leilao.contratos.EventoLeilao.LanceRegistrado;
 import br.edu.ifsp.leilao.contratos.EventoLeilao.LeilaoCriado;
 import br.edu.ifsp.leilao.contratos.EventoLeilao.LeilaoIniciado;
 import br.edu.ifsp.leilao.estado.EstadoLeilao;
-import br.edu.ifsp.leilao.estado.LeitorEventos;
+import br.edu.ifsp.leilao.estado.cache.LeitorEventos;
 import br.edu.ifsp.leilao.leitura.api.ConsultaController;
 import java.time.Instant;
 import java.util.List;
@@ -23,7 +23,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import tools.jackson.databind.json.JsonMapper;
 
 class ViagemNoTempoTest {
-
     static final UUID ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
     static final UUID OUTRO = UUID.fromString("22222222-2222-2222-2222-222222222222");
     static final Instant INICIO = Instant.parse("2026-11-16T18:00:00Z");

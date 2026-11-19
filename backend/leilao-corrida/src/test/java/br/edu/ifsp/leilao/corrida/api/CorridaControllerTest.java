@@ -22,8 +22,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 class CorridaControllerTest {
-
-    /** Motor de mentira: uma corrida por vez, sem rodar nada. */
     static class MotorFalso implements MotorCorrida {
         UUID atual;
         boolean rodando;
@@ -114,7 +112,7 @@ class CorridaControllerTest {
         mvc.perform(post("/corrida/" + id + "/parar")).andExpect(status().isNoContent());
         mvc.perform(post("/corrida/" + UUID.randomUUID() + "/parar")).andExpect(status().isNotFound());
         mvc.perform(post("/corrida/nao-e-uuid/parar")).andExpect(status().isNotFound());
-        // Depois de parar, uma nova pode começar.
+
         iniciar(CORPO).andExpect(status().isCreated());
     }
 

@@ -37,7 +37,7 @@ Para comparar as configurações do cache (ADR-003): `A` (sem cópia), `B` (só 
 
 ```
 contratos/         eventos, comandos, tópicos e corpos HTTP (o contrato entre as partes)
-estado/            EstadoLeilao (aplicar eventos) e como obtê-lo: Redis → checkpoint → eventos posteriores
+estado/            EstadoLeilao (aplicar eventos) e, em estado.cache, como obtê-lo: Redis → checkpoint → eventos posteriores
 leilao-escrita/    escrita: domain / application / infrastructure (event store + outbox) / api (8081)
 leilao-leitura/    leitura: api (GET + SSE) / consultas (lista, históricos) / notificacoes (8082)
 agendador-leilao/  worker que monitora prazos e emite comandos de abertura/fechamento (8084)
@@ -63,7 +63,6 @@ java -cp ferramentas/target/classes:$(cat ferramentas/target/cp.txt) \
 
 **Só para uso local: sem autenticação e conectado como o superusuário `postgres`.** Corre o mesmo leilão, com a mesma sequência de lances (semente + gerador mulberry32, portado do antigo simulador do front, hoje removido), ao mesmo tempo em 6 arquiteturas: `crud` (sem controle de concorrência, de propósito), `crud-cache`, `es`, `es-snapshot`, `es-cache` e `es-cqrs`. Não depende de `leilao-escrita`, `leilao-leitura` nem `estado`.
 
-- Desenho: `docs/superpowers/specs/2026-11-19-corrida-arquiteturas-design.md`. Contrato da API e do SSE: `docs/superpowers/specs/2026-11-19-corrida-contrato.md`.
 - Rotas: `POST /corrida` (201, 400 `PARAMETRO_INVALIDO`, 409 `CORRIDA_EM_ANDAMENTO`), `GET /corrida/{id}/stream` (SSE `foto` a cada 250 ms e um `fim`), `POST /corrida/{id}/parar` (204) e `GET /corrida/{id}`. CORS para `http://localhost:5173`. Uma corrida por vez.
 - Isolamento: cria na subida os schemas `corrida_crud`, `corrida_crud_cache`, `corrida_es`, `corrida_es_snapshot`, `corrida_es_cache` e `corrida_es_cqrs`; usa só as chaves `corrida:<arquitetura>:*` no Redis e o tópico `corrida.cqrs` (3 partições, criado pela aplicação). Nunca toca em `event_store`, `checkpoint`, `read_model` nem em `leilao:*`.
 - Cada arquitetura tem o próprio pool de conexões (`CORRIDA_POOL_POR_ARQUITETURA`, padrão 8; as 6 juntas usam 48 conexões) e o próprio pool de threads.

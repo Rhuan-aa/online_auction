@@ -4,13 +4,7 @@ import br.edu.ifsp.leilao.corrida.regra.EstadoLeilao;
 import br.edu.ifsp.leilao.corrida.regra.RegraLance;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
-/**
- * CRUD simples, SEM controle de concorrência (de propósito: é a lição). Lê a linha, decide e faz
- * um UPDATE incondicional. Dois lances que leram a mesma versão são os dois "aceitos", mas o
- * segundo UPDATE apaga o primeiro (lost update): o líder e o preço finais podem ficar errados.
- */
 public final class ArquiteturaCrud extends ArquiteturaLinha {
-
     public static final String ID = "crud";
 
     public ArquiteturaCrud(JdbcClient jdbc) {
@@ -31,7 +25,7 @@ public final class ArquiteturaCrud extends ArquiteturaLinha {
             return new ResultadoLance(ResultadoLance.Tipo.RECUSADO, atual.versao(), atual.versao(), atual.precoAtual(), 0);
         }
         EstadoLeilao novo = atual.comLance(licitante, valor);
-        // Incondicional: sem "WHERE versao = ?". Quem gravar por último vence, mesmo com valor menor.
+
         custos.escritaBanco();
         jdbc.sql("UPDATE " + tabela + " SET preco_atual = ?, lider = ?, versao = ? WHERE id = ?")
                 .params(novo.precoAtual(), novo.lider(), novo.versao(), leilao.leilaoId())

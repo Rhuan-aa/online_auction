@@ -1,11 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 
-export const LARGURA_PADRAO = 640
-
-/** Largura utilizável: valores inválidos ou 0 caem no padrão. */
-export function larguraEfetiva(w: number | undefined): number {
-  return w !== undefined && Number.isFinite(w) && w > 0 ? Math.round(w) : LARGURA_PADRAO
-}
+const LARGURA_PADRAO = 640
 
 /**
  * Próxima largura a partir de uma medida. Medida inválida ou 0 (elemento escondido, por exemplo um

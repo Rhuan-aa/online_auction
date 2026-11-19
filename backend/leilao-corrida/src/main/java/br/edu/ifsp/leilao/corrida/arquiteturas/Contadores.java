@@ -2,14 +2,11 @@ package br.edu.ifsp.leilao.corrida.arquiteturas;
 
 import java.util.concurrent.atomic.LongAdder;
 
-/** Operações feitas no banco e no Redis. Seguro entre threads (LongAdder). */
 public final class Contadores {
-
     private final LongAdder leiturasBanco = new LongAdder();
     private final LongAdder escritasBanco = new LongAdder();
     private final LongAdder opsRedis = new LongAdder();
 
-    /** Para operações que não devem entrar na conta (estado final, por exemplo). */
     public static Contadores descartavel() {
         return new Contadores();
     }

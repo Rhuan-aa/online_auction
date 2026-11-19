@@ -6,7 +6,6 @@ import br.edu.ifsp.leilao.corrida.regra.EstadoLeilao;
 import org.junit.jupiter.api.Test;
 
 class CopiaRedisTest {
-
     @Test
     void codificaComAVersaoNaFrenteParaOScriptComparar() {
         EstadoLeilao e = EstadoLeilao.criado(10_000, 100).comLance("licitante-7", 12_300);

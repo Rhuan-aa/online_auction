@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 class RegraLanceTest {
-
     private final EstadoLeilao criado = EstadoLeilao.criado(10_000, 100);
 
     @Test

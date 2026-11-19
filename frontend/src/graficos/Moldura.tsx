@@ -1,6 +1,6 @@
 import type { ReactNode, Ref } from 'react'
 
-export interface ItemLegenda {
+interface ItemLegenda {
   nome: string
   cor: string
 }

@@ -9,7 +9,6 @@ import java.util.concurrent.Callable;
 import org.junit.jupiter.api.Test;
 
 class ChecagemInfraTest {
-
     private static Map<String, Callable<?>> checks(Callable<?> pg, Callable<?> redis, Callable<?> kafka) {
         Map<String, Callable<?>> m = new LinkedHashMap<>();
         m.put("postgres", pg);

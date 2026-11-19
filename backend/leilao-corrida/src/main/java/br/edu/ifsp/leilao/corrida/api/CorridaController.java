@@ -24,11 +24,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import tools.jackson.databind.JsonNode;
 
-/** API da corrida (contrato em docs/superpowers/specs/2026-11-19-corrida-contrato.md). */
 @RestController
 @RequestMapping("/corrida")
 public class CorridaController {
-
     record Erro(String erro, String mensagem) {}
 
     record ErroEmAndamento(String erro, String mensagem, String corridaId) {}

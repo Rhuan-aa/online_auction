@@ -7,30 +7,12 @@ import java.net.http.HttpResponse;
 import java.util.concurrent.Executors;
 import tools.jackson.databind.json.JsonMapper;
 
-/**
- * Teste de concorrência: N bots dão lances ao mesmo tempo no mesmo leilão.
- *
- * Uso: SimuladorLances <leilaoId> <bots> <lancesPorBot> [incrementoEmCentavos]
- *
- * Cada bot roda em uma virtual thread (barata: 50 ou 5000 bots não pesam).
- * Os lances disputam a mesma versão do leilão; o event store garante que só um vence cada
- * disputa (UNIQUE leilao_id + versao) e o ServicoLeilao reavalia os perdedores.
- * No fim, o resultado é conferido no serviço de leitura: o líder é um só.
- */
 public class SimuladorLances {
-
     private static final String URL_ESCRITA = System.getenv().getOrDefault("URL_ESCRITA", "http://localhost:8081");
     private static final String URL_LEITURA = System.getenv().getOrDefault("URL_LEITURA", "http://localhost:8082");
     private static final long INCREMENTO_PADRAO = 100;
 
-    /** Tudo que define uma simulação. O valor de cada lance sai daqui. */
     record Cenario(String leilaoId, int bots, int lancesPorBot, long precoInicial, long incremento) {
-
-        /**
-         * Cada lance tem valor próprio e crescente. Ex.: bot 3, rodada 2, com 50 bots:
-         * precoInicial + (2 * 50 + 3 + 1) * incremento. Como nenhum valor se repete,
-         * se o sistema funciona o maior valor é o único vencedor.
-         */
         long valorDoLance(int bot, int rodada) {
             long posicao = (long) rodada * bots + bot + 1;
             return precoInicial + posicao * incremento;
@@ -61,7 +43,7 @@ public class SimuladorLances {
                 int numeroDoBot = bot;
                 executor.submit(() -> rodarBot(cenario, numeroDoBot));
             }
-        } // ao sair do try, espera todos os bots terminarem
+        }
 
         long duracao = System.currentTimeMillis() - inicio;
         System.out.printf("%d bots x %d lances em %d ms%n", cenario.bots(), cenario.lancesPorBot(), duracao);
@@ -78,7 +60,6 @@ public class SimuladorLances {
         }
     }
 
-    /** Devolve o status HTTP, ou -1 se nem chegou a conversar com o servidor. */
     private int enviarLance(String leilaoId, String licitanteId, long valor) {
         String corpo = "{\"licitanteId\":\"%s\",\"valor\":%d}".formatted(licitanteId, valor);
         HttpRequest pedido = HttpRequest.newBuilder(URI.create(URL_ESCRITA + "/leiloes/" + leilaoId + "/lances"))
@@ -92,7 +73,6 @@ public class SimuladorLances {
         }
     }
 
-    /** Lê o preço na leitura para os bots começarem acima dele. */
     private long consultarPrecoAtual(String leilaoId) throws Exception {
         return json.readTree(buscar(URL_LEITURA + "/leiloes/" + leilaoId)).path("precoAtual").asLong();
     }

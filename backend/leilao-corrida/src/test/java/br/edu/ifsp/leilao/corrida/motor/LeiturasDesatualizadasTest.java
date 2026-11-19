@@ -5,16 +5,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 
 class LeiturasDesatualizadasTest {
-
     private static final long MS = 1_000_000L;
 
     @Test
     void contaSoAsQueViramVersaoMenorQueAConfirmada() {
         LeiturasDesatualizadas d = new LeiturasDesatualizadas();
-        d.registrar(5, 5, 0);   // em dia
-        d.registrar(6, 5, 0);   // à frente (lance gravado, ainda não confirmado): em dia
-        d.registrar(3, 5, 10);  // 2 versões atrás, 10 ms
-        d.registrar(4, 5, 20);  // 1 versão atrás, 20 ms
+        d.registrar(5, 5, 0);
+        d.registrar(6, 5, 0);
+        d.registrar(3, 5, 10);
+        d.registrar(4, 5, 20);
         LeiturasDesatualizadas.Resumo r = d.resumo();
         assertEquals(4, r.consultas());
         assertEquals(2, r.desatualizadas());
@@ -37,9 +36,9 @@ class LeiturasDesatualizadasTest {
         c.confirmar(2, 110 * MS);
         c.confirmar(3, 130 * MS);
         assertEquals(3, c.ultima());
-        // Leu a v1 começando em 150 ms: a v2 existe desde 110 ms -> 40 ms de atraso.
+
         assertEquals(40.0, c.atrasoMs(1, 3, 150 * MS), 1e-9);
-        // Leu a v2: a v3 existe desde 130 ms -> 20 ms.
+
         assertEquals(20.0, c.atrasoMs(2, 3, 150 * MS), 1e-9);
         assertEquals(0.0, c.atrasoMs(3, 3, 150 * MS), 1e-9);
     }
@@ -47,7 +46,7 @@ class LeiturasDesatualizadasTest {
     @Test
     void versaoConfirmadaForaDeOrdemUsaAUltima() {
         Confirmacoes c = new Confirmacoes(10, 1, 0);
-        c.confirmar(3, 50 * MS); // a v2 ainda não voltou ao cliente
+        c.confirmar(3, 50 * MS);
         assertEquals(3, c.ultima());
         assertEquals(10.0, c.atrasoMs(1, 3, 60 * MS), 1e-9);
         c.confirmar(2, 70 * MS);
@@ -58,7 +57,7 @@ class LeiturasDesatualizadasTest {
     void mesmaVersaoConfirmadaDuasVezesGuardaAPrimeira() {
         Confirmacoes c = new Confirmacoes(10, 1, 0);
         c.confirmar(2, 10 * MS);
-        c.confirmar(2, 40 * MS); // lost update no CRUD simples
+        c.confirmar(2, 40 * MS);
         assertEquals(50.0, c.atrasoMs(1, 2, 60 * MS), 1e-9);
     }
 }

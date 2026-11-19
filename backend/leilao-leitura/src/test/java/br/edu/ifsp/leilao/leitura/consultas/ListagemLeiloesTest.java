@@ -5,10 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import br.edu.ifsp.leilao.contratos.EventoLeilao.LeilaoCancelado;
 import br.edu.ifsp.leilao.contratos.EventoLeilao.LeilaoCriado;
 import br.edu.ifsp.leilao.contratos.EventoLeilao.LeilaoIniciado;
-import br.edu.ifsp.leilao.estado.CacheEstadoLeilao;
+import br.edu.ifsp.leilao.estado.cache.CacheEstadoLeilao;
 import br.edu.ifsp.leilao.estado.EstadoLeilao;
-import br.edu.ifsp.leilao.estado.LeitorEventos;
-import br.edu.ifsp.leilao.estado.ObterEstado;
+import br.edu.ifsp.leilao.estado.cache.LeitorEventos;
+import br.edu.ifsp.leilao.estado.cache.ObterEstado;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -19,9 +19,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
-/** De onde a lista tira os ids e como filtra. Sem Redis nem banco: tudo em memória. */
 class ListagemLeiloesTest {
-
     static final Instant INICIO = Instant.parse("2026-11-16T18:00:00Z");
     static final UUID ABERTO_TARDE = UUID.fromString("11111111-1111-1111-1111-111111111111");
     static final UUID ABERTO_CEDO = UUID.fromString("22222222-2222-2222-2222-222222222222");
@@ -33,15 +31,13 @@ class ListagemLeiloesTest {
                 .aplicar(new LeilaoIniciado(fim));
     }
 
-    /** Todos os estados "do mundo". */
     final Map<UUID, EstadoLeilao> estados = Map.of(
             ABERTO_TARDE, aberto("Tarde", INICIO.plusSeconds(7200)),
             ABERTO_CEDO, aberto("Cedo", INICIO.plusSeconds(3600)),
             CANCELADO, aberto("Cancelado", INICIO.plusSeconds(60)).aplicar(new LeilaoCancelado("x")));
 
-
     Optional<List<UUID>> indice = Optional.empty();
-    /** Anota quem foi perguntado ao Event Store. */
+
     final List<String> idasAoEventStore = new ArrayList<>();
     final List<Map<UUID, EstadoLeilao>> repovoamentos = new ArrayList<>();
 
@@ -87,13 +83,13 @@ class ListagemLeiloesTest {
 
     @Test
     void entradaVelhaNoIndiceNaoApareceNaLista() {
-        indice = Optional.of(List.of(ABERTO_CEDO, CANCELADO)); // o cancelado ficou no índice por engano
+        indice = Optional.of(List.of(ABERTO_CEDO, CANCELADO));
         assertEquals(List.of("Cedo"), titulos(listagem.listar("ABERTO")));
     }
 
     @Test
     void indiceIncompletoCaiParaOEventStoreERefazOIndice() {
-        indice = Optional.empty(); // sem o marcador: Redis reiniciado, LRU ou fora do ar
+        indice = Optional.empty();
         assertEquals(List.of("Cedo", "Tarde"), titulos(listagem.listar("ABERTO")));
         assertEquals(List.of("idsDosLeiloes"), idasAoEventStore);
         assertEquals(List.of(estados.keySet()), repovoamentos.stream().map(Map::keySet).toList());
@@ -101,7 +97,7 @@ class ListagemLeiloesTest {
 
     @Test
     void indiceCompletoSemNenhumAbertoNaoVaiAoEventStore() {
-        indice = Optional.of(List.of()); // só o marcador: de fato não há leilão aberto
+        indice = Optional.of(List.of());
         assertEquals(List.of(), listagem.listar("ABERTO"));
         assertEquals(List.of(), idasAoEventStore);
     }

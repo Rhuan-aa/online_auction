@@ -15,9 +15,7 @@ import org.junit.jupiter.api.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-/** Sem Kafka e sem log: o canal é trocado por uma lista (é para isso que existe a interface CanalNotificacao). */
 class NotificadorTest {
-
     static final UUID ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
     static final Instant AGORA = Instant.parse("2026-11-16T18:00:00Z");
 
@@ -72,7 +70,7 @@ class NotificadorTest {
         criado();
         evento(3, "LanceRegistrado.v1", new LanceRegistrado("licitante-1", 10_000));
         evento(4, "LanceRegistrado.v1", new LanceRegistrado("licitante-2", 11_000));
-        evento(4, "LanceRegistrado.v1", new LanceRegistrado("licitante-2", 11_000)); // o Kafka entregou de novo
+        evento(4, "LanceRegistrado.v1", new LanceRegistrado("licitante-2", 11_000));
         assertEquals(1, enviados.size());
     }
 }

@@ -13,7 +13,6 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class EstadoLeilaoTest {
-
     static final Instant INICIO = Instant.parse("2026-11-16T18:00:00Z");
     static final Instant FIM = Instant.parse("2026-11-16T19:00:00Z");
 

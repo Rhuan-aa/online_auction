@@ -9,7 +9,6 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class IntegridadeTest {
-
     @Test
     void semConcorrenciaNadaSePerde() {
         List<LanceAceito> aceitos = List.of(
@@ -25,7 +24,6 @@ class IntegridadeTest {
 
     @Test
     void lostUpdateMenorPorCimaPerdeOMaior() {
-        // A e B leram a v1; A gravou 12_000, depois B gravou 11_000 por cima.
         List<LanceAceito> aceitos = List.of(
                 new LanceAceito("A", 12_000, 1, 2, 1),
                 new LanceAceito("B", 11_000, 1, 2, 2));
@@ -38,7 +36,6 @@ class IntegridadeTest {
 
     @Test
     void lostUpdateMaiorPorCimaAindaPerdeUm() {
-        // Mesmo com o preço final certo, o lance de A sumiu: os dois foram decididos sobre a v1.
         List<LanceAceito> aceitos = List.of(
                 new LanceAceito("A", 11_000, 1, 2, 1),
                 new LanceAceito("B", 12_000, 1, 2, 2));

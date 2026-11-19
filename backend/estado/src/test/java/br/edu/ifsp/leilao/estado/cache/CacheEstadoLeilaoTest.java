@@ -1,5 +1,6 @@
-package br.edu.ifsp.leilao.estado;
+package br.edu.ifsp.leilao.estado.cache;
 
+import br.edu.ifsp.leilao.estado.EstadoLeilao;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
@@ -15,16 +16,13 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import tools.jackson.databind.json.JsonMapper;
 
-/** Sem Redis de verdade: o que importa aqui é o cache nunca derrubar o pedido. */
 class CacheEstadoLeilaoTest {
-
     static final UUID ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
-    static final EstadoLeilao ESTADO = EstadoLeilao.INICIAL.aplicarTodos(EstadoLeilaoTest.EVENTOS);
+    static final EstadoLeilao ESTADO = EstadoLeilao.INICIAL.aplicarTodos(EventosDeTeste.EVENTOS);
 
     final JsonMapper json = JsonMapper.builder().build();
     LettuceConnectionFactory fabrica;
 
-    /** Um cache apontando para uma porta onde nada responde: é o "Redis fora do ar". */
     CacheEstadoLeilao cacheComRedisDesligado() {
         return cacheComRedisDesligado(new ConfiguracaoAtiva(Configuracao.C));
     }
@@ -51,7 +49,6 @@ class CacheEstadoLeilaoTest {
         assertFalse(cache.gravar(ID, ESTADO));
     }
 
-    /** Redis que quebra qualquer chamada: prova que em A e B o cache nem chega a tocar no Redis. */
     @Test
     void trocarParaAOuBFazLerDevolverVazioSemTocarNoRedis() {
         StringRedisTemplate quebrado = new StringRedisTemplate() {
@@ -71,7 +68,6 @@ class CacheEstadoLeilaoTest {
         }
     }
 
-    /** O estado sai do Redis igual ao que entrou (ida e volta pelo JSON). */
     @Test
     void jsonDeIdaEVoltaDevolveOMesmoEstado() {
         String texto = json.writeValueAsString(ESTADO);

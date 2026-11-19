@@ -17,14 +17,8 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.stereotype.Component;
 
-/**
- * Checagem de Postgres, Redis e Kafka para o painel "Arquitetura" (GET /infra/saude).
- * Cada checagem tem timeout de 1 s e nunca lança: falha vira DOWN com uma mensagem curta.
- * Separada do /actuator/health de propósito: o Redis é só cache e não pode derrubar o serviço (ADR-003).
- */
 @Component
 public class ChecagemInfra {
-
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Componente(String status, long ms, String erro) {}
 

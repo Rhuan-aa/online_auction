@@ -23,7 +23,6 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 class LeilaoControllerTest {
-
     static final UUID ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
     static final String CORPO = "{\"licitanteId\":\"licitante-2\",\"valor\":2000}";
 

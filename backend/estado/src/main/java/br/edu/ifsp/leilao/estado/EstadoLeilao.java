@@ -13,7 +13,6 @@ import java.util.List;
 public record EstadoLeilao(Status status, String vendedorId, String titulo, long precoAtual,
                            long incrementoMinimo, String liderId, Instant inicioEm, Instant fimEm,
                            int versao) {
-
     public static final int SCHEMA_VERSION = 1;
     public enum Status { CRIADO, ABERTO, ENCERRADO, CANCELADO }
     public static final EstadoLeilao INICIAL =

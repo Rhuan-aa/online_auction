@@ -9,8 +9,6 @@ import java.util.Random;
 import org.junit.jupiter.api.Test;
 
 class HistogramaTest {
-
-    /** Percentil pelo posto mais próximo, igual ao {@code percentil} do front. */
     private static double referencia(double[] valores, double p) {
         double[] o = valores.clone();
         Arrays.sort(o);
@@ -28,7 +26,7 @@ class HistogramaTest {
     void postoMaisProximoExatoAbaixoDe128Microssegundos() {
         Histograma h = new Histograma();
         for (int i = 1; i <= 100; i++) {
-            h.registrar(i / 1000.0); // 1..100 µs
+            h.registrar(i / 1000.0);
         }
         assertEquals(100, h.amostras());
         assertEquals(0.050, h.percentil(50), 1e-12);
@@ -43,7 +41,7 @@ class HistogramaTest {
         double[] valores = new double[5_000];
         Histograma h = new Histograma();
         for (int i = 0; i < valores.length; i++) {
-            valores[i] = 0.2 + r.nextDouble() * 400; // 0,2 ms a 400 ms
+            valores[i] = 0.2 + r.nextDouble() * 400;
             h.registrar(valores[i]);
         }
         for (double p : new double[] {50, 95, 99}) {

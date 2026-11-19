@@ -3,14 +3,7 @@ package br.edu.ifsp.leilao.corrida.motor;
 import br.edu.ifsp.leilao.corrida.motor.Planejador.LancePlanejado;
 import br.edu.ifsp.leilao.corrida.motor.Planejador.Plano;
 
-/**
- * Distribui os lances do plano entre as threads de escrita de UMA arquitetura, como
- * {@code dispararLances} do front: nunca dois lances do mesmo licitante ao mesmo tempo (cada um dá
- * os seus em ordem), e cada thread pega o próximo licitante livre na rotação. Sem nenhum livre, a
- * thread termina: os restantes já têm quem cuide deles.
- */
 final class Despachante {
-
     record Vez(int licitante, LancePlanejado lance) {}
 
     private final Plano plano;

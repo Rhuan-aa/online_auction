@@ -5,13 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Uma corrida: as 6 pistas preparam o mesmo leilão, largam juntas e correm em paralelo, cada uma
- * na própria thread coordenadora e no próprio pool. Termina quando todas terminam (concluídas,
- * paradas ou com erro).
- */
 final class Corrida {
-
     private final UUID id;
     private final Parametros parametros;
     private final List<Pista> pistas = new ArrayList<>();
@@ -27,7 +21,7 @@ final class Corrida {
         this.parametros = parametros;
         this.aoTerminar = aoTerminar;
         Planejador.Plano plano = Planejador.planejar(parametros, semente);
-        // Mesmo leilão (mesmo id, preço e incremento) em todas; a rodada separa corridas no CQRS.
+
         Arquitetura.LeilaoInicial inicial = new Arquitetura.LeilaoInicial(id, UUID.randomUUID(),
                 parametros.precoInicial(), parametros.incremento());
         for (Arquitetura a : arquiteturas) {
@@ -51,7 +45,6 @@ final class Corrida {
 
     private void executar() {
         try {
-            // 1. Todas preparam (em paralelo); 2. largada comum; 3. todas correm em paralelo.
             List<Thread> preparos = pistas.stream().map(p -> Thread.ofPlatform().name("corrida-preparar-" + p.id())
                     .start(p::preparar)).toList();
             juntar(preparos);
@@ -83,7 +76,6 @@ final class Corrida {
         pistas.forEach(Pista::parar);
     }
 
-    /** A foto agora; depois do fim, o Resultado (fixo). */
     Foto foto() {
         Foto r = resultado;
         if (r != null) {

@@ -1,7 +1,7 @@
 import type { EstadoLeilao } from '../api.ts'
 import { dataHora, dinheiro, ROTULO_STATUS } from '../formato.ts'
 
-export interface Mudanca { campo: keyof EstadoLeilao; de: unknown; para: unknown }
+interface Mudanca { campo: keyof EstadoLeilao; de: unknown; para: unknown }
 
 /** Campos mostrados na auditoria (versao e leilaoId não entram: um é o índice, o outro nunca muda). */
 const CAMPOS: (keyof EstadoLeilao)[] = ['titulo', 'status', 'precoAtual', 'liderId', 'fimEm']

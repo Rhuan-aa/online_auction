@@ -4,9 +4,7 @@ import br.edu.ifsp.leilao.corrida.regra.EstadoLeilao;
 import java.util.List;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
-/** Base das duas variantes CRUD: o leilão é uma linha só, {@code <schema>.leilao}, sobrescrita a cada lance. */
 abstract class ArquiteturaLinha extends ArquiteturaBase {
-
     protected final String tabela;
 
     ArquiteturaLinha(JdbcClient jdbc, String id, String nome, String descricao, String schema) {
@@ -39,6 +37,6 @@ abstract class ArquiteturaLinha extends ArquiteturaBase {
 
     @Override
     public Auditoria auditoria() {
-        return new Auditoria(false, 0); // a linha guarda só o último valor: o histórico se perde
+        return new Auditoria(false, 0);
     }
 }

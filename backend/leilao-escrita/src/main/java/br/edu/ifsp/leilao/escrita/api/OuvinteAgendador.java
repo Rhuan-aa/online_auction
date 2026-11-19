@@ -7,10 +7,8 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
 
-/** Porta de entrada para os comandos do agendador (chegam pelo Kafka, não por HTTP). */
 @Component
 public class OuvinteAgendador {
-
     private final ServicoLeilao servico;
     private final JsonMapper json;
 
@@ -26,7 +24,7 @@ public class OuvinteAgendador {
         switch (comando.tipo()) {
             case "IniciarLeilao" -> servico.iniciar(comando.leilaoId());
             case "EncerrarLeilao" -> servico.encerrar(comando.leilaoId());
-            default -> { } // comando desconhecido: ignora
+            default -> { }
         }
     }
 }

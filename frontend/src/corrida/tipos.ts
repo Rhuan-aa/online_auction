@@ -1,5 +1,4 @@
-// Espelho do contrato do leilao-corrida (8085): docs/superpowers/specs/2026-11-19-corrida-contrato.md.
-// Dinheiro em centavos, tempos em ms.
+// Espelho do contrato do leilao-corrida: dinheiro em centavos, tempos em ms.
 
 export interface Parametros {
   licitantes: number
@@ -10,7 +9,7 @@ export interface Parametros {
   incremento: number
 }
 
-export type StatusArq = 'rodando' | 'terminou' | 'parada' | 'erro'
+type StatusArq = 'rodando' | 'terminou' | 'parada' | 'erro'
 
 export interface Tempos { p50: number; p95: number }
 

@@ -54,7 +54,7 @@ export function truncar(txt: string, max: number): string {
   return `${txt.slice(0, max - 1)}…`
 }
 
-export interface GrupoBarras { rotulo: string; valores: { serie: string; valor: number | null }[] }
+interface GrupoBarras { rotulo: string; valores: { serie: string; valor: number | null }[] }
 
 /** Texto de leitor de tela das barras; grupo sem rótulo (gráfico de um grupo só) não gera ": " solto. */
 export function descreverBarras(titulo: string, unidade: string, grupos: GrupoBarras[]): string {

@@ -9,20 +9,10 @@ import java.util.UUID;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
-/**
- * Históricos de lances, lidos direto do Event Store (a fonte da verdade): cada lance aceito é um
- * evento LanceRegistrado. Sem cópia nenhuma, então nunca ficam atrasados.
- *
- * Os campos saem do JSON do evento pelos operadores do Postgres: dados->>'licitanteId' devolve o
- * texto do campo, e (dados->>'valor')::bigint o converte para número.
- */
 @Repository
 public class HistoricoLances {
-
-    /** Item de GET /leiloes/{id}/lances: o mesmo JSON de antes. */
     public record Lance(int versao, String licitanteId, long valor, Instant criadoEm) {}
 
-    /** Item de GET /licitantes/{id}/lances: o último lance do licitante em cada leilão. */
     public record Atividade(UUID leilaoId, long ultimoValor, Instant ultimoLanceEm) {}
 
     private final JdbcClient jdbc;
@@ -31,7 +21,6 @@ public class HistoricoLances {
         this.jdbc = jdbc;
     }
 
-    /** Os lances aceitos de um leilão, em ordem. Usa o índice do UNIQUE(leilao_id, versao). */
     public List<Lance> doLeilao(UUID leilaoId) {
         return jdbc.sql("""
                         SELECT versao, dados->>'licitanteId' AS licitante_id,
@@ -45,11 +34,6 @@ public class HistoricoLances {
                 .list();
     }
 
-    /**
-     * O último lance do licitante em cada leilão, do mais recente para o mais antigo.
-     * DISTINCT ON (leilao_id) + ORDER BY versao DESC fica com uma linha por leilão: a de maior versão.
-     * Usa o índice eventos_lances_por_licitante (infra/sql/001_event_store.sql).
-     */
     public List<Atividade> doLicitante(String licitanteId) {
         return jdbc.sql("""
                         SELECT * FROM (

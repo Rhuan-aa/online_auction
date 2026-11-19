@@ -16,13 +16,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 
-/**
- * Uma arquitetura dentro de uma corrida: o próprio pool ({@code simultaneos} escritores +
- * {@code leitores} leitores), as medições e o resultado final. Uma exceção aqui marca só esta
- * pista como {@code erro}; as outras seguem.
- */
 final class Pista {
-
     private static final long ASSENTAR_MS = 5_000;
 
     private final Arquitetura arq;
@@ -30,7 +24,6 @@ final class Pista {
     private final Arquitetura.LeilaoInicial inicial;
     private final Despachante despachante;
 
-    // Contagens (seguras entre threads).
     private final LongAdder enviados = new LongAdder();
     private final LongAdder aceitos = new LongAdder();
     private final LongAdder recusados = new LongAdder();
@@ -46,7 +39,6 @@ final class Pista {
     private final AtomicReference<Leitura> ultimoAceito;
     private volatile Confirmacoes confirmacoes;
 
-    // Ciclo de vida.
     private volatile String status = "rodando";
     private volatile String erro;
     private volatile boolean pararPedido;
@@ -88,7 +80,6 @@ final class Pista {
         }
     }
 
-    /** Fase 1: apaga os dados da arquitetura e cria o leilão inicial. */
     void preparar() {
         try {
             arq.preparar(inicial);
@@ -97,7 +88,6 @@ final class Pista {
         }
     }
 
-    /** Fase 2: corre (depois da largada comum) e fecha o resultado. Bloqueia até terminar. */
     void correr(long largadaNanos) {
         inicioNanos = largadaNanos;
         if (erro != null) {
@@ -107,7 +97,7 @@ final class Pista {
         ExecutorService pool = null;
         try {
             confirmacoes = new Confirmacoes(p.totalLances() + 1, 1, largadaNanos);
-            // Threads virtuais: cada licitante/leitor é uma thread barata, então dá para simular milhares.
+
             pool = Executors.newThreadPerTaskExecutor(nomeadas("corrida-" + arq.id()));
             List<Future<?>> escritores = new ArrayList<>();
             for (int i = 0; i < p.simultaneos(); i++) {
@@ -125,7 +115,6 @@ final class Pista {
                 status = pararPedido && enviados.sum() < p.totalLances() ? "parada" : "terminou";
             }
         } catch (Throwable e) {
-            // Falta de memória, de threads etc.: esta pista vira "erro"; as outras seguem.
             falhar(e);
         } finally {
             escritoresTerminaram = true;
@@ -188,7 +177,7 @@ final class Pista {
             }
             case CONFLITO -> {
                 conflitos.increment();
-                recusados.increment(); // perdeu a disputa em todas as tentativas: o lance não entrou
+                recusados.increment();
                 precoConhecido.accumulateAndGet(r.precoAtual(), Math::max);
             }
         }
@@ -213,11 +202,10 @@ final class Pista {
         }
     }
 
-    /** Estado final, integridade, espaço e auditoria. Não entra nas métricas de custo. */
     private void fechar() {
         try {
             assentar();
-            custosFinais = arq.custos().foto(); // inclui a projeção do CQRS que chegou durante o assentar
+            custosFinais = arq.custos().foto();
             Leitura fin = arq.estadoFinal();
             estadoFinal = fin;
             Integridade.Resultado integridade = Integridade.avaliar(aceitosLista, p.precoInicial(), fin.precoAtual(),
@@ -228,7 +216,6 @@ final class Pista {
         }
     }
 
-    /** No CQRS a projeção anda atrás: espera (até 5 s) a consulta alcançar a versão final verdadeira. */
     private void assentar() {
         int alvo = arq.estadoFinal().versao();
         long limite = System.currentTimeMillis() + ASSENTAR_MS;
@@ -279,7 +266,6 @@ final class Pista {
                 Thread.currentThread().interrupt();
                 return;
             } catch (Exception e) {
-                // as tarefas já tratam as próprias exceções (falhar)
             }
         }
     }

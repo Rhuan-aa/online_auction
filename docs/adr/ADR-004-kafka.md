@@ -12,7 +12,7 @@ Em uma aplicação de leilão em tempo real, os eventos do ciclo de vida do leil
 Esses eventos podem ser distribuídos por um broker de filas, como o RabbitMQ ou o SQS, ou por um log distribuído e retido, como o Apache Kafka.
  
 # Decisão
-Adotaremos o Apache Kafka como broker para os eventos do ciclo de vida do leilão (tópico auction.events) e para os comandos do agendador (tópico auction.commands.timer).
+Adotaremos o Apache Kafka como broker para os eventos do ciclo de vida do leilão (tópico leilao.eventos) e para os comandos do agendador (tópico leilao.comandos-agendador).
 As justificativas para essa decisão:
 • Log Imutável e Retenção: os tópicos manterão os eventos persistidos em disco, permitindo que consumidores releiam o histórico recente. O RabbitMQ apaga as mensagens após o consumo, o que impediria o replay. A retenção é limitada, então o histórico completo vem do Event Store (ADR-002).
 • Particionamento por ID do Leilão: todos os eventos serão publicados utilizando o ID do leilão como chave da mensagem. Isso garante que todos os eventos de um mesmo leilão caiam na mesma partição e sejam entregues em ordem estrita (FIFO), enquanto leilões diferentes escalam paralelamente em outras partições. No RabbitMQ, manter a ordem por leilão com múltiplos consumidores exigiria topologias muito mais complexas.

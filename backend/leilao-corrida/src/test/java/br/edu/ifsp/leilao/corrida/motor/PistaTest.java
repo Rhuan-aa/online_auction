@@ -14,10 +14,7 @@ import br.edu.ifsp.leilao.corrida.regra.RegraLance;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
-/** O motor de uma pista, com arquiteturas em memória (sem banco). */
 class PistaTest {
-
-    /** Correta: decide e grava sob trava. */
     static class EmMemoria implements Arquitetura {
         final Contadores custos = new Contadores();
         final Contadores custosLeitura = new Contadores();
@@ -56,12 +53,11 @@ class PistaTest {
                 return new ResultadoLance(ResultadoLance.Tipo.RECUSADO, lido.versao(), lido.versao(), lido.precoAtual(), 0);
             }
             if (perdeAtualizacoes) {
-                Thread.yield(); // abre a janela entre ler e gravar, como o CRUD simples
+                Thread.yield();
                 try { Thread.sleep(1); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
             }
             synchronized (this) {
                 if (!perdeAtualizacoes && estado.versao() != lido.versao()) {
-                    // controle de concorrência: decide de novo sob a trava
                     if (!RegraLance.aceita(estado, valor)) {
                         return new ResultadoLance(ResultadoLance.Tipo.RECUSADO, estado.versao(), estado.versao(),
                                 estado.precoAtual(), 1);

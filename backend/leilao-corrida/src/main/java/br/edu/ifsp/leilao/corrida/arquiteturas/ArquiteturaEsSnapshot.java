@@ -5,13 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
-/**
- * Event Sourcing com snapshot: a cada {@link #INTERVALO} eventos, quem gravou o evento grava
- * também uma foto do estado. Escrita e consulta partem da foto mais recente e aplicam só os
- * eventos posteriores (no máximo 49).
- */
 public final class ArquiteturaEsSnapshot extends ArquiteturaEventos {
-
     public static final String ID = "es-snapshot";
     public static final int INTERVALO = 50;
 

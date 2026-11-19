@@ -8,14 +8,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
 
-/**
- * Um pool de conexões por arquitetura, para uma não roubar conexões da outra: a espera por
- * conexão entra na latência só da própria arquitetura. Não são beans DataSource de propósito
- * (o DataSource do Spring continua o padrão, usado no DDL).
- */
 @Component
 public class Conexoes implements DisposableBean {
-
     private final String url;
     private final String usuario;
     private final String senha;
@@ -40,7 +34,7 @@ public class Conexoes implements DisposableBean {
             ds.setPassword(senha);
             ds.setMaximumPoolSize(tamanho);
             ds.setMinimumIdle(0);
-            // Com milhares de licitantes na fila de poucas conexões, a espera pode passar dos 30 s padrão.
+
             ds.setConnectionTimeout(600_000);
             ds.setPoolName("corrida-" + id);
             return ds;

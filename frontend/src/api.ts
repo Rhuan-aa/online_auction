@@ -27,9 +27,9 @@ export interface ResumoLeilao {
 export interface EventoGravado { versao: number; tipo: string; dados: unknown; criadoEm: string }
 
 /** Mensagem do stream: o estado, mais o evento que o causou (ausente na primeira mensagem). */
-export type EstadoComEvento = EstadoLeilao & { evento?: { tipo: string; versao: number } }
+type EstadoComEvento = EstadoLeilao & { evento?: { tipo: string; versao: number } }
 
-export type ResultadoLance =
+type ResultadoLance =
   | { tipo: 'aceito'; versao: number; tentativas: number }
   | { tipo: 'recusado'; codigo?: string; mensagem?: string; tentativas: number }   // 422: regra violada (ex.: LANCE_ABAIXO_DO_MINIMO)
   | { tipo: 'conflito'; tentativas: number }                    // 409: versão disputada por outro lance mesmo após as retentativas
@@ -66,7 +66,7 @@ export interface Api {
   observarCorrida(corridaId: string, ouvintes: OuvintesCorrida): () => void
 }
 
-export interface OuvintesCorrida {
+interface OuvintesCorrida {
   aoFoto: (f: Foto) => void
   aoFim: (f: Foto) => void
   /** fechado = o navegador desistiu (não vai reconectar sozinho). */

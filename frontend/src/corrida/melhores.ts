@@ -12,7 +12,7 @@ export function melhores(valores: (number | null)[], sentido: Sentido): Set<numb
   return new Set(valores.flatMap((v, i) => (v === alvo ? [i] : [])))
 }
 
-export interface Criterio {
+interface Criterio {
   id: string
   rotulo: string
   sentido: Sentido
@@ -40,7 +40,7 @@ export const CRITERIOS: Criterio[] = [
 ]
 
 /** Por que a linha não concorre ao ★ (null: concorre). Só vale quem terminou, está correto e enviou lances. */
-export function motivoExclusao(a: ArqFoto): string | null {
+function motivoExclusao(a: ArqFoto): string | null {
   if (a.status === 'erro') return 'terminou com erro'
   if (a.status === 'parada') return 'a corrida foi parada'
   if (a.status !== 'terminou') return 'ainda não terminou'
@@ -49,7 +49,7 @@ export function motivoExclusao(a: ArqFoto): string | null {
   return null
 }
 
-export interface Exclusao { indice: number; nome: string; motivo: string }
+interface Exclusao { indice: number; nome: string; motivo: string }
 
 /** As linhas fora da disputa, com o motivo (para a nota abaixo do placar). */
 export function excluidas(arqs: ArqFoto[]): Exclusao[] {

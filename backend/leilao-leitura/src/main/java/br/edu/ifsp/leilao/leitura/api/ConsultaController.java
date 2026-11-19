@@ -1,8 +1,8 @@
 package br.edu.ifsp.leilao.leitura.api;
 
-import br.edu.ifsp.leilao.estado.LeitorEventos;
-import br.edu.ifsp.leilao.estado.LeitorEventos.EventoGravado;
-import br.edu.ifsp.leilao.estado.ObterEstado;
+import br.edu.ifsp.leilao.estado.cache.LeitorEventos;
+import br.edu.ifsp.leilao.estado.cache.LeitorEventos.EventoGravado;
+import br.edu.ifsp.leilao.estado.cache.ObterEstado;
 import br.edu.ifsp.leilao.leitura.consultas.HistoricoLances;
 import br.edu.ifsp.leilao.leitura.consultas.HistoricoLances.Atividade;
 import br.edu.ifsp.leilao.leitura.consultas.HistoricoLances.Lance;
@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -21,14 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-/**
- * API de consulta (PLANO.md, seção 2.5). Nunca chama o leilao-escrita.
- * O estado e a lista vêm do cache (módulo estado); os históricos de lances, do Event Store.
- */
 @RestController
-@CrossOrigin(origins = "http://localhost:5173")
 public class ConsultaController {
-
     private final ListagemLeiloes listagem;
     private final HistoricoLances historico;
     private final ObterEstado obterEstado;
@@ -51,10 +44,6 @@ public class ConsultaController {
         return listagem.listar(status);
     }
 
-    /**
-     * Estado do leilão pelo cache. Com ?versaoMinima=N, garante uma resposta com pelo menos a
-     * versão N (ex.: a que o POST do lance devolveu); sem ele, aceita a cópia que houver no Redis.
-     */
     @GetMapping("/leiloes/{id}")
     public LeilaoDetalhe buscar(@PathVariable UUID id, @RequestParam(defaultValue = "0") int versaoMinima,
                                 @RequestParam(required = false) Integer ateVersao) {
@@ -66,7 +55,6 @@ public class ConsultaController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Leilão não encontrado"));
     }
 
-    /** Viagem no tempo: o estado reconstruído dos eventos 1..N, sem cache nem checkpoint. */
     private LeilaoDetalhe naVersao(UUID id, int ateVersao) {
         if (ateVersao < 1) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ateVersao deve ser >= 1");
@@ -78,7 +66,6 @@ public class ConsultaController {
                         : new ResponseStatusException(HttpStatus.NOT_FOUND, "Leilão não encontrado"));
     }
 
-    /** Todos os eventos do leilão, como gravados no Event Store (auditoria). */
     @GetMapping("/leiloes/{id}/eventos")
     public List<EventoGravado> eventos(@PathVariable UUID id) {
         List<EventoGravado> lista = eventos.todos(id);
@@ -88,7 +75,6 @@ public class ConsultaController {
         return lista;
     }
 
-    /** Conexão SSE: o navegador fica ouvindo e recebe o estado do leilão a cada mudança. */
     @GetMapping(path = "/leiloes/{id}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter acompanhar(@PathVariable UUID id) {
         return transmissor.assinar(id);

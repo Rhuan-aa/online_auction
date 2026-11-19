@@ -4,7 +4,7 @@ import type { Serie } from '../graficos/escalas.ts'
 import { pctDesatualizadas, temEscrita, temLeitura } from './medidas.ts'
 import { corDe, type ArqFoto } from './tipos.ts'
 
-export interface Grupo { rotulo: string; valores: { serie: string; valor: number | null }[] }
+interface Grupo { rotulo: string; valores: { serie: string; valor: number | null }[] }
 
 /** nome da arquitetura → cor, para a legenda e as barras. */
 export function cores(arqs: ArqFoto[]): Record<string, string> {
@@ -20,7 +20,7 @@ export function gruposTempos(arqs: ArqFoto[], tipo: 'escrita' | 'leitura'): Grup
 }
 
 /** Um grupo só (sem rótulo embaixo: o título do gráfico já diz o que é). */
-export function grupoUnico(arqs: ArqFoto[], valor: (a: ArqFoto) => number | null): Grupo[] {
+function grupoUnico(arqs: ArqFoto[], valor: (a: ArqFoto) => number | null): Grupo[] {
   if (arqs.length === 0) return []
   return [{ rotulo: '', valores: arqs.map((a) => ({ serie: a.nome, valor: valor(a) })) }]
 }

@@ -4,9 +4,7 @@ import br.edu.ifsp.leilao.corrida.regra.EstadoLeilao;
 import java.util.List;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
-/** Event Sourcing puro: cada lance e cada consulta relê todos os eventos. O custo cresce com o leilão. */
 public final class ArquiteturaEs extends ArquiteturaEventos {
-
     public static final String ID = "es";
 
     public ArquiteturaEs(JdbcClient jdbc) {

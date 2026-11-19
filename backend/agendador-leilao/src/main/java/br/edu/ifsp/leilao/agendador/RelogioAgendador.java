@@ -8,14 +8,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
 
-/**
- * A cada 1 segundo, pergunta aos Prazos o que venceu e envia o comando ao leilao-escrita.
- * Quem decide se o leilão pode mesmo abrir/fechar é o agregado Leilao (se o comando chegar
- * repetido ou adiantado, ele simplesmente ignora).
- */
 @Component
 public class RelogioAgendador {
-
     private final Prazos prazos;
     private final KafkaTemplate<String, String> kafka;
     private final JsonMapper json;

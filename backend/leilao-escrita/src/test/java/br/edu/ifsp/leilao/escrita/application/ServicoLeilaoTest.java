@@ -7,13 +7,13 @@ import br.edu.ifsp.leilao.contratos.EventoLeilao;
 import br.edu.ifsp.leilao.contratos.EventoLeilao.LanceRegistrado;
 import br.edu.ifsp.leilao.contratos.EventoLeilao.LeilaoCriado;
 import br.edu.ifsp.leilao.contratos.EventoLeilao.LeilaoIniciado;
-import br.edu.ifsp.leilao.estado.CacheEstadoLeilao;
-import br.edu.ifsp.leilao.estado.Checkpoint;
-import br.edu.ifsp.leilao.estado.Configuracao;
-import br.edu.ifsp.leilao.estado.ConfiguracaoAtiva;
+import br.edu.ifsp.leilao.estado.cache.CacheEstadoLeilao;
+import br.edu.ifsp.leilao.estado.cache.Checkpoint;
+import br.edu.ifsp.leilao.estado.cache.Configuracao;
+import br.edu.ifsp.leilao.estado.cache.ConfiguracaoAtiva;
 import br.edu.ifsp.leilao.estado.EstadoLeilao;
-import br.edu.ifsp.leilao.estado.LeitorEventos;
-import br.edu.ifsp.leilao.estado.ObterEstado;
+import br.edu.ifsp.leilao.estado.cache.LeitorEventos;
+import br.edu.ifsp.leilao.estado.cache.ObterEstado;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -22,15 +22,12 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
-/** Sem banco nem Redis: Event Store em memória que perde a disputa nas primeiras chamadas escolhidas. */
 class ServicoLeilaoTest {
-
     static final UUID ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
-    /** Nas primeiras `conflitos` chamadas a anexar, "outro comando" grava um lance antes e o conflito é lançado. */
     static class EventStoreFalso extends LeitorEventos implements EventStore {
         final List<EventoLeilao> eventos = new ArrayList<>();
-        final List<Long> lancesDoVencedor = new ArrayList<>(); // um por conflito, na ordem
+        final List<Long> lancesDoVencedor = new ArrayList<>();
         int chamadas;
         int conflitos;
 
@@ -92,13 +89,13 @@ class ServicoLeilaoTest {
         store.lancesDoVencedor.add(1_500L);
         Resultado r = servico.darLance(ID, "licitante-2", 2_000);
         assertEquals(2, r.tentativas());
-        assertEquals(4, r.versao()); // criado, iniciado, lance do vencedor, o nosso
+        assertEquals(4, r.versao());
     }
 
     @Test
     void recusaDepoisDeRetentarCarregaAsTentativas() {
         store.conflitos = 1;
-        store.lancesDoVencedor.add(3_000L); // o vencedor sobe o mínimo acima do nosso valor
+        store.lancesDoVencedor.add(3_000L);
         var e = assertThrows(LanceRecusadoException.class, () -> servico.darLance(ID, "licitante-2", 2_000));
         assertEquals(2, e.tentativas());
         assertEquals("LANCE_ABAIXO_DO_MINIMO", e.codigo());

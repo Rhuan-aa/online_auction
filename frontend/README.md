@@ -4,8 +4,7 @@ Vite + React + TypeScript. A infra e a documentação estão na raiz: veja o [RE
 
 Uma página só, sem abas: a **corrida de arquiteturas**. O mesmo leilão roda ao mesmo tempo em 6 arquiteturas
 (CRUD simples, CRUD + cache, Event Sourcing puro, ES + snapshot, ES + cache e ES + CQRS) no serviço
-`leilao-corrida` (8085), e a página mostra tudo o que foi medido. Desenho: `docs/superpowers/specs/2026-11-19-corrida-arquiteturas-design.md`;
-contrato: `docs/superpowers/specs/2026-11-19-corrida-contrato.md`.
+`leilao-corrida` (8085), e a página mostra tudo o que foi medido.
 
 ```bash
 cp .env.example .env

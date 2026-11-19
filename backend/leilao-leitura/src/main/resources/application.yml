@@ -3,7 +3,6 @@ spring:
     name: leilao-leitura
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/leilao}
-    # Só leitura: SELECT nos eventos e no checkpoint (infra/sql/003_roles.sql e 004_checkpoint.sql).
     username: ${DB_QUERY_USER:query_svc}
     password: ${DB_QUERY_PASSWORD:query_svc}
   kafka:
@@ -12,18 +11,13 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-      # Curtos de propósito: com o Redis fora do ar, a consulta desiste logo e segue pelo banco.
       timeout: 200ms
       connect-timeout: 200ms
 server:
   port: 8082
 leilao:
   cache:
-    # Valor inicial; troca em tempo de execução por /admin/cache/configuracao.
-    # A = sem cópia (relê todos os eventos), B = só checkpoint, C = Redis + checkpoint (ADR-003).
-    # Ex.: CACHE_CONFIGURACAO=A para começar medindo o custo sem cache.
     configuracao: ${CACHE_CONFIGURACAO:C}
-# O /infra/saude cria um AdminClient do Kafka a cada consulta e o AdminClientConfig loga a configuração inteira em INFO.
 logging:
   level:
     org.apache.kafka.clients.admin.AdminClientConfig: WARN
@@ -32,11 +26,9 @@ management:
     web:
       exposure:
         include: health, metrics
-      # O painel de ADM (front) lê /actuator/metrics direto do navegador.
       cors:
         allowed-origins: http://localhost:5173
         allowed-methods: GET
   health:
     redis:
-      # O Redis é só cache: se ele cair, a leitura continua funcionando (ADR-003).
       enabled: false

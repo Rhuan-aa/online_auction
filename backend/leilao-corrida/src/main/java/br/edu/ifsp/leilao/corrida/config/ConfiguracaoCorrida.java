@@ -19,8 +19,6 @@ import java.util.List;
 
 @Configuration
 public class ConfiguracaoCorrida implements WebMvcConfigurer {
-
-    /** Tópico só do es-cqrs; o Kafka local não cria tópicos sozinho. Criado pelo KafkaAdmin na subida. */
     @Bean
     NewTopic topicoCorridaCqrs() {
         return new NewTopic(ArquiteturaEsCqrs.TOPICO, 3, (short) 1);
@@ -33,7 +31,6 @@ public class ConfiguracaoCorrida implements WebMvcConfigurer {
                 kafka, json);
     }
 
-    /** As 6, na ordem do contrato. O Esquema entra como parâmetro para o DDL rodar antes. */
     @Bean
     List<Arquitetura> arquiteturas(Esquema esquema, Conexoes conexoes, StringRedisTemplate redis,
                                    ArquiteturaEsCqrs esCqrs) {
