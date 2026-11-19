@@ -77,25 +77,66 @@ services:
       kafka:
         condition: service_healthy
 
-  backend:
-    build: ../backend
-    command: ./mvnw spring-boot:run -Dspring-boot.run.fork=true
-    ports:
-      - "8081:8081"
-      - "8082:8082"
-      - "8084:8084"
-      - "8085:8085"
+  # Back: cada serviço tem a própria imagem e o próprio container (MODULO escolhe o jar).
+  # Dentro da rede do compose os hosts são postgres/redis/kafka (não localhost) e o Kafka
+  # interno escuta em 29092.
+  leilao-escrita:
+    build:
+      context: ../backend
+      args: { MODULO: leilao-escrita }
+    image: leilao-escrita:dev
+    container_name: leilao-escrita
+    ports: [ "8081:8081" ]
+    environment: &backend-env
+      DB_URL: jdbc:postgresql://postgres:5432/leilao
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on: &backend-deps
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+
+  leilao-leitura:
+    build:
+      context: ../backend
+      args: { MODULO: leilao-leitura }
+    image: leilao-leitura:dev
+    container_name: leilao-leitura
+    ports: [ "8082:8082" ]
+    environment: *backend-env
+    depends_on: *backend-deps
+
+  agendador-leilao:
+    build:
+      context: ../backend
+      args: { MODULO: agendador-leilao }
+    image: agendador-leilao:dev
+    container_name: agendador-leilao
+    ports: [ "8084:8084" ]
     environment:
-      - POSTGRES_DB=leilao
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
-      - postgres
-      - redis
-      - kafka
+      kafka-init:
+        condition: service_completed_successfully
+
+  leilao-corrida:
+    build:
+      context: ../backend
+      args: { MODULO: leilao-corrida }
+    image: leilao-corrida:dev
+    container_name: leilao-corrida
+    ports: [ "8085:8085" ]
+    environment:
+      CORRIDA_DB_URL: jdbc:postgresql://postgres:5432/leilao
+      CORRIDA_BIND: 0.0.0.0
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on: *backend-deps
 
   frontend:
     image: node:22-alpine
@@ -109,9 +150,10 @@ services:
     environment:
       - VITE_COMMAND_API=http://localhost:8081
       - VITE_QUERY_API=http://localhost:8082
-      - VITE_CORRIDA_API=http://localhost:8085"
+      - VITE_CORRIDA_API=http://localhost:8085
     depends_on:
-      - backend
+      - leilao-escrita
+      - leilao-leitura
 
 volumes:
   pgdata:
