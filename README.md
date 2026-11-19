@@ -12,7 +12,7 @@ Plataforma de leilão online com lances em tempo real. Os comandos geram eventos
 backend/    Java 21 + Spring Boot 4, Maven multi-módulo  → backend/README.md
 frontend/   Vite + React + TypeScript (UI de apresentação) → frontend/README.md
 infra/      docker-compose (Postgres, Redis, Kafka, Kafka UI) + SQL
-docs/       plano, divisão, C4, ADRs
+docs/       padrão de commits, C4, ADRs
 .github/    CI (backend, frontend e infra em jobs separados)
 ```
 
