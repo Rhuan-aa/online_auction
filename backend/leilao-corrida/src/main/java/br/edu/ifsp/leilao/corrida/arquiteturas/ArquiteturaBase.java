@@ -4,9 +4,7 @@ import br.edu.ifsp.leilao.corrida.regra.EstadoLeilao;
 import java.util.List;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
-/** O que as 6 têm em comum: identidade, conexão própria, contadores e as medidas de espaço. */
 abstract class ArquiteturaBase implements Arquitetura {
-
     protected final JdbcClient jdbc;
     protected final Contadores custos = new Contadores();
     protected final Contadores custosLeitura = new Contadores();
@@ -15,7 +13,7 @@ abstract class ArquiteturaBase implements Arquitetura {
     private final String id;
     private final String nome;
     private final String descricao;
-    /** Tabelas da arquitetura, com schema (ex.: corrida_es.eventos). */
+
     private final List<String> tabelas;
 
     ArquiteturaBase(JdbcClient jdbc, String id, String nome, String descricao, List<String> tabelas) {
@@ -56,7 +54,6 @@ abstract class ArquiteturaBase implements Arquitetura {
         return leilao;
     }
 
-    /** TRUNCATE de todas as tabelas da arquitetura (e só delas). */
     protected void apagarTabelas() {
         jdbc.sql("TRUNCATE " + String.join(", ", tabelas) + " RESTART IDENTITY").update();
     }
@@ -71,10 +68,6 @@ abstract class ArquiteturaBase implements Arquitetura {
         return EstadoLeilao.criado(l.precoInicial(), l.incremento());
     }
 
-    /**
-     * Soma de pg_total_relation_size (dados + índices + TOAST) das tabelas da arquitetura, depois de
-     * um VACUUM (autocommit) nelas: as linhas mortas dos UPDATEs não contam como espaço usado.
-     */
     protected long bytes() {
         long total = 0;
         for (String tabela : tabelas) {

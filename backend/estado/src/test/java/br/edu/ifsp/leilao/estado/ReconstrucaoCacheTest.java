@@ -14,7 +14,6 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class ReconstrucaoCacheTest {
-
     static class EventStore extends ObterEstadoTest.EventStoreFalso {
         @Override
         public List<UUID> idsDosLeiloes() {

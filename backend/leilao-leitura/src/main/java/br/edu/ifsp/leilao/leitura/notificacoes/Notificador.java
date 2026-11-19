@@ -15,16 +15,8 @@ import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-/**
- * Consumidor independente (consumer group próprio): prova a extensibilidade do estilo,
- * porque entrou no sistema sem mudar uma linha do leilao-escrita.
- *
- * Avisa o licitante superado e, no encerramento, o vencedor e o vendedor.
- * Guarda em memória só o necessário: título, vendedor, líder atual e última versão de cada leilão.
- */
 @Component
 public class Notificador {
-
     private static final TypeReference<EnvelopeEvento<JsonNode>> ENVELOPE = new TypeReference<>() {};
 
     private record Acompanhamento(String titulo, String vendedorId, String liderId, int versao) {}
@@ -47,7 +39,7 @@ public class Notificador {
         UUID id = evento.leilaoId();
         Acompanhamento atual = leiloes.get(id);
         if (atual != null && evento.versao() <= atual.versao()) {
-            return; // evento repetido: não avisa duas vezes
+            return;
         }
 
         switch (evento.tipo()) {
@@ -81,7 +73,7 @@ public class Notificador {
                 }
                 leiloes.remove(id);
             }
-            default -> { } // os outros eventos não geram aviso
+            default -> { }
         }
     }
 

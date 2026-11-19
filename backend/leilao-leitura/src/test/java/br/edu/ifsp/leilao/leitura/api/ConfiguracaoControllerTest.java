@@ -16,8 +16,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 class ConfiguracaoControllerTest {
-
-    /** Cache de mentira: só conta apagamentos e pode simular o Redis fora do ar. */
     static class CacheFalso extends CacheEstadoLeilao {
         int apagamentos;
         boolean falha;

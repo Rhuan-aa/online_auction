@@ -16,14 +16,11 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-/** Regras do leilão, sem banco nem Kafka. O "agora" é passado como parâmetro: testa o tempo sem sleep. */
 class LeilaoTest {
-
     static final Instant INICIO = Instant.parse("2026-11-16T18:00:00Z");
     static final Instant FIM = Instant.parse("2026-11-16T19:00:00Z");
     static final Instant DURANTE = Instant.parse("2026-11-16T18:30:00Z");
 
-    /** Leilão aberto: preço inicial R$ 100,00, incremento R$ 10,00 (centavos). */
     static List<EventoLeilao> aberto(EventoLeilao... depois) {
         List<EventoLeilao> eventos = new ArrayList<>(List.of(
                 new LeilaoCriado("vendedor-1", "Notebook", 10_000, 1_000, INICIO, FIM),
@@ -32,7 +29,6 @@ class LeilaoTest {
         return eventos;
     }
 
-    /** O Leilao no estado de quem aplicou todos os eventos desde o início. */
     static Leilao reconstituir(List<EventoLeilao> eventos) {
         return Leilao.de(EstadoLeilao.INICIAL.aplicarTodos(eventos));
     }
@@ -63,7 +59,7 @@ class LeilaoTest {
     @Test
     void lanceAbaixoDoAtualMaisIncrementoEhRecusado() {
         Leilao leilao = reconstituir(aberto(new LanceRegistrado("licitante-1", 12_000)));
-        // mínimo = 12.000 + 1.000 = 13.000
+
         assertEquals("LANCE_ABAIXO_DO_MINIMO", codigoDoErro(() -> leilao.darLance("licitante-2", 12_500, DURANTE)));
         assertEquals(List.of(new LanceRegistrado("licitante-2", 13_000)),
                 leilao.darLance("licitante-2", 13_000, DURANTE));

@@ -2,17 +2,10 @@ package br.edu.ifsp.leilao.corrida.motor;
 
 import java.util.concurrent.atomic.AtomicLongArray;
 
-/**
- * Tempos em ms com memória fixa (~18 KB), para leitores que fazem milhões de consultas.
- * Guarda contagens por faixa de microssegundos: exato abaixo de 128 µs; acima, faixas log-lineares
- * de 64 subdivisões por potência de 2 (erro relativo < 0,8 %). Seguro entre threads sem trava.
- * Percentil pelo posto mais próximo, como {@code percentil} do front.
- */
 public final class Histograma {
-
     private static final int EXATOS = 128;
     private static final int SUB = 64;
-    private static final long MAX_US = (1L << 40) - 1; // ~12 dias
+    private static final long MAX_US = (1L << 40) - 1;
     private static final int FAIXAS = indice(MAX_US) + 1;
 
     private final AtomicLongArray contagens = new AtomicLongArray(FAIXAS);
@@ -21,13 +14,12 @@ public final class Histograma {
         if (us < EXATOS) {
             return (int) Math.max(0, us);
         }
-        int expoente = 63 - Long.numberOfLeadingZeros(us); // >= 7
+        int expoente = 63 - Long.numberOfLeadingZeros(us);
         int deslocamento = expoente - 6;
-        int sub = (int) (us >>> deslocamento); // 64..127
+        int sub = (int) (us >>> deslocamento);
         return EXATOS + (deslocamento - 1) * SUB + (sub - SUB);
     }
 
-    /** Valor que representa a faixa (o meio dela), em µs. */
     static double representante(int indice) {
         if (indice < EXATOS) {
             return indice;
@@ -53,7 +45,6 @@ public final class Histograma {
         return total;
     }
 
-    /** Percentil (p de 0 a 100) em ms, ou null sem amostras. */
     public Double percentil(double p) {
         long[] copia = new long[FAIXAS];
         long total = 0;

@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;
 
 class ValidadorParametrosTest {
-
     private static final JsonMapper JSON = JsonMapper.builder().build();
     private static final String OK =
             "\"licitantes\":20,\"lancesPorLicitante\":10,\"simultaneos\":6,\"leitores\":4,\"precoInicial\":10000,\"incremento\":100";
@@ -57,7 +56,7 @@ class ValidadorParametrosTest {
     @Test
     void recusaOQueNaoCabeNosTipos() {
         invalido("{" + OK.replace("\"licitantes\":20", "\"licitantes\":3000000000") + "}");
-        // 50000 x 50000 lances não cabe em int
+
         invalido("{" + OK.replace("\"licitantes\":20", "\"licitantes\":50000")
                 .replace("\"lancesPorLicitante\":10", "\"lancesPorLicitante\":50000") + "}");
         invalido("{" + OK.replace("\"incremento\":100", "\"incremento\":9000000000000000000") + "}");
@@ -65,13 +64,12 @@ class ValidadorParametrosTest {
 
     @Test
     void orcamentoDeThreadsRecusaComMensagemClara() {
-        // 6 x (166600 + 67) = 1000002 > 1000000
         String corpo = "{" + OK.replace("\"simultaneos\":6", "\"simultaneos\":166600")
                 .replace("\"leitores\":4", "\"leitores\":67") + "}";
         ParametroInvalidoException e = assertThrows(ParametroInvalidoException.class, () -> validar(corpo));
         assertTrue(e.getMessage().contains("Threads demais"), e.getMessage());
         assertTrue(e.getMessage().contains("1000002"), e.getMessage());
-        // abaixo do teto passa: 6 x (166600 + 66) = 999996 (o pedido de 13200 threads também)
+
         validar("{" + OK.replace("\"simultaneos\":6", "\"simultaneos\":166600")
                 .replace("\"leitores\":4", "\"leitores\":66") + "}");
     }
@@ -82,7 +80,7 @@ class ValidadorParametrosTest {
                 .replace("\"lancesPorLicitante\":10", "\"lancesPorLicitante\":1000") + "}";
         ParametroInvalidoException e = assertThrows(ParametroInvalidoException.class, () -> validar(corpo));
         assertTrue(e.getMessage().contains("Lances demais"), e.getMessage());
-        // com teto maior (configuração), o mesmo pedido passa
+
         Pedido p = ValidadorParametros.validar(JSON.readTree(corpo), 42, new Orcamento(2000, 5_000_000));
         assertEquals(3_000_000, p.parametros().totalLances());
     }

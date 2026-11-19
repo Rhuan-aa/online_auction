@@ -4,7 +4,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-/** Além do próprio pacote, procura beans no módulo estado (LeitorEventos, e depois o cache). */
 @SpringBootApplication(scanBasePackages = {"br.edu.ifsp.leilao.escrita", "br.edu.ifsp.leilao.estado"})
 @EnableScheduling
 public class LeilaoEscritaApplication {

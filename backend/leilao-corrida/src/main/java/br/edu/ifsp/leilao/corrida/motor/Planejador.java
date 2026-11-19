@@ -4,27 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.DoubleSupplier;
 
-/**
- * Plano de lances a partir de uma semente: porte do gerador mulberry32 e do planejamento de lances
- * do antigo simulador do front (já removido): mesma semente, mesmos valores e mesma rotação. Os passos de cada
- * lance são sorteados em [incremento, incremento x 50].
- */
 public final class Planejador {
-
     private Planejador() {}
 
-    /** {@code passo} = incremento sorteado deste lance (valor = valor anterior do licitante + passo). */
     public record LancePlanejado(String licitanteId, long valor, long passo) {}
 
-    /** Lances de cada licitante, em ordem crescente, e a rotação embaralhada em que são atendidos. */
     public record Plano(List<List<LancePlanejado>> porLicitante, int[] ordem) {}
 
-    /**
-     * mulberry32. Em JS, {@code Math.imul} e {@code >>> 0} trabalham em 32 bits; em Java a
-     * aritmética de int já dá a volta do mesmo jeito, então basta usar int e tirar o sinal no fim.
-     */
     public static DoubleSupplier gerador(long semente) {
-        int[] a = {(int) semente}; // semente >>> 0: só os 32 bits de baixo importam
+        int[] a = {(int) semente};
         return () -> {
             a[0] += 0x6d2b79f5;
             int t = a[0];
@@ -65,7 +53,6 @@ public final class Planejador {
         return new Plano(porLicitante, ordem);
     }
 
-    /** Valor enviado: o lance "acompanha o preço" (maior entre o planejado e o último preço conhecido + passo). */
     public static long valorEnviado(LancePlanejado lance, long precoConhecido) {
         return Math.max(lance.valor(), precoConhecido + lance.passo());
     }

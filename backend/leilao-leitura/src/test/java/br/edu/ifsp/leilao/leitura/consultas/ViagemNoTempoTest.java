@@ -23,7 +23,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import tools.jackson.databind.json.JsonMapper;
 
 class ViagemNoTempoTest {
-
     static final UUID ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
     static final UUID OUTRO = UUID.fromString("22222222-2222-2222-2222-222222222222");
     static final Instant INICIO = Instant.parse("2026-11-16T18:00:00Z");

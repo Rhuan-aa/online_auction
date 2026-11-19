@@ -14,12 +14,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-/** API de comandos (PLANO.md, seção 2.4). Só traduz HTTP <-> ServicoLeilao. */
 @RestController
 @RequestMapping("/leiloes")
 @CrossOrigin(origins = "http://localhost:5173")
 public class LeilaoController {
-
     record LeilaoCriadoResponse(UUID leilaoId, int versao) {}
     record VersaoResponse(int versao) {}
     record LanceResponse(int versao, int tentativas) {}

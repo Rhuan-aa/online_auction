@@ -10,15 +10,8 @@ import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-/**
- * Lê os eventos do leilão e mantém os prazos atualizados.
- *
- * O consumer group é novo a cada inicialização (${random.uuid}) e começa do início do tópico:
- * assim, ao reiniciar, o agendador relê todos os eventos e reconstrói os prazos sozinho.
- */
 @Component
 public class OuvinteEventos {
-
     private final Prazos prazos;
     private final JsonMapper json;
 
@@ -43,7 +36,7 @@ public class OuvinteEventos {
             case TiposEvento.LEILAO_PRORROGADO ->
                     prazos.prorrogado(leilaoId, json.treeToValue(dados, LeilaoProrrogado.class).novoFimEm());
             case TiposEvento.LEILAO_ENCERRADO, TiposEvento.LEILAO_CANCELADO -> prazos.terminado(leilaoId);
-            default -> { } // LanceRegistrado não muda prazo
+            default -> { }
         }
     }
 }

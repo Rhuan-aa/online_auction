@@ -9,12 +9,7 @@ import java.util.List;
 import java.util.function.DoubleSupplier;
 import org.junit.jupiter.api.Test;
 
-/**
- * Paridade com o antigo simulador do front (removido). Os valores esperados foram gerados rodando o
- * {@code gerador} e o {@code planejarLances} dele no Node (mesmo código, copiado).
- */
 class PlanejadorTest {
-
     private static double[] primeiros(long semente, int n) {
         DoubleSupplier r = Planejador.gerador(semente);
         double[] v = new double[n];
@@ -43,8 +38,6 @@ class PlanejadorTest {
 
     @Test
     void planoIgualAoFront() {
-        // planejarLances({licitantes: 3, lancesPorLicitante: 2, precoInicial: 10000,
-        //                 incrementoMin: 100, incrementoMax: 5000, semente: 42})
         Plano plano = Planejador.planejar(new Parametros(3, 2, 1, 0, 10_000, 100), 42);
         assertEquals(List.of(
                 List.of(new LancePlanejado("licitante-1", 13_046, 3_046), new LancePlanejado("licitante-1", 15_343, 2_297)),

@@ -13,19 +13,14 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-/**
- * Uma corrida por vez. Guarda a corrida atual (ou a última) e transmite por SSE: uma {@code foto}
- * ao conectar e a cada 250 ms, e um único {@code fim} com o Resultado, depois fecha o stream.
- */
 @Service
 public class ServicoCorrida implements MotorCorrida, DisposableBean {
-
     static final long INTERVALO_MS = 250;
 
     private final List<Arquitetura> arquiteturas;
     private final ScheduledExecutorService relogio;
     private final List<SseEmitter> assinantes = new CopyOnWriteArrayList<>();
-    /** Trava das transmissões: foto e fim nunca se cruzam, e nada sai depois do fim. */
+
     private final Object trava = new Object();
 
     private volatile Corrida atual;
@@ -47,7 +42,7 @@ public class ServicoCorrida implements MotorCorrida, DisposableBean {
         if (rodando != null && rodando.rodando()) {
             throw new CorridaEmAndamentoException(rodando.id());
         }
-        // O plano de lances (pode ser grande) é montado ANTES de pegar a trava das transmissões.
+
         Corrida[] ref = new Corrida[1];
         Corrida nova = new Corrida(UUID.randomUUID(), pedido.parametros(), pedido.semente(), arquiteturas,
                 () -> transmitirFim(ref[0]));
@@ -57,7 +52,7 @@ public class ServicoCorrida implements MotorCorrida, DisposableBean {
             if (c != null && c.rodando()) {
                 throw new CorridaEmAndamentoException(c.id());
             }
-            // Quem ainda assistia à corrida anterior já recebeu o fim; fecha os que sobraram e recomeça.
+
             assinantes.forEach(SseEmitter::complete);
             assinantes.clear();
             fimEnviado = false;
@@ -97,7 +92,6 @@ public class ServicoCorrida implements MotorCorrida, DisposableBean {
         synchronized (trava) {
             Corrida corrida = c.get();
             if (atual != corrida || fimEnviado) {
-                // Já terminou: manda o resultado e fecha.
                 enviar(emissor, "fim", corrida.foto());
                 emissor.complete();
             } else {
@@ -119,7 +113,6 @@ public class ServicoCorrida implements MotorCorrida, DisposableBean {
                 assinantes.forEach(e -> enviar(e, "foto", foto));
             }
         } catch (RuntimeException e) {
-            // o relógio não pode morrer por causa de uma foto
         }
     }
 

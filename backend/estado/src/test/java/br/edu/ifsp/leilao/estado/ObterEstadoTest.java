@@ -13,17 +13,11 @@ import java.util.UUID;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
-/**
- * Sem Redis nem banco: o cache e o Event Store são trocados por versões em memória,
- * para mostrar quantos eventos cada caminho precisa ler.
- */
 class ObterEstadoTest {
-
     static final UUID ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
-    static final List<EventoLeilao> EVENTOS = EstadoLeilaoTest.EVENTOS; // 6 eventos
+    static final List<EventoLeilao> EVENTOS = EstadoLeilaoTest.EVENTOS;
     static final EstadoLeilao ATUAL = EstadoLeilao.INICIAL.aplicarTodos(EVENTOS);
 
-    /** Event Store em memória que anota a partir de qual versão cada leitura pediu. */
     static class EventStoreFalso extends LeitorEventos {
         final List<Integer> pedidosAPartirDe = new ArrayList<>();
 
@@ -38,7 +32,6 @@ class ObterEstadoTest {
         }
     }
 
-    /** Redis em memória, com a mesma regra do cache: só grava se a versão for maior. */
     static class CacheFalso extends CacheEstadoLeilao {
         final Map<UUID, EstadoLeilao> guardado = new HashMap<>();
 
@@ -49,7 +42,6 @@ class ObterEstadoTest {
             this.configuracao = configuracao;
         }
 
-        /** Como o cache de verdade: nas configurações A e B é como se o Redis estivesse vazio. */
         boolean ligado() {
             return configuracao.atual().usaRedis();
         }
@@ -83,7 +75,6 @@ class ObterEstadoTest {
         }
     }
 
-    /** Checkpoint em memória. */
     static class CheckpointFalso extends Checkpoint {
         final Map<UUID, EstadoLeilao> guardado = new HashMap<>();
 
@@ -94,7 +85,6 @@ class ObterEstadoTest {
             this.configuracao = configuracao;
         }
 
-        /** Como o checkpoint de verdade: na configuração A é como se a tabela estivesse vazia. */
         @Override
         public Optional<EstadoLeilao> ler(UUID leilaoId) {
             return configuracao.atual().usaCheckpoint() ? Optional.ofNullable(guardado.get(leilaoId)) : Optional.empty();
@@ -112,25 +102,24 @@ class ObterEstadoTest {
     void semCopiaLeTodosOsEventosEGuardaNoCache() {
         assertEquals(Optional.of(ATUAL), obterEstado.obter(ID));
         assertEquals(List.of(0), eventStore.pedidosAPartirDe);
-        assertEquals(ATUAL, cache.guardado.get(ID)); // o próximo pedido já encontra a cópia
+        assertEquals(ATUAL, cache.guardado.get(ID));
     }
 
     @Test
     void comCopiaAtrasadaLeSoOsEventosQueFaltam() {
-        cache.guardado.put(ID, EstadoLeilao.INICIAL.aplicarTodos(EVENTOS.subList(0, 4))); // cópia na versão 4
+        cache.guardado.put(ID, EstadoLeilao.INICIAL.aplicarTodos(EVENTOS.subList(0, 4)));
 
         assertEquals(Optional.of(ATUAL), obterEstado.obter(ID));
-        assertEquals(List.of(4), eventStore.pedidosAPartirDe); // leu só as versões 5 e 6
-        assertEquals(6, cache.guardado.get(ID).versao());       // e atualizou a cópia
+        assertEquals(List.of(4), eventStore.pedidosAPartirDe);
+        assertEquals(6, cache.guardado.get(ID).versao());
     }
 
-    /** As métricas que o painel de ADM lê: de onde veio a cópia e quantos eventos foram lidos. */
     @Test
     void metricasContamDeOndeVeioACopiaEQuantosEventosForamLidos() {
-        cache.guardado.put(ID, EstadoLeilao.INICIAL.aplicarTodos(EVENTOS.subList(0, 4))); // cópia na v4
+        cache.guardado.put(ID, EstadoLeilao.INICIAL.aplicarTodos(EVENTOS.subList(0, 4)));
 
-        obterEstado.obter(ID);      // completa a partir do Redis: lê 2 eventos
-        obterEstado.obterDaFonte(ID); // relê tudo: 6 eventos
+        obterEstado.obter(ID);
+        obterEstado.obterDaFonte(ID);
 
         var doRedis = metricas.get("leilao.estado.eventos.lidos").tag("base", "redis").tag("configuracao", "C").summary();
         var daFonte = metricas.get("leilao.estado.eventos.lidos").tag("base", "fonte").tag("configuracao", "C").summary();
@@ -140,10 +129,9 @@ class ObterEstadoTest {
         assertEquals(1, metricas.get("leilao.estado.obter").tag("caminho", "comando").tag("configuracao", "C").timer().count());
     }
 
-    /** Em A o cache e o checkpoint (que honram a configuração) são ignorados: relê tudo e marca a tag A. */
     @Test
     void emATodaObtencaoReleTodosOsEventosEMarcaATag() {
-        cache.guardado.put(ID, ATUAL); // o "Redis" até tem a cópia, mas em A não pode ser usado
+        cache.guardado.put(ID, ATUAL);
         checkpoint.guardado.put(ID, ATUAL);
         configuracao.trocar(Configuracao.A);
 
@@ -155,7 +143,6 @@ class ObterEstadoTest {
         assertEquals(1, metricas.get("leilao.estado.obter").tag("caminho", "comando").tag("configuracao", "A").timer().count());
     }
 
-    /** A tag acompanha a troca: medições antes e depois ficam em séries separadas. */
     @Test
     void trocarDeConfiguracaoSeparaAsMedicoes() {
         obterEstado.obter(ID);
@@ -176,7 +163,6 @@ class ObterEstadoTest {
         }
     }
 
-    /** Configuração A: Redis e checkpoint desligados se comportam como vazios, e o resultado é o mesmo. */
     @Test
     void configuracaoASemCopiasRelêTudoEDaOMesmoEstado() {
         ConfiguracaoAtiva a = new ConfiguracaoAtiva(Configuracao.A);
@@ -186,27 +172,27 @@ class ObterEstadoTest {
         ObterEstado configuracaoA = new ObterEstado(redisDesligado, checkpointDesligado, eventStore, metricas, a);
 
         assertEquals(Optional.of(ATUAL), configuracaoA.obter(ID));
-        assertEquals(List.of(0), eventStore.pedidosAPartirDe); // releu desde o início
+        assertEquals(List.of(0), eventStore.pedidosAPartirDe);
     }
 
     @Test
     void semRedisParteDoCheckpointELeSoOQueVeioDepois() {
-        checkpoint.guardado.put(ID, EstadoLeilao.INICIAL.aplicarTodos(EVENTOS.subList(0, 3))); // checkpoint na v3
+        checkpoint.guardado.put(ID, EstadoLeilao.INICIAL.aplicarTodos(EVENTOS.subList(0, 3)));
 
         assertEquals(Optional.of(ATUAL), obterEstado.obter(ID));
-        assertEquals(List.of(3), eventStore.pedidosAPartirDe); // leu só as versões 4, 5 e 6
-        assertEquals(6, cache.guardado.get(ID).versao());       // e deixou a cópia completa no Redis
+        assertEquals(List.of(3), eventStore.pedidosAPartirDe);
+        assertEquals(6, cache.guardado.get(ID).versao());
     }
 
     @Test
     void semRedisComCheckpointEmDiaRegravaACopiaNoRedis() {
-        checkpoint.guardado.put(ID, ATUAL); // checkpoint já na v6: não há evento posterior
+        checkpoint.guardado.put(ID, ATUAL);
 
         assertEquals(Optional.of(ATUAL), obterEstado.obterParaConsulta(ID, 0));
-        assertEquals(ATUAL, cache.guardado.get(ID)); // a próxima leitura já acha a cópia no Redis
+        assertEquals(ATUAL, cache.guardado.get(ID));
 
         obterEstado.obterParaConsulta(ID, 0);
-        assertEquals(List.of(6), eventStore.pedidosAPartirDe); // só a primeira foi ao banco
+        assertEquals(List.of(6), eventStore.pedidosAPartirDe);
     }
 
     @Test
@@ -214,18 +200,18 @@ class ObterEstadoTest {
         EstadoLeilao copiaV4 = EstadoLeilao.INICIAL.aplicarTodos(EVENTOS.subList(0, 4));
         cache.guardado.put(ID, copiaV4);
 
-        assertEquals(Optional.of(copiaV4), obterEstado.obterParaConsulta(ID, 0)); // sem mínima: qualquer cópia
-        assertEquals(Optional.of(copiaV4), obterEstado.obterParaConsulta(ID, 4)); // cópia já tem a v4
-        assertEquals(List.of(), eventStore.pedidosAPartirDe);                     // não foi ao banco
+        assertEquals(Optional.of(copiaV4), obterEstado.obterParaConsulta(ID, 0));
+        assertEquals(Optional.of(copiaV4), obterEstado.obterParaConsulta(ID, 4));
+        assertEquals(List.of(), eventStore.pedidosAPartirDe);
     }
 
     @Test
     void consultaComCopiaAtrasDaVersaoMinimaCompletaPeloEventStore() {
-        cache.guardado.put(ID, EstadoLeilao.INICIAL.aplicarTodos(EVENTOS.subList(0, 4))); // cópia na v4
+        cache.guardado.put(ID, EstadoLeilao.INICIAL.aplicarTodos(EVENTOS.subList(0, 4)));
 
-        assertEquals(Optional.of(ATUAL), obterEstado.obterParaConsulta(ID, 6)); // pediu pelo menos a v6
-        assertEquals(List.of(4), eventStore.pedidosAPartirDe);                  // leu só o que faltava
-        assertEquals(6, cache.guardado.get(ID).versao());                       // e consertou a cópia
+        assertEquals(Optional.of(ATUAL), obterEstado.obterParaConsulta(ID, 6));
+        assertEquals(List.of(4), eventStore.pedidosAPartirDe);
+        assertEquals(6, cache.guardado.get(ID).versao());
     }
 
     @Test
@@ -236,10 +222,10 @@ class ObterEstadoTest {
 
         Map<UUID, EstadoLeilao> estados = obterEstado.obterVariosParaConsulta(List.of(semCopia, ID));
 
-        assertEquals(List.of(semCopia, ID), List.copyOf(estados.keySet())); // mantém a ordem pedida
-        assertEquals(copiaV4, estados.get(ID));                             // confiou na cópia
-        assertEquals(ATUAL, estados.get(semCopia));                         // reconstruiu o que faltava
-        assertEquals(List.of(0), eventStore.pedidosAPartirDe);              // só esse foi ao banco
+        assertEquals(List.of(semCopia, ID), List.copyOf(estados.keySet()));
+        assertEquals(copiaV4, estados.get(ID));
+        assertEquals(ATUAL, estados.get(semCopia));
+        assertEquals(List.of(0), eventStore.pedidosAPartirDe);
     }
 
     @Test
@@ -247,7 +233,7 @@ class ObterEstadoTest {
         cache.guardado.put(ID, ATUAL);
 
         assertEquals(Optional.of(ATUAL), obterEstado.obterDaFonte(ID));
-        assertEquals(List.of(0), eventStore.pedidosAPartirDe); // releu tudo
+        assertEquals(List.of(0), eventStore.pedidosAPartirDe);
     }
 
     @Test
@@ -259,6 +245,6 @@ class ObterEstadoTest {
             }
         };
         assertTrue(new ObterEstado(cache, checkpoint, vazio, metricas, configuracao).obter(ID).isEmpty());
-        assertTrue(cache.guardado.isEmpty()); // nada é guardado para um leilão que não existe
+        assertTrue(cache.guardado.isEmpty());
     }
 }

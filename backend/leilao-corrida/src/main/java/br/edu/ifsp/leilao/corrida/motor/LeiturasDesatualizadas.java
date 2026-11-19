@@ -1,12 +1,6 @@
 package br.edu.ifsp.leilao.corrida.motor;
 
-/**
- * Conta as leituras desatualizadas: a consulta devolveu uma versão menor que a última versão já
- * confirmada a algum cliente no momento em que a consulta começou. O atraso médio (em versões e
- * em ms) é a média só entre as desatualizadas.
- */
 public final class LeiturasDesatualizadas {
-
     public record Resumo(long consultas, long desatualizadas, double pctDesatualizadas,
                          double atrasoMedioVersoes, double atrasoMedioMs) {}
 
@@ -15,7 +9,6 @@ public final class LeiturasDesatualizadas {
     private long somaVersoes;
     private double somaMs;
 
-    /** @param confirmada maior versão confirmada quando a leitura começou */
     public synchronized void registrar(int versaoLida, int confirmada, double atrasoMs) {
         consultas++;
         if (versaoLida < confirmada) {

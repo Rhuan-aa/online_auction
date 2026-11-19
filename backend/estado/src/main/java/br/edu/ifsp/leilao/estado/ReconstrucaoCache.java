@@ -7,17 +7,8 @@ import java.util.Objects;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 
-/**
- * Apaga as cópias do estado (Redis e checkpoints) e as refaz só com os eventos do Event Store.
- * Usada pela ferramenta CLI e pelo painel de ADM (POST /admin/cache/reconstruir).
- *
- * Passos: fotografa os estados como as consultas os veem; apaga as cópias; refaz cada estado
- * relendo todos os eventos; fotografa de novo e lista os leilões que mudaram.
- * Nas configurações A e B o Redis não é usado, então só se refaz o que a configuração usa.
- */
 @Component
 public class ReconstrucaoCache {
-
     public record Tempos(long fotografiaMs, long apagarMs, long refazerMs, long compararMs) {}
 
     public record Relatorio(int leiloes, long chavesApagadas, int checkpointsApagados, int refeitos,
@@ -49,8 +40,8 @@ public class ReconstrucaoCache {
         Map<UUID, EstadoLeilao> refeitos = new LinkedHashMap<>();
         for (UUID leilaoId : leiloes) {
             obterEstado.obterDaFonte(leilaoId).ifPresent(estado -> {
-                cache.gravar(leilaoId, estado);                         // também recoloca no índice de abertos
-                checkpoint.gravarSeNecessario(leilaoId, 0, estado);     // mesma regra de sempre: a partir de N ou se terminou
+                cache.gravar(leilaoId, estado);
+                checkpoint.gravarSeNecessario(leilaoId, 0, estado);
                 refeitos.put(leilaoId, estado);
             });
         }

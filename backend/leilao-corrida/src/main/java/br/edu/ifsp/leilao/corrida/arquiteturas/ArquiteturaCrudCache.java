@@ -6,14 +6,7 @@ import java.util.Optional;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
-/**
- * CRUD com controle otimista e cache. A escrita lê a linha no banco, decide e grava com
- * {@code UPDATE ... WHERE versao = ?}; se outra thread gravou antes (0 linhas), tenta de novo
- * (até {@link ResultadoLance#MAX_TENTATIVAS}). Depois de gravar, atualiza a cópia no Redis (só se
- * for mais nova). A consulta lê o Redis (cache-aside): se a chave falta, lê o banco e preenche.
- */
 public final class ArquiteturaCrudCache extends ArquiteturaLinha {
-
     public static final String ID = "crud-cache";
 
     private final CopiaRedis cache;

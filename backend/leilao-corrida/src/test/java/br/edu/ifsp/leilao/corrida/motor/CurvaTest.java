@@ -7,7 +7,6 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class CurvaTest {
-
     @Test
     void faixasDe10VersoesRotuladasPeloFim() {
         assertEquals(0, Curva.faixa(1));
@@ -32,7 +31,7 @@ class CurvaTest {
     void pulaFaixasVaziasECresce() {
         Curva c = new Curva();
         c.registrar(5, 1.0);
-        c.registrar(1_005, 9.0); // além do tamanho inicial
+        c.registrar(1_005, 9.0);
         assertEquals(List.of(new Ponto(10, 1.0), new Ponto(1_010, 9.0)), c.pontos());
     }
 }

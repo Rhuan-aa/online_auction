@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;
 
 class TransmissorSseTest {
-
     private final JsonMapper json = JsonMapper.builder().build();
 
     private LeilaoDetalhe base() {

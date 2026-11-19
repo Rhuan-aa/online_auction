@@ -8,7 +8,6 @@
   </parent>
   <artifactId>ferramentas</artifactId>
   <dependencies>
-    <!-- estado traz JDBC, Jackson, Redis e o ObterEstado (o mesmo código da escrita e da leitura) -->
     <dependency><groupId>br.edu.ifsp.leilao</groupId><artifactId>estado</artifactId></dependency>
     <dependency><groupId>org.postgresql</groupId><artifactId>postgresql</artifactId></dependency>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
@@ -19,7 +18,6 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
         <configuration>
-          <!-- o módulo tem dois main (simulador e reconstrutor); o jar executável roda o reconstrutor -->
           <mainClass>br.edu.ifsp.leilao.ferramentas.reconstrutor.ReconstrutorCache</mainClass>
         </configuration>
       </plugin>

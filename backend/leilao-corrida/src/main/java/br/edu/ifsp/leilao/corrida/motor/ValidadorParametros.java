@@ -2,14 +2,7 @@ package br.edu.ifsp.leilao.corrida.motor;
 
 import tools.jackson.databind.JsonNode;
 
-/**
- * Valida o corpo do POST /corrida. Sem limite máximo (o contrato não tem), só inteiros: os 4
- * contadores >= 1 (leitores >= 0), preço inicial e incremento >= 1. Rejeita o que não cabe nos
- * tipos (int nos contadores e no total de lances; long nos valores que o plano pode atingir).
- * {@code semente} é opcional (não faz parte do contrato da tela; útil para repetir um plano).
- */
 public final class ValidadorParametros {
-
     private ValidadorParametros() {}
 
     public record Pedido(Parametros parametros, long semente) {}
@@ -20,10 +13,6 @@ public final class ValidadorParametros {
         }
     }
 
-    /**
-     * Teto de recursos da máquina (não é um máximo da tela): protege o servidor de pedidos que o
-     * derrubariam. Configurável em {@code corrida.max-threads} e {@code corrida.max-lances}.
-     */
     public record Orcamento(int maxThreads, long maxLances) {
         public static final Orcamento PADRAO = new Orcamento(1_000_000, 2_000_000);
     }
@@ -46,7 +35,7 @@ public final class ValidadorParametros {
 
         try {
             Math.multiplyExact(licitantes, lances);
-            // Pior caso do plano: cada lance sobe 50 incrementos (e ainda acompanha o preço).
+
             long passoMax = Math.multiplyExact(incremento, 50L);
             Math.addExact(precoInicial, Math.multiplyExact(passoMax, 2L * licitantes * (long) lances));
         } catch (ArithmeticException e) {
@@ -58,7 +47,6 @@ public final class ValidadorParametros {
 
     private static void verificarOrcamento(int licitantes, int lances, int simultaneos, int leitores,
                                            Orcamento orcamento) {
-        // 6 arquiteturas, cada uma com simultaneos escritores + leitores leitores.
         long threads = 6L * ((long) simultaneos + leitores);
         if (threads > orcamento.maxThreads()) {
             throw new ParametroInvalidoException("Threads demais para esta máquina: " + threads

@@ -7,11 +7,9 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Saúde da infraestrutura para o painel "Arquitetura". Sempre 200, mesmo com componente DOWN. */
 @RestController
 @CrossOrigin(origins = "http://localhost:5173")
 public class InfraController {
-
     private final ChecagemInfra checagem;
 
     public InfraController(ChecagemInfra checagem) {

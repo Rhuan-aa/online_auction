@@ -14,10 +14,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
-/** Quando o checkpoint é gravado (a regra pura, sem banco). */
 class CheckpointTest {
-
-    /** Um estado ABERTO na versão pedida (criado + iniciado + lances até chegar nela). */
     static EstadoLeilao abertoNaVersao(int versao) {
         List<EventoLeilao> eventos = new ArrayList<>(EstadoLeilaoTest.EVENTOS.subList(0, 2));
         while (eventos.size() < versao) {
@@ -26,7 +23,6 @@ class CheckpointTest {
         return EstadoLeilao.INICIAL.aplicarTodos(eventos);
     }
 
-    /** Banco que quebra qualquer chamada: prova que em A o checkpoint nem chega a tocar no banco. */
     @Test
     void trocarParaALeDevolveVazioSemTocarNoBanco() {
         JdbcClient quebrado = (JdbcClient) Proxy.newProxyInstance(getClass().getClassLoader(),
@@ -39,13 +35,13 @@ class CheckpointTest {
         configuracao.trocar(Configuracao.A);
 
         assertEquals(Optional.empty(), checkpoint.ler(UUID.randomUUID()));
-        checkpoint.gravarSeNecessario(UUID.randomUUID(), 0, abertoNaVersao(50)); // não lança nem grava
+        checkpoint.gravarSeNecessario(UUID.randomUUID(), 0, abertoNaVersao(50));
     }
 
     @Test
     void gravaQuandoPassaDeUmMultiploDeN() {
-        assertTrue(Checkpoint.deveGravar(49, abertoNaVersao(50), 50));  // chegou no 50
-        assertTrue(Checkpoint.deveGravar(49, abertoNaVersao(51), 50));  // pulou o 50 (lance + prorrogação)
+        assertTrue(Checkpoint.deveGravar(49, abertoNaVersao(50), 50));
+        assertTrue(Checkpoint.deveGravar(49, abertoNaVersao(51), 50));
         assertTrue(Checkpoint.deveGravar(99, abertoNaVersao(100), 50));
     }
 

@@ -6,13 +6,7 @@ import java.util.Optional;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
-/**
- * Event Sourcing com cópia versionada no Redis (a arquitetura do sistema real, em miniatura).
- * A escrita parte da cópia e aplica só os eventos depois dela; depois de gravar, atualiza a cópia
- * (só se for mais nova). A consulta lê só a cópia; se ela falta, relê os eventos e regrava.
- */
 public final class ArquiteturaEsCache extends ArquiteturaEventos {
-
     public static final String ID = "es-cache";
 
     private final CopiaRedis cache;

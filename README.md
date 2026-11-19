@@ -2,11 +2,7 @@
 
 Plataforma de leilão online com lances em tempo real. Os comandos geram eventos imutáveis em um Event Store (PostgreSQL), publicados no Kafka via outbox. O estado de cada leilão é derivado dos eventos e guardado como cópia versionada no Redis e em checkpoints no Postgres: escrita e leitura obtêm o mesmo estado, sem banco de leitura separado (ADR-003).
 
-- [docs/PLANO.md](docs/PLANO.md): plano de desenvolvimento (o que cada parte faz, os acordos entre elas e os marcos)
-- [docs/PLANO_CACHE.md](docs/PLANO_CACHE.md): como o CQRS foi trocado pelo cache, decisão por decisão
-- [docs/DIVISAO.md](docs/DIVISAO.md): quem faz o quê e quando
 - [docs/adr/](docs/adr/) e [docs/c4/](docs/c4/): decisões de arquitetura e diagramas
-- [docs/COMMITS.md](docs/COMMITS.md): padrão de commits
 
 ```
 backend/    Java 21 + Spring Boot 4, Maven multi-módulo  → backend/README.md

@@ -13,8 +13,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 class ReconstrucaoControllerTest {
-
-    /** Reconstrução de mentira: devolve um relatório fixo, sem tocar em Redis nem em banco. */
     private final ReconstrucaoCache reconstrucao = new ReconstrucaoCache(null, null, null, null) {
         @Override
         public Relatorio reconstruir() {

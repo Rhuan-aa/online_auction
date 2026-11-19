@@ -11,14 +11,8 @@ import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-/**
- * A cada 200 ms, envia ao Kafka os eventos ainda não publicados e marca o outbox.
- * Se cair no meio, o evento é reenviado na próxima rodada (entrega "pelo menos uma vez":
- * por isso os consumidores ignoram versões repetidas).
- */
 @Component
 public class PublicadorOutbox {
-
     private record Pendente(long outboxId, long id, UUID leilaoId, int versao, String tipo,
                             Instant criadoEm, String dados) {}
 
@@ -48,7 +42,7 @@ public class PublicadorOutbox {
         for (Pendente p : pendentes) {
             var envelope = new EnvelopeEvento<JsonNode>(p.id(), p.leilaoId(), p.versao(), p.tipo(),
                     p.criadoEm(), json.readTree(p.dados()));
-            // key = leilaoId: todos os eventos de um leilão caem na mesma partição, em ordem.
+
             kafka.send(Topicos.EVENTOS_LEILAO, p.leilaoId().toString(), json.writeValueAsString(envelope)).join();
             jdbc.sql("UPDATE event_store.outbox SET publicado_em = now() WHERE id = ?").param(p.outboxId()).update();
         }

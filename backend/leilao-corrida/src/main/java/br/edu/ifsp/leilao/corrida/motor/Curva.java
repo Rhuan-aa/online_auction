@@ -4,13 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Tempo × tamanho do leilão: média do tempo de escrita por faixa de 10 versões. A faixa é rotulada
- * pela maior versão dela (versões 1–10 → 10, 11–20 → 20...). Cada lance entra na versão que gerou
- * (aceito) ou na versão que a arquitetura viu ao recusar.
- */
 public final class Curva {
-
     public static final int LARGURA = 10;
 
     public record Ponto(int versao, double ms) {}

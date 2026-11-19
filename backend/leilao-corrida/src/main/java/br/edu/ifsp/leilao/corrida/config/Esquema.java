@@ -4,15 +4,8 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
 
-/**
- * Cria, na subida, um schema por arquitetura (CREATE ... IF NOT EXISTS). Roda antes dos
- * consumidores Kafka começarem (eles sobem depois do contexto pronto). Nada aqui toca nos schemas
- * do sistema real (event_store, checkpoint, read_model).
- */
 @Component
 public class Esquema implements InitializingBean {
-
-    /** Tabela de eventos igual nas 4 variantes de Event Sourcing. UNIQUE(leilao_id, versao) é o controle de concorrência. */
     private static String eventos(String schema) {
         return """
                 CREATE TABLE IF NOT EXISTS %s.eventos (
@@ -28,7 +21,6 @@ public class Esquema implements InitializingBean {
                 )""".formatted(schema);
     }
 
-    /** A linha única do leilão nas duas variantes CRUD. */
     private static String linhaLeilao(String schema) {
         return """
                 CREATE TABLE IF NOT EXISTS %s.leilao (

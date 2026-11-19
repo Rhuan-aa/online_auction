@@ -12,13 +12,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
 
-/**
- * EventStore no PostgreSQL (tabelas event_store.eventos e event_store.outbox).
- * O UNIQUE(leilao_id, versao) do banco é quem impede dois lances na mesma versão.
- */
 @Repository
 public class EventStorePostgres implements EventStore {
-
     private final JdbcClient jdbc;
     private final JsonMapper json;
 
@@ -27,7 +22,6 @@ public class EventStorePostgres implements EventStore {
         this.json = json;
     }
 
-    /** Evento e linha do outbox na MESMA transação: ou grava os dois, ou nenhum (padrão outbox). */
     @Override
     @Transactional
     public void anexar(UUID leilaoId, int versaoEsperada, List<EventoLeilao> novos) {

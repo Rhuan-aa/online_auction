@@ -7,17 +7,7 @@ import java.util.List;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
-/**
- * Base das 4 variantes de Event Sourcing. Os eventos são imutáveis ({@code <schema>.eventos});
- * versão 1 = LeilaoCriado, cada lance aceito = um LanceAceito com a versão seguinte.
- *
- * <p>Escrita: monta o estado (cada variante do seu jeito), decide e faz INSERT do evento com
- * a versão seguinte. {@code UNIQUE(leilao_id, versao)} barra quem decidiu sobre um estado velho:
- * a thread que perdeu tenta de novo, até {@link ResultadoLance#MAX_TENTATIVAS}; depois disso o
- * lance é um conflito (e conta como recusado).
- */
 abstract class ArquiteturaEventos extends ArquiteturaBase {
-
     protected static final String CRIADO = "LeilaoCriado";
     protected static final String LANCE = "LanceAceito";
 
@@ -38,13 +28,10 @@ abstract class ArquiteturaEventos extends ArquiteturaBase {
         return todas;
     }
 
-    /** Estado sobre o qual a escrita decide. */
     protected abstract EstadoLeilao carregarParaEscrita(Contadores c);
 
-    /** Depois do INSERT bem-sucedido (snapshot, cópia no Redis, publicação no Kafka...). */
     protected void aposGravar(EstadoLeilao novo, Contadores c) {}
 
-    /** Depois de criar o leilão (versão 1), para a variante preparar as suas estruturas. */
     protected void aposPreparar(EstadoLeilao inicial) {}
 
     protected long chavesRedis() {
@@ -81,7 +68,6 @@ abstract class ArquiteturaEventos extends ArquiteturaBase {
                 ResultadoLance.MAX_TENTATIVAS - 1);
     }
 
-    /** INSERT do LanceAceito. False se a versão já existe (outra thread chegou antes). */
     protected boolean anexar(EstadoLeilao novo, Contadores c) {
         c.escritaBanco();
         try {
@@ -94,15 +80,10 @@ abstract class ArquiteturaEventos extends ArquiteturaBase {
         }
     }
 
-    /** Relê todos os eventos (uma consulta). */
     protected EstadoLeilao replayCompleto(Contadores c) {
         return aplicarEventos(null, 0, c);
     }
 
-    /**
-     * Aplica sobre {@code base} os eventos com versão maior que {@code depoisDe} (uma consulta).
-     * Com base null, o primeiro evento lido tem que ser o LeilaoCriado.
-     */
     protected EstadoLeilao aplicarEventos(EstadoLeilao base, int depoisDe, Contadores c) {
         c.leituraBanco();
         List<Evento> lidos = jdbc.sql("SELECT versao, tipo, licitante, valor, incremento FROM " + eventos

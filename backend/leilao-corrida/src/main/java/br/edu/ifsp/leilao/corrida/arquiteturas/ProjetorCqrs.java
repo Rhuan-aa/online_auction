@@ -3,10 +3,8 @@ package br.edu.ifsp.leilao.corrida.arquiteturas;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-/** Consumidor do tópico do es-cqrs: projeta cada evento na tabela de leitura. */
 @Component
 public class ProjetorCqrs {
-
     private final ArquiteturaEsCqrs cqrs;
 
     public ProjetorCqrs(ArquiteturaEsCqrs cqrs) {

@@ -6,8 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 
 class TrocaDeConfiguracaoTest {
-
-    /** Cache que guarda chaves de mentira e conta quantas vezes foi apagado. */
     static class CacheContador extends CacheEstadoLeilao {
         int apagamentos;
         final java.util.Set<String> chaves = new java.util.HashSet<>(java.util.Set.of("leiloes:abertos"));
@@ -29,7 +27,6 @@ class TrocaDeConfiguracaoTest {
         }
     }
 
-    /** Parte de `de`, troca para `para` e devolve quantas vezes o Redis foi apagado. */
     private int apagamentosAoTrocar(Configuracao de, Configuracao para) {
         var configuracao = new ConfiguracaoAtiva(de);
         var cache = new CacheContador(configuracao);

@@ -10,26 +10,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * "Resultado correto?" de uma arquitetura, a partir dos lances confirmados como aceitos e do
- * estado final verdadeiro dela.
- *
- * <p><b>Lance perdido</b> (definição usada aqui): um lance confirmado ao cliente como aceito é
- * perdido se
- * <ol>
- *   <li>o valor dele ficou ACIMA do preço final (alguém gravou um valor menor por cima), ou</li>
- *   <li>outro lance aceito foi decidido sobre a MESMA versão base (lost update: os dois leram o
- *       mesmo estado e os dois gravaram, então só o efeito de um sobrevive). Em cada grupo de k
- *       lances com a mesma base, k - 1 são perdidos; o "sobrevivente" é o último confirmado.</li>
- * </ol>
- * Um lance que cai nos dois casos conta uma vez só. Nas arquiteturas com controle de
- * concorrência a base é única por construção (UNIQUE ou WHERE versao = ?), então o esperado é 0.
- */
 public final class Integridade {
-
     private Integridade() {}
 
-    /** Um lance confirmado como aceito. {@code ordem} = ordem global de confirmação. */
     public record LanceAceito(String licitante, long valor, int versaoBase, int versao, long ordem) {}
 
     public record Resultado(boolean ok, boolean umVencedor, boolean precoFinalCorreto, int lancesPerdidos,

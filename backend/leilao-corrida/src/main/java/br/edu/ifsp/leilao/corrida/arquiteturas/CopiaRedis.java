@@ -9,13 +9,7 @@ import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 
-/**
- * Cópia versionada do estado no Redis, sob o prefixo {@code corrida:<arquitetura>:} (nunca
- * {@code leilao:*}, que é do sistema real). A gravação só substitui uma cópia de versão menor
- * (script Lua atômico): duas threads gravando fora de ordem não fazem a cópia voltar no tempo.
- */
 final class CopiaRedis {
-
     private static final DefaultRedisScript<Long> GRAVAR_SE_MAIS_NOVA = new DefaultRedisScript<>("""
             local atual = redis.call('GET', KEYS[1])
             if atual then
@@ -45,7 +39,6 @@ final class CopiaRedis {
         redis.execute(GRAVAR_SE_MAIS_NOVA, List.of(chaveEstado), Integer.toString(e.versao()), codificar(e));
     }
 
-    /** Apaga só as chaves do próprio prefixo. */
     void apagarTudo() {
         List<String> chaves = chaves();
         if (!chaves.isEmpty()) {

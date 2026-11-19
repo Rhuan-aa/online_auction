@@ -10,14 +10,8 @@ import org.springframework.stereotype.Repository;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-/**
- * Lê o Event Store (a fonte da verdade). Só SELECT: quem grava eventos é o leilao-escrita.
- * Fica no módulo estado porque a escrita e a leitura precisam dele para montar o estado.
- */
 @Repository
 public class LeitorEventos {
-
-    /** Um evento como está gravado: tipo com sufixo (LanceRegistrado.v1) e o JSON cru em dados. */
     public record EventoGravado(int versao, String tipo, JsonNode dados, Instant criadoEm) {}
 
     private final JdbcClient jdbc;
@@ -28,10 +22,6 @@ public class LeitorEventos {
         this.json = json;
     }
 
-    /**
-     * Eventos com versão MAIOR que a dada, em ordem. É o que falta aplicar sobre uma cópia
-     * que está na versão informada. Com versão 0, são todos os eventos do leilão.
-     */
     public List<EventoLeilao> posteriores(UUID leilaoId, int versao) {
         return jdbc.sql("""
                         SELECT tipo, dados FROM event_store.eventos
@@ -43,7 +33,6 @@ public class LeitorEventos {
                 .list();
     }
 
-    /** Eventos com versão até n (inclusive), em ordem: o histórico para reconstruir o estado na versão n. */
     public List<EventoLeilao> ateVersao(UUID leilaoId, int n) {
         return jdbc.sql("""
                         SELECT tipo, dados FROM event_store.eventos
@@ -55,7 +44,6 @@ public class LeitorEventos {
                 .list();
     }
 
-    /** Todos os eventos do leilão como gravados, com o JSON cru, para a aba de auditoria. */
     public List<EventoGravado> todos(UUID leilaoId) {
         return jdbc.sql("""
                         SELECT versao, tipo, dados, criado_em FROM event_store.eventos
@@ -67,7 +55,6 @@ public class LeitorEventos {
                 .list();
     }
 
-    /** Ids de todos os leilões: cada leilão tem exatamente um evento de versão 1 (o LeilaoCriado). */
     public List<UUID> idsDosLeiloes() {
         return jdbc.sql("SELECT leilao_id FROM event_store.eventos WHERE versao = 1")
                 .query(UUID.class)

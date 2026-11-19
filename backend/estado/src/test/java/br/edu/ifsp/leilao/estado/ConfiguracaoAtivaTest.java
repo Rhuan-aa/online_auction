@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 
 class ConfiguracaoAtivaTest {
-
     @Test
     void comecaNaInicialETroca() {
         var c = new ConfiguracaoAtiva(Configuracao.C);

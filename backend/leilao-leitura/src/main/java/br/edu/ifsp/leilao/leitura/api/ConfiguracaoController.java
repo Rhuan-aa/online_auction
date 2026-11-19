@@ -16,15 +16,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * Painel de ADM: lê e troca a configuração A/B/C do cache deste serviço sem reiniciar.
- * A troca passa por TrocaDeConfiguracao (limpa o Redis ao ligá-lo), nunca direto em ConfiguracaoAtiva.
- */
 @RestController
 @RequestMapping("/admin/cache/configuracao")
 @CrossOrigin(origins = "http://localhost:5173", methods = {RequestMethod.GET, RequestMethod.PUT})
 public class ConfiguracaoController {
-
     private static final Logger log = LoggerFactory.getLogger(ConfiguracaoController.class);
 
     public record ConfiguracaoDto(Configuracao configuracao) {}
@@ -51,7 +46,6 @@ public class ConfiguracaoController {
         try {
             return ResponseEntity.ok(new ConfiguracaoDto(troca.trocar(corpo.configuracao())));
         } catch (RuntimeException e) {
-            // a limpeza do Redis falhou: a configuração não mudou
             log.warn("Troca para {} falhou ao limpar o Redis; configuração continua {}", corpo.configuracao(), ativa.atual(), e);
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("erro", "REDIS_INDISPONIVEL",
                     "mensagem", "Não foi possível limpar o Redis; a configuração continua " + ativa.atual() + "."));
