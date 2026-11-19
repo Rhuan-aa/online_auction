@@ -56,7 +56,7 @@ export interface Foto {
   arquiteturas: ArqFoto[]
 }
 
-/** As 6 arquiteturas na ordem do contrato. Nome e descrição servem para as raias antes da primeira foto. */
+/** As 5 arquiteturas na ordem do contrato. Nome e descrição servem para as raias antes da primeira foto. */
 export const ARQUITETURAS = [
   { id: 'crud', nome: 'CRUD simples', descricao: 'UPDATE direto na linha, sem controle de concorrência' },
   { id: 'crud-cache', nome: 'CRUD + cache', descricao: 'UPDATE com versão (otimista) e cópia no Redis' },

@@ -42,7 +42,7 @@ leilao-escrita/    escrita: domain / application / infrastructure (event store +
 leilao-leitura/    leitura: api (GET + SSE) / consultas (lista, históricos) / notificacoes (8082)
 agendador-leilao/  worker que monitora prazos e emite comandos de abertura/fechamento (8084)
 ferramentas/       simulador de lances concorrentes e reconstrutor do cache
-leilao-corrida/    laboratório: o mesmo leilão em 6 arquiteturas ao mesmo tempo, métricas por SSE (8085)
+leilao-corrida/    laboratório: o mesmo leilão em 5 arquiteturas ao mesmo tempo, métricas por SSE (8085)
 ```
 
 ## Ferramentas
@@ -61,11 +61,11 @@ java -cp ferramentas/target/classes:$(cat ferramentas/target/cp.txt) \
 
 ## Laboratório `leilao-corrida` (8085)
 
-**Só para uso local: sem autenticação e conectado como o superusuário `postgres`.** Corre o mesmo leilão, com a mesma sequência de lances (semente + gerador mulberry32, portado do antigo simulador do front, hoje removido), ao mesmo tempo em 6 arquiteturas: `crud` (sem controle de concorrência, de propósito), `crud-cache`, `es`, `es-snapshot`, `es-cache` e `es-cqrs`. Não depende de `leilao-escrita`, `leilao-leitura` nem `estado`.
+**Só para uso local: sem autenticação e conectado como o superusuário `postgres`.** Corre o mesmo leilão, com a mesma sequência de lances (semente + gerador mulberry32, portado do antigo simulador do front, hoje removido), ao mesmo tempo em 5 arquiteturas: `crud` (sem controle de concorrência, de propósito), `crud-cache`, `es`, `es-snapshot` e `es-cache`. Não depende de `leilao-escrita`, `leilao-leitura` nem `estado`.
 
 - Rotas: `POST /corrida` (201, 400 `PARAMETRO_INVALIDO`, 409 `CORRIDA_EM_ANDAMENTO`), `GET /corrida/{id}/stream` (SSE `foto` a cada 250 ms e um `fim`), `POST /corrida/{id}/parar` (204) e `GET /corrida/{id}`. CORS para `http://localhost:5173`. Uma corrida por vez.
-- Isolamento: cria na subida os schemas `corrida_crud`, `corrida_crud_cache`, `corrida_es`, `corrida_es_snapshot`, `corrida_es_cache` e `corrida_es_cqrs`; usa só as chaves `corrida:<arquitetura>:*` no Redis e o tópico `corrida.cqrs` (3 partições, criado pela aplicação). Nunca toca em `event_store`, `checkpoint`, `read_model` nem em `leilao:*`.
-- Cada arquitetura tem o próprio pool de conexões (`CORRIDA_POOL_POR_ARQUITETURA`, padrão 8; as 6 juntas usam 48 conexões) e o próprio pool de threads.
+- Isolamento: cria na subida os schemas `corrida_crud`, `corrida_crud_cache`, `corrida_es`, `corrida_es_snapshot`, `corrida_es_cache`; usa só as chaves `corrida:<arquitetura>:*` no Redis e o tópico `corrida.cqrs` (3 partições, criado pela aplicação). Nunca toca em `event_store`, `checkpoint`, `read_model` nem em `leilao:*`.
+- Cada arquitetura tem o próprio pool de conexões (`CORRIDA_POOL_POR_ARQUITETURA`, padrão 8; as 5 juntas usam 40 conexões) e o próprio pool de threads.
 - Variáveis: `CORRIDA_DB_URL` (padrão `jdbc:postgresql://localhost:5432/leilao`, como no compose; se o seu Postgres está em outra porta, por exemplo 5433, suba com `CORRIDA_DB_URL=jdbc:postgresql://localhost:5433/leilao ./mvnw -pl leilao-corrida spring-boot:run`), `CORRIDA_DB_USER` e `CORRIDA_DB_PASSWORD` (padrão `postgres`/`postgres`), `REDIS_HOST`/`REDIS_PORT` e `KAFKA_BOOTSTRAP_SERVERS`, `CORRIDA_BIND` (padrão `127.0.0.1`: só a própria máquina responde; use `0.0.0.0` para expor).
-- Tetos de segurança, não limites da tela: se `6 × (simultâneos + leitores)` passar de `CORRIDA_MAX_THREADS` (padrão 1000000; licitantes e leitores usam threads virtuais) ou `licitantes × lances por licitante` passar de `CORRIDA_MAX_LANCES` (padrão 2000000), o `POST /corrida` responde 400 com a explicação. O 409 traz o `corridaId` da corrida em andamento.
+- Tetos de segurança, não limites da tela: se `5 × (simultâneos + leitores)` passar de `CORRIDA_MAX_THREADS` (padrão 1000000; licitantes e leitores usam threads virtuais) ou `licitantes × lances por licitante` passar de `CORRIDA_MAX_LANCES` (padrão 2000000), o `POST /corrida` responde 400 com a explicação. O 409 traz o `corridaId` da corrida em andamento.
 

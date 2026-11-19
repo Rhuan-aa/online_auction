@@ -1,5 +1,5 @@
 // Acesso ao backend: leilao-escrita (8081) para comandos, leilao-leitura (8082) para consultas e
-// leilao-corrida (8085), o laboratório que roda a mesma corrida nas 6 arquiteturas.
+// leilao-corrida (8085), o laboratório que roda a mesma corrida nas 5 arquiteturas.
 import type { Foto, Parametros } from './corrida/tipos.ts'
 import type { CriarLeilaoRequest, DarLanceRequest } from './types.ts'
 

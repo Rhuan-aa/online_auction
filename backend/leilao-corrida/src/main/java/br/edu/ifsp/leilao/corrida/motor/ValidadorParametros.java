@@ -50,7 +50,7 @@ public final class ValidadorParametros {
         long threads = 6L * ((long) simultaneos + leitores);
         if (threads > orcamento.maxThreads()) {
             throw new ParametroInvalidoException("Threads demais para esta máquina: " + threads
-                    + " (6 arquiteturas x (simultâneos + leitores)); o limite é " + orcamento.maxThreads()
+                    + " (5 arquiteturas x (simultâneos + leitores)); o limite é " + orcamento.maxThreads()
                     + ". Reduza os simultâneos ou os leitores.");
         }
         long total = (long) licitantes * lances;

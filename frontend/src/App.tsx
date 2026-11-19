@@ -22,8 +22,8 @@ export default function App() {
     <>
       <Topo />
       <main className="pagina">
-        <Secao id="simulacao" kicker="1 · Simulação" titulo="O mesmo leilão, em 6 arquiteturas ao mesmo tempo"
-          explicacao="Escolha a carga: as 6 arquiteturas partem do mesmo estado e recebem a mesma sequência de lances.">
+        <Secao id="simulacao" kicker="1 · Simulação" titulo="O mesmo leilão, em 5 arquiteturas ao mesmo tempo"
+          explicacao="Escolha a carga: as 5 arquiteturas partem do mesmo estado e recebem a mesma sequência de lances.">
           <Formulario rodando={rodando} ocupado={corrida.fase === 'iniciando' || corrida.fase === 'parando'}
             erro={corrida.erro} emAndamento={corrida.emAndamento !== null}
             aoAcompanhar={corrida.acompanhar} aoPararEmAndamento={corrida.pararEmAndamento} aoIniciar={corrida.iniciar} aoParar={corrida.parar} />
