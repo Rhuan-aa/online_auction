@@ -79,9 +79,6 @@ services:
 
   backend:
     build: ../backend
-    volumes:
-      - ../backend:/app
-      - ~/.m2:/root/.m2
     command: ./mvnw spring-boot:run -Dspring-boot.run.fork=true
     ports:
       - "8081:8081"
