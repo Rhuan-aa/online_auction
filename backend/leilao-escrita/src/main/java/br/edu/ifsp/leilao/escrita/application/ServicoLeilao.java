@@ -58,7 +58,7 @@ public class ServicoLeilao {
     }
 
     private Resultado executar(UUID leilaoId, Function<UUID, Optional<EstadoLeilao>> leitura,
-                         Function<Leilao, List<EventoLeilao>> decisao) {
+                               Function<Leilao, List<EventoLeilao>> decisao) {
         for (int tentativa = 1; ; tentativa++) {
             EstadoLeilao estado = leitura.apply(leilaoId)
                     .orElseThrow(() -> new LeilaoNaoEncontradoException(leilaoId));
