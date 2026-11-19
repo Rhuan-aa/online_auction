@@ -77,5 +77,44 @@ services:
       kafka:
         condition: service_healthy
 
+  backend:
+    build: ./backend
+    volumes:
+      - ./backend:/app
+      - ~/.m2:/root/.m2
+    command: ./mvnw spring-boot:run -Dspring-boot.run.fork=true
+    ports:
+      - "8081:8081"
+      - "8082:8082"
+      - "8084:8084"
+      - "8085:8085"
+    environment:
+      - POSTGRES_DB=leilao
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+
+  frontend:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm run dev"
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_COMMAND_API=http://localhost:8081
+      - VITE_QUERY_API=http://localhost:8082
+      - VITE_CORRIDA_API=http://localhost:8085"
+    depends_on:
+      - backend
+
 volumes:
   pgdata:
