@@ -8,7 +8,7 @@
   </parent>
   <artifactId>leilao-corrida</artifactId>
   <description>Laboratório: o mesmo leilão em 6 arquiteturas ao mesmo tempo, com métricas ao vivo (só local).</description>
-  <!-- Autocontido de propósito: não usa leilao-escrita, leilao-leitura nem estado-cache, para o custo de
+  <!-- Autocontido de propósito: não usa leilao-escrita, leilao-leitura nem estado, para o custo de
        cada arquitetura ser medido só com o código dela. -->
   <dependencies>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-webmvc</artifactId></dependency>

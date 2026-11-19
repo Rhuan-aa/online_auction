@@ -13,14 +13,14 @@ Container_Boundary(escrita, "leilao-escrita") {
   Component(erros, "TratadorErros", "Spring ControllerAdvice", "Converte regra violada e conflito em respostas HTTP com código.")
   Component(ouvinte, "OuvinteAgendador", "Kafka Listener", "Recebe comandos iniciar/encerrar do agendador.")
   Component(servico, "ServicoLeilao", "Application Service", "Obtém o estado, decide e grava com versaoEsperada; retry em conflito (até 3). O encerramento lê sempre do event store, sem cache (ADR-003).")
-  Component(obter, "ObterEstado", "Módulo estado-cache (compartilhado com a leitura)", "Redis, depois checkpoint, depois eventos posteriores à versão. Single-flight por leilão; métricas.")
+  Component(obter, "ObterEstado", "Módulo estado (compartilhado com a leitura)", "Redis, depois checkpoint, depois eventos posteriores à versão. Single-flight por leilão; métricas.")
   Component(porta, "EventStore", "Porta (interface)", "Contrato para anexar eventos (versaoEsperada).")
-  Component(leitor, "LeitorEventos", "Módulo estado-cache, JDBC", "Eventos posteriores a uma versão (somente leitura).")
+  Component(leitor, "LeitorEventos", "Módulo estado, JDBC", "Eventos posteriores a uma versão (somente leitura).")
   Component(dominio, "Leilao", "Agregado de domínio (Java puro)", "Lance mínimo, anti-sniping 30 s, cancelamento; devolve eventos.")
   Component(storepg, "EventStorePostgres", "JDBC", "Implementa EventStore; UNIQUE(leilao_id, versao).")
   Component(outbox, "PublicadorOutbox", "Relay", "Publica no Kafka os eventos da tabela outbox.")
-  Component(checkpoint, "Checkpoint", "Módulo estado-cache, JDBC", "Grava o estado a cada N eventos e no encerramento, com schema_version. Upsert que só avança.")
-  Component(cache, "CacheEstadoLeilao", "Módulo estado-cache, Spring Data Redis", "Estado (GET/SET de um JSON) e índice de abertos (SADD/SREM); só grava se a versão for maior. Cache-aside na leitura e write-through após o commit.")
+  Component(checkpoint, "Checkpoint", "Módulo estado, JDBC", "Grava o estado a cada N eventos e no encerramento, com schema_version. Upsert que só avança.")
+  Component(cache, "CacheEstadoLeilao", "Módulo estado, Spring Data Redis", "Estado (GET/SET de um JSON) e índice de abertos (SADD/SREM); só grava se a versão for maior. Cache-aside na leitura e write-through após o commit.")
 }
 
 Rel(front, controller, "Comandos", "REST/JSON")

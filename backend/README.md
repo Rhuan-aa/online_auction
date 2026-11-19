@@ -5,14 +5,14 @@ Java 21 + Spring Boot 4, Maven multi-módulo (o Maven vem pelo wrapper). A infra
 ```bash
 cp .env.example .env
 ./mvnw verify                                      # build + testes (unidade e ArchUnit; não precisa de Docker)
-./mvnw install -DskipTests                         # instala os módulos, para o spring-boot:run achar estado, estado-cache e contratos
+./mvnw install -DskipTests                         # instala os módulos, para o spring-boot:run achar estado e contratos
 ./mvnw -pl leilao-escrita spring-boot:run          # sobe o serviço de escrita (8081)
 ./mvnw -pl leilao-leitura spring-boot:run          # sobe o serviço de leitura (8082)
 ./mvnw -pl agendador-leilao spring-boot:run        # sobe o agendador de prazos (8084)
 ./mvnw -pl leilao-corrida spring-boot:run          # sobe o laboratório "corrida de arquiteturas" (8085)
 ```
 
-Não use `-am` junto com `spring-boot:run`: ele tenta rodar também os módulos sem `main` e falha. Depois de mudar `estado`, `estado-cache` ou `contratos`, rode o `install` de novo.
+Não use `-am` junto com `spring-boot:run`: ele tenta rodar também os módulos sem `main` e falha. Depois de mudar `estado` ou `contratos`, rode o `install` de novo.
 
 Os serviços expõem `/actuator/health`. Escrita e leitura expõem também `/actuator/metrics` (ex.: `leilao.estado.obter` e `leilao.estado.eventos.lidos`).
 
@@ -37,8 +37,7 @@ Para comparar as configurações do cache (ADR-003): `A` (sem cópia), `B` (só 
 
 ```
 contratos/         eventos, comandos, tópicos e corpos HTTP (o contrato entre as partes)
-estado/            EstadoLeilao: o estado derivado dos eventos (puro, sem Spring)
-estado-cache/      como obter o estado: Redis → checkpoint → eventos posteriores (e a configuração A/B/C)
+estado/            EstadoLeilao (aplicar eventos) e, em estado.cache, como obtê-lo: Redis → checkpoint → eventos posteriores
 leilao-escrita/    escrita: domain / application / infrastructure (event store + outbox) / api (8081)
 leilao-leitura/    leitura: api (GET + SSE) / consultas (lista, históricos) / notificacoes (8082)
 agendador-leilao/  worker que monitora prazos e emite comandos de abertura/fechamento (8084)
@@ -62,7 +61,7 @@ java -cp ferramentas/target/classes:$(cat ferramentas/target/cp.txt) \
 
 ## Laboratório `leilao-corrida` (8085)
 
-**Só para uso local: sem autenticação e conectado como o superusuário `postgres`.** Corre o mesmo leilão, com a mesma sequência de lances (semente + gerador mulberry32, portado do antigo simulador do front, hoje removido), ao mesmo tempo em 6 arquiteturas: `crud` (sem controle de concorrência, de propósito), `crud-cache`, `es`, `es-snapshot`, `es-cache` e `es-cqrs`. Não depende de `leilao-escrita`, `leilao-leitura` nem `estado`/`estado-cache`.
+**Só para uso local: sem autenticação e conectado como o superusuário `postgres`.** Corre o mesmo leilão, com a mesma sequência de lances (semente + gerador mulberry32, portado do antigo simulador do front, hoje removido), ao mesmo tempo em 6 arquiteturas: `crud` (sem controle de concorrência, de propósito), `crud-cache`, `es`, `es-snapshot`, `es-cache` e `es-cqrs`. Não depende de `leilao-escrita`, `leilao-leitura` nem `estado`.
 
 - Desenho: `docs/superpowers/specs/2026-11-19-corrida-arquiteturas-design.md`. Contrato da API e do SSE: `docs/superpowers/specs/2026-11-19-corrida-contrato.md`.
 - Rotas: `POST /corrida` (201, 400 `PARAMETRO_INVALIDO`, 409 `CORRIDA_EM_ANDAMENTO`), `GET /corrida/{id}/stream` (SSE `foto` a cada 250 ms e um `fim`), `POST /corrida/{id}/parar` (204) e `GET /corrida/{id}`. CORS para `http://localhost:5173`. Uma corrida por vez.

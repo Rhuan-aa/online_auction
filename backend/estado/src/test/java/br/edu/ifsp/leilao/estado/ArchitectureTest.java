@@ -10,7 +10,7 @@ import com.tngtech.archunit.lang.ArchRule;
 @AnalyzeClasses(packages = "br.edu.ifsp.leilao.estado", importOptions = ImportOption.DoNotIncludeTests.class)
 class ArchitectureTest {
     @ArchTest
-    static final ArchRule dominioEhPuro = noClasses().that().resideInAPackage("br.edu.ifsp.leilao.estado..")
+    static final ArchRule dominioEhPuro = noClasses().that().resideInAPackage("br.edu.ifsp.leilao.estado")
             .should().dependOnClassesThat().resideInAnyPackage(
                     "org.springframework..", "java.sql..", "org.apache.kafka..", "tools.jackson..");
 }
