@@ -37,8 +37,6 @@ Para zerar tudo, inclusive os dados: `docker compose -f infra/docker-compose.yml
 
 ### Atualizando um banco que já existia
 
-A troca do CQRS pelo cache mudou o SQL. O caminho simples é recriar o banco (`down -v` e `up -d`). Para manter os dados, rode no Postgres (`docker compose -f infra/docker-compose.yml exec -T postgres psql -U postgres -d leilao`):
-
 ```bash
 # 1) tabela de checkpoints e permissões
 docker compose -f infra/docker-compose.yml exec -T postgres psql -U postgres -d leilao < infra/sql/004_checkpoint.sql
