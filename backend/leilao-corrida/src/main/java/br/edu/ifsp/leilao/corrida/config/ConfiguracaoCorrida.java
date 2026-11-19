@@ -13,34 +13,25 @@ import br.edu.ifsp.leilao.corrida.arquiteturas.ArquiteturaCrud;
 import br.edu.ifsp.leilao.corrida.arquiteturas.ArquiteturaCrudCache;
 import br.edu.ifsp.leilao.corrida.arquiteturas.ArquiteturaEs;
 import br.edu.ifsp.leilao.corrida.arquiteturas.ArquiteturaEsCache;
-import br.edu.ifsp.leilao.corrida.arquiteturas.ArquiteturaEsCqrs;
+// Removed import of ArquiteturaEsCqrs as CQRS architecture is no longer used
+
+
 import br.edu.ifsp.leilao.corrida.arquiteturas.ArquiteturaEsSnapshot;
 import java.util.List;
 
 @Configuration
 public class ConfiguracaoCorrida implements WebMvcConfigurer {
-    @Bean
-    NewTopic topicoCorridaCqrs() {
-        return new NewTopic(ArquiteturaEsCqrs.TOPICO, 3, (short) 1);
-    }
+// Removed CQRS related beans (NewTopic and ArquiteturaEsCqrs) as CQRS is no longer used
 
     @Bean
-    ArquiteturaEsCqrs arquiteturaEsCqrs(Esquema esquema, Conexoes conexoes,
-                                        KafkaTemplate<String, String> kafka, JsonMapper json) {
-        return new ArquiteturaEsCqrs(conexoes.para(ArquiteturaEsCqrs.ID), conexoes.para(ArquiteturaEsCqrs.ID + "-projecao"),
-                kafka, json);
-    }
-
-    @Bean
-    List<Arquitetura> arquiteturas(Esquema esquema, Conexoes conexoes, StringRedisTemplate redis,
-                                   ArquiteturaEsCqrs esCqrs) {
+    List<Arquitetura> arquiteturas(Esquema esquema, Conexoes conexoes, StringRedisTemplate redis) {
         return List.of(
                 new ArquiteturaCrud(conexoes.para(ArquiteturaCrud.ID)),
                 new ArquiteturaCrudCache(conexoes.para(ArquiteturaCrudCache.ID), redis),
                 new ArquiteturaEs(conexoes.para(ArquiteturaEs.ID)),
                 new ArquiteturaEsSnapshot(conexoes.para(ArquiteturaEsSnapshot.ID)),
-                new ArquiteturaEsCache(conexoes.para(ArquiteturaEsCache.ID), redis),
-                esCqrs);
+                new ArquiteturaEsCache(conexoes.para(ArquiteturaEsCache.ID), redis)
+        );
     }
 
     @Override
