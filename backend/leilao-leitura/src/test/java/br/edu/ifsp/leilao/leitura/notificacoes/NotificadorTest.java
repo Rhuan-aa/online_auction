@@ -21,7 +21,10 @@ class NotificadorTest {
 
     final JsonMapper json = JsonMapper.builder().build();
     final List<String> enviados = new ArrayList<>();
-    final Notificador notificador = new Notificador((para, mensagem) -> enviados.add(para + ": " + mensagem), json);
+    final List<Notificacao> recebidas = new ArrayList<>();
+    final Notificador notificador = new Notificador(List.of(
+            n -> enviados.add(n.destinatarioId() + ": " + n.mensagem()),
+            recebidas::add), json);
 
     void evento(int versao, String tipo, EventoLeilao dados) {
         JsonNode node = json.valueToTree(dados);
@@ -63,6 +66,18 @@ class NotificadorTest {
         criado();
         evento(3, "LeilaoEncerrado.v1", new LeilaoEncerrado(null, null));
         assertEquals(List.of("vendedor-1: Seu leilão \"Notebook\" terminou sem lances"), enviados);
+    }
+
+    @Test
+    void todosOsCanaisRecebemOAvisoComTipoELeilao() {
+        criado();
+        evento(3, "LanceRegistrado.v1", new LanceRegistrado("licitante-1", 10_000));
+        evento(4, "LanceRegistrado.v1", new LanceRegistrado("licitante-2", 11_000));
+        evento(5, "LeilaoEncerrado.v1", new LeilaoEncerrado("licitante-2", 11_000L));
+        assertEquals(enviados.size(), recebidas.size());
+        assertEquals(List.of(Notificacao.Tipo.SUPERADO, Notificacao.Tipo.VENCEU, Notificacao.Tipo.VENDEU),
+                recebidas.stream().map(Notificacao::tipo).toList());
+        assertEquals(List.of(ID), recebidas.stream().map(Notificacao::leilaoId).distinct().toList());
     }
 
     @Test
