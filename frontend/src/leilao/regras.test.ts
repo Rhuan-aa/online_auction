@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { ErroHttp, type EstadoLeilao } from '../api.ts'
-import { licitanteDaVez, podeDarLance, proximoLance, situacaoDoLeilao } from './regras.ts'
+import { fimDoLeilao, licitanteDaVez, podeDarLance, proximoLance, situacaoDoLeilao } from './regras.ts'
 
 const AGORA = Date.parse('2026-11-18T12:00:00Z')
 const estado: EstadoLeilao = {
@@ -19,6 +19,24 @@ describe('podeDarLance', () => {
   test('agendado ainda não abriu', () =>
     expect(podeDarLance({ ...estado, status: 'CRIADO' }, AGORA)).toEqual({ pode: false, motivo: 'Leilão ainda não abriu (o agendador leva alguns segundos)' }))
   test('sem leilão em foco', () => expect(podeDarLance(null, 0).motivo).toBe('Sem leilão escolhido'))
+})
+
+describe('fimDoLeilao', () => {
+  const fim = Date.parse(estado.fimEm)
+  test('contagem em horas quando falta muito', () => expect(fimDoLeilao(estado, AGORA)).toBe('encerra em 1h00'))
+  test('contagem em minutos e segundos', () => expect(fimDoLeilao(estado, fim - 83_000)).toBe('encerra em 1:23'))
+  test('nos últimos 30 s avisa do anti-sniping', () =>
+    expect(fimDoLeilao(estado, fim - 12_000)).toBe('encerra em 0:12 (lance agora prorroga +30 s)'))
+  test('prazo vencido e ainda aberto: espera o agendador', () =>
+    expect(fimDoLeilao(estado, fim + 500)).toBe('prazo acabou; aguardando o agendador encerrar…'))
+  test('encerrado com vencedor', () =>
+    expect(fimDoLeilao({ ...estado, status: 'ENCERRADO', liderId: 'licitante-1' }, AGORA)).toBe('vencedor licitante-1'))
+  test('encerrado sem lances', () =>
+    expect(fimDoLeilao({ ...estado, status: 'ENCERRADO' }, AGORA)).toBe('sem lances, sem vencedor'))
+  test('cancelado ou agendado não mostra nada', () => {
+    expect(fimDoLeilao({ ...estado, status: 'CANCELADO' }, AGORA)).toBeNull()
+    expect(fimDoLeilao({ ...estado, status: 'CRIADO' }, AGORA)).toBeNull()
+  })
 })
 
 describe('proximoLance', () => {
