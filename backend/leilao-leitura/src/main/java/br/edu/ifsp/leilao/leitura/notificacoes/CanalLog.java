@@ -9,7 +9,7 @@ public class CanalLog implements CanalNotificacao {
     private static final Logger log = LoggerFactory.getLogger(CanalLog.class);
 
     @Override
-    public void enviar(String destinatarioId, String mensagem) {
-        log.info("[notificação] para {}: {}", destinatarioId, mensagem);
+    public void enviar(Notificacao n) {
+        log.info("[notificação] para {}: {}", n.destinatarioId(), n.mensagem());
     }
 }

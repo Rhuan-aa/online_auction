@@ -26,6 +26,14 @@ export interface ResumoLeilao {
 /** Item de GET /leiloes/{id}/eventos. */
 export interface EventoGravado { versao: number; tipo: string; dados: unknown; criadoEm: string }
 
+/** Aviso do Notificador (leilao-leitura) para uma pessoa, de GET /licitantes/{id}/notificacoes/stream. */
+export interface Notificacao {
+  destinatarioId: string
+  leilaoId: string
+  tipo: 'SUPERADO' | 'VENCEU' | 'VENDEU' | 'SEM_LANCES'
+  mensagem: string
+}
+
 /** Mensagem do stream: o estado, mais o evento que o causou (ausente na primeira mensagem). */
 type EstadoComEvento = EstadoLeilao & { evento?: { tipo: string; versao: number } }
 
@@ -56,6 +64,8 @@ export interface Api {
   listarLeiloes(status?: EstadoLeilao['status']): Promise<ResumoLeilao[]>
   observarLeilao(leilaoId: string, aoMudar: (estado: EstadoComEvento) => void, aoFalhar?: () => void): () => void
   eventos(leilaoId: string): Promise<EventoGravado[]>
+  /** SSE com os avisos de uma pessoa; só chegam os enviados depois de assinar. */
+  observarNotificacoes(pessoaId: string, aoReceber: (n: Notificacao) => void): () => void
   estadoNaVersao(leilaoId: string, versao: number): Promise<EstadoLeilao>
 
   /** POST /corrida. Lança ErroHttp: 400 parâmetro inválido, 409 corrida em andamento, 0 serviço fora do ar. */
@@ -138,6 +148,11 @@ export const api: Api = {
     return () => fonte.close()
   },
   eventos: (id) => getJson(`${LEITURA}/leiloes/${id}/eventos`),
+  observarNotificacoes(pessoaId, aoReceber) {
+    const fonte = new EventSource(`${LEITURA}/licitantes/${encodeURIComponent(pessoaId)}/notificacoes/stream`)
+    fonte.addEventListener('notificacao', (ev) => aoReceber(JSON.parse((ev as MessageEvent).data as string)))
+    return () => fonte.close()
+  },
   estadoNaVersao: (id, versao) => getJson(`${LEITURA}/leiloes/${id}?ateVersao=${versao}`),
   async iniciarCorrida(p) {
     const r = await naCorrida('/corrida', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(p) })

@@ -6,6 +6,7 @@ import Raias, { ResumoCorrida } from './corrida/Raias.tsx'
 import { RESSALVAS, SELO } from './corrida/tipos.ts'
 import { useCorrida } from './corrida/useCorrida.ts'
 import SeletorLeilao from './leilao/SeletorLeilao.tsx'
+import SecaoMini from './mini/SecaoMini.tsx'
 import { useLeilao } from './leilao/useLeilao.ts'
 import { useLeilaoDaRota } from './rota.ts'
 import Secao from './Secao.tsx'
@@ -67,6 +68,11 @@ export default function App() {
           {leilaoId
             ? <SecaoTempo key={leilaoId} leilaoId={leilaoId} atual={leilao.estado?.versao ?? 0} />
             : <p className="painel suave">Escolha ou crie um leilão na seção anterior.</p>}
+        </Secao>
+
+        <Secao id="mini" kicker="7 · Mini leilão" titulo="Quem foi superado fica sabendo?"
+          explicacao="Ana e Bruno disputam um leilão real de 30 segundos: cada tela recebe o aviso quando é superada (e ele some quando ela volta a liderar), e no fim o vencedor é anunciado.">
+          <SecaoMini />
         </Secao>
       </main>
     </>

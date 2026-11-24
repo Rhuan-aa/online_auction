@@ -23,7 +23,8 @@ class ArchitectureTest {
             .layer("notificacoes").definedBy("..leitura.notificacoes..")
             .whereLayer("api").mayNotBeAccessedByAnyLayer()
             .whereLayer("consultas").mayOnlyBeAccessedByLayers("api")
-            .whereLayer("notificacoes").mayNotBeAccessedByAnyLayer();
+            // a api entrega os avisos por SSE (TransmissorNotificacoes implementa CanalNotificacao)
+            .whereLayer("notificacoes").mayOnlyBeAccessedByLayers("api");
 
     @ArchTest
     static final ArchRule notificacoesSoConhecemOsContratos = noClasses().that().resideInAPackage("..leitura.notificacoes..")
