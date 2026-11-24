@@ -5,6 +5,9 @@
 .seletor-campo select { width: 100%; min-width: 0; }
 .seletor-estado { margin: 0; font-size: 0.95rem; }
 .seletor-estado:empty { display: none; }
+.seletor-prazo { display: flex; flex-direction: column; gap: 0.25rem; font-weight: 600; font-size: 0.9rem; }
+.fim-leilao { font-family: var(--fonte-mono); font-variant-numeric: tabular-nums; }
+.fim-leilao--encerrado { color: var(--sucesso); font-weight: 700; }
 
 /* caminho de um lance */
 .caminho { display: flex; flex-direction: column; gap: 1rem; }

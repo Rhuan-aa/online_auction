@@ -2,10 +2,9 @@ import { useEffect, useState } from 'react'
 import { api, ErroHttp, type ResumoLeilao } from '../api.ts'
 import { dinheiro, ROTULO_STATUS } from '../formato.ts'
 import { escolherLeilao } from '../rota.ts'
-import { VENDEDOR } from './regras.ts'
+import { fimDoLeilao, PRAZOS, VENDEDOR } from './regras.ts'
+import { useAgora } from './useAgora.ts'
 import type { Leilao } from './useLeilao.ts'
-
-const DUAS_HORAS = 2 * 60 * 60 * 1000
 
 const SITUACAO: Partial<Record<Leilao['situacao'], string>> = {
   carregando: 'Carregando o leilão…',
@@ -23,6 +22,8 @@ export default function SeletorLeilao({ leilaoId, leilao }: { leilaoId: string |
   const [erro, setErro] = useState<string | null>(null)
   const [criando, setCriando] = useState(false)
   const [recarga, setRecarga] = useState(0)
+  const [prazo, setPrazo] = useState<number>(PRAZOS[1].ms)
+  const agora = useAgora(leilao.estado?.status === 'ABERTO')
 
   useEffect(() => {
     let vigente = true
@@ -41,10 +42,10 @@ export default function SeletorLeilao({ leilaoId, leilao }: { leilaoId: string |
     setCriando(true)
     setErro(null)
     try {
-      const agora = Date.now()
+      const inicio = Date.now()
       const { leilaoId: novo } = await api.criarLeilao({
         vendedorId: VENDEDOR, titulo: 'Leilão de demonstração', precoInicial: 10000, incrementoMinimo: 100,
-        inicioEm: new Date(agora).toISOString(), fimEm: new Date(agora + DUAS_HORAS).toISOString(),
+        inicioEm: new Date(inicio).toISOString(), fimEm: new Date(inicio + prazo).toISOString(),
       })
       escolherLeilao(novo)
       setRecarga((r) => r + 1)
@@ -59,6 +60,7 @@ export default function SeletorLeilao({ leilaoId, leilao }: { leilaoId: string |
   const lista = abertos ?? []
   const foraDaLista = leilaoId !== null && !lista.some((l) => l.leilaoId === leilaoId)
   const situacao = SITUACAO[leilao.situacao]
+  const fim = e ? fimDoLeilao(e, agora) : null
 
   return (
     <div className="painel seletor-leilao">
@@ -74,12 +76,19 @@ export default function SeletorLeilao({ leilaoId, leilao }: { leilaoId: string |
           </select>
         </label>
         <button type="button" className="botao" onClick={() => setRecarga((r) => r + 1)}>Atualizar lista</button>
+        <label className="seletor-prazo">
+          Encerra em
+          <select value={prazo} onChange={(ev) => setPrazo(Number(ev.target.value))}>
+            {PRAZOS.map((p) => <option key={p.ms} value={p.ms}>{p.rotulo}</option>)}
+          </select>
+        </label>
         <button type="button" className="botao botao--destaque" onClick={() => void criar()} disabled={criando}>
           {criando ? 'Criando…' : 'Criar leilão de demonstração'}
         </button>
       </div>
       <p className="seletor-estado" aria-live="polite">
         {e && <><strong>{e.titulo}</strong> · {ROTULO_STATUS[e.status]} · {dinheiro(e.precoAtual)} · <span className="id">v{e.versao}</span> </>}
+        {e && fim && <span className={e.status === 'ENCERRADO' ? 'fim-leilao fim-leilao--encerrado' : 'fim-leilao'}>· {fim} </span>}
         {situacao && <span className="aviso">{situacao}</span>}
         {abertos !== null && lista.length === 0 && !leilaoId && <span className="suave">Nenhum leilão aberto: crie um de demonstração.</span>}
       </p>

@@ -17,6 +17,29 @@ export function podeDarLance(e: EstadoLeilao | null, agora: number): { pode: boo
   return { pode: true }
 }
 
+/** Prazos do leilão de demonstração: curtos para ver o agendador encerrar durante a apresentação. */
+export const PRAZOS = [
+  { rotulo: '1 min', ms: 60_000 },
+  { rotulo: '2 min', ms: 2 * 60_000 },
+  { rotulo: '5 min', ms: 5 * 60_000 },
+  { rotulo: '2 h', ms: 2 * 60 * 60_000 },
+] as const
+
+/** O que a tela diz sobre o fim: contagem regressiva, espera pelo agendador ou o resultado. */
+export function fimDoLeilao(e: EstadoLeilao, agora: number): string | null {
+  if (e.status === 'ENCERRADO') {
+    return e.liderId ? `vencedor ${e.liderId}` : 'sem lances, sem vencedor'
+  }
+  if (e.status !== 'ABERTO') return null
+  const resta = Date.parse(e.fimEm) - agora
+  if (resta <= 0) return 'prazo acabou; aguardando o agendador encerrar…'
+  const s = Math.ceil(resta / 1000)
+  const relogio = s >= 3600
+    ? `${Math.floor(s / 3600)}h${String(Math.floor((s % 3600) / 60)).padStart(2, '0')}`
+    : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+  return `encerra em ${relogio}${s < 30 ? ' (lance agora prorroga +30 s)' : ''}`
+}
+
 /** Sem lance ainda, o próximo lance é o preço inicial (que vem do evento LeilaoCriado); 0 se ainda não se sabe. */
 export function proximoLance(e: EstadoLeilao, incrementoMinimo: number, precoInicial?: number | null): number {
   if (e.precoAtual == null) return precoInicial ?? 0
