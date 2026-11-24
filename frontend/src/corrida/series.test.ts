@@ -35,7 +35,7 @@ test('espaço só depois do fim, em KB', () => {
 })
 test('curva: pontos ordenados por versão, com a cor da arquitetura', () => {
   const s = seriesCurva([arq('es-cache', { curva: [{ versao: 20, ms: 4.1 }, { versao: 10, ms: 3.9 }] })])
-  expect(s).toEqual([{ nome: 'ES-CACHE', cor: 'var(--arq-5)', pontos: [{ x: 10, y: 3.9 }, { x: 20, y: 4.1 }] }])
+  expect(s).toEqual([{ nome: 'ES-CACHE', cor: 'var(--arq-4)', pontos: [{ x: 10, y: 3.9 }, { x: 20, y: 4.1 }] }])
 })
 
 test('contagem do espaço: linhas, eventos e chaves de quem tem resultado final', () => {

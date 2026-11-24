@@ -22,14 +22,12 @@
   --perigo-fundo: rgb(255 107 138 / 0.16);
   --sombra: 0 2px 6px rgb(8 10 40 / 0.25), 0 14px 34px rgb(8 10 40 / 0.35);
 
-  /* uma cor por arquitetura da corrida, na ordem do contrato: crud, crud-cache, es, es-snapshot, es-cache, es-cqrs.
+  /* uma cor por arquitetura da corrida, na ordem do contrato: crud, crud-cache, es, es-cache (+ snapshot).
      Família CRUD em tons quentes, família ES em tons frios; todas com contraste ≥ 3:1 sobre o índigo. */
   --arq-1: #ff7a5c;
   --arq-2: #ffc24d;
   --arq-3: #7cc4ff;
-  --arq-4: #c4a7ff;
-  --arq-5: #3ee6a8;
-  --arq-6: #ff8fd1;
+  --arq-4: #3ee6a8;
   --grade: rgb(255 255 255 / 0.14);
   --eixo: rgb(255 255 255 / 0.45);
 
@@ -70,13 +68,11 @@
   --perigo: #c4234f;
   --perigo-fundo: #fbe1e8;
   --sombra: 0 1px 2px rgb(27 31 94 / 0.08), 0 8px 24px rgb(27 31 94 / 0.12);
-  /* as mesmas 6 matizes, escurecidas: todas com contraste ≥ 4,5:1 sobre branco */
+  /* as mesmas 4 matizes, escurecidas: todas com contraste ≥ 4,5:1 sobre branco */
   --arq-1: #c2410c;
   --arq-2: #8f5a00;
   --arq-3: #1f5fb4;
-  --arq-4: #6b4aa8;
-  --arq-5: #0f7a55;
-  --arq-6: #b02f74;
+  --arq-4: #0f7a55;
   --grade: #dfe1f5;
   --eixo: #6b6f9a;
 }

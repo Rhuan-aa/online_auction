@@ -40,10 +40,10 @@ public class Esquema implements InitializingBean {
         linhaLeilao("corrida_crud_cache"),
         "CREATE SCHEMA IF NOT EXISTS corrida_es",
         eventos("corrida_es"),
-        "CREATE SCHEMA IF NOT EXISTS corrida_es_snapshot",
-        eventos("corrida_es_snapshot"),
+        "CREATE SCHEMA IF NOT EXISTS corrida_es_cache",
+        eventos("corrida_es_cache"),
         """
-        CREATE TABLE IF NOT EXISTS corrida_es_snapshot.snapshot (
+        CREATE TABLE IF NOT EXISTS corrida_es_cache.snapshot (
           leilao_id     uuid   PRIMARY KEY,
           versao        int    NOT NULL,
           preco_inicial bigint NOT NULL,
@@ -51,8 +51,6 @@ public class Esquema implements InitializingBean {
           preco_atual   bigint NOT NULL,
           lider         text
         )""",
-        "CREATE SCHEMA IF NOT EXISTS corrida_es_cache",
-        eventos("corrida_es_cache"),
         "CREATE SCHEMA IF NOT EXISTS corrida_es_cqrs",
         eventos("corrida_es_cqrs"),
         """

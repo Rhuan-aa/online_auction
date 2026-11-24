@@ -24,7 +24,7 @@ export const CAMPOS: DefCampo[] = [
   { campo: 'lancesPorLicitante', rotulo: 'Lances por licitante', dica: 'Quantos lances cada pessoa envia ao longo da corrida.' },
   { campo: 'simultaneos', rotulo: 'Lances simultâneos', dica: 'Quantos lances chegam ao mesmo tempo em cada arquitetura (threads de envio).' },
   { campo: 'leitores', rotulo: 'Leitores', dica: 'Quantos clientes consultam o preço sem parar durante a corrida; 0 desliga as consultas.' },
-  { campo: 'precoInicial', rotulo: 'Preço inicial (R$)', dica: 'O preço com que o leilão começa, igual nas 5 arquiteturas.', dinheiro: true },
+  { campo: 'precoInicial', rotulo: 'Preço inicial (R$)', dica: 'O preço com que o leilão começa, igual nas 4 arquiteturas.', dinheiro: true },
   { campo: 'incremento', rotulo: 'Incremento (R$)', dica: 'Quanto um lance precisa superar o preço atual para ser aceito.', dinheiro: true },
 ]
 

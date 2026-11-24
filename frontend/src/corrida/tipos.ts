@@ -56,24 +56,23 @@ export interface Foto {
   arquiteturas: ArqFoto[]
 }
 
-/** As 5 arquiteturas na ordem do contrato. Nome e descrição servem para as raias antes da primeira foto. */
+/** As 4 arquiteturas na ordem do contrato. Nome e descrição servem para as raias antes da primeira foto. */
 export const ARQUITETURAS = [
   { id: 'crud', nome: 'CRUD simples', descricao: 'UPDATE direto na linha, sem controle de concorrência' },
   { id: 'crud-cache', nome: 'CRUD + cache', descricao: 'UPDATE com versão (otimista) e cópia no Redis' },
   { id: 'es', nome: 'Event Sourcing puro', descricao: 'Relê todos os eventos a cada lance e a cada consulta' },
-  { id: 'es-snapshot', nome: 'ES + snapshot', descricao: 'Parte de um snapshot gravado a cada 50 eventos' },
-  { id: 'es-cache', nome: 'ES + cache', descricao: 'Eventos imutáveis + cópia versionada no Redis' },
+  { id: 'es-cache', nome: 'ES + cache + snapshot', descricao: 'Eventos imutáveis + cópia versionada no Redis + snapshot a cada 50 eventos' },
 
 ] as const
 
-/** Cor da arquitetura (token --arq-1…6), a mesma nas raias, legendas, gráficos e placar. */
+/** Cor da arquitetura (token --arq-1…4), a mesma nas raias, legendas, gráficos e placar. */
 export function corDe(id: string): string {
   const i = ARQUITETURAS.findIndex((a) => a.id === id)
   return i < 0 ? 'var(--tinta-suave)' : `var(--arq-${i + 1})`
 }
 
 /** Selo obrigatório ao lado de toda medição da corrida. */
-export const SELO = 'medido nesta máquina; as 6 rodaram juntas e disputaram CPU e banco'
+export const SELO = 'medido nesta máquina; as 4 rodaram juntas e disputaram CPU e banco'
 
 /** Ressalvas honestas da comparação, ao lado do selo. */
 export const RESSALVAS = 'Cuidados ao comparar: as sequências de lances divergem entre as arquiteturas, porque cada uma segue o próprio preço; '
