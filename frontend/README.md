@@ -2,8 +2,8 @@
 
 Vite + React + TypeScript. A infra e a documentação estão na raiz: veja o [README principal](../README.md).
 
-Uma página só, sem abas: a **corrida de arquiteturas**. O mesmo leilão roda ao mesmo tempo em 5 arquiteturas
-(CRUD simples, CRUD + cache, Event Sourcing puro, ES + snapshot, ES + cache) no serviço
+Uma página só, sem abas: a **corrida de arquiteturas**. O mesmo leilão roda ao mesmo tempo em 4 arquiteturas
+(CRUD simples, CRUD + cache, Event Sourcing puro, ES + cache + snapshot) no serviço
 `leilao-corrida` (8085), e a página mostra tudo o que foi medido.
 
 ```bash
@@ -19,8 +19,8 @@ npm run build    # tsc + vite build
 
 1. **Simulação**: 6 campos (licitantes, lances por licitante, lances simultâneos, leitores, preço inicial, incremento), sem limite máximo, cada um com um tooltip. ▶ Iniciar corrida / ■ Parar.
 2. **Corrida ao vivo**: uma raia por arquitetura, atualizada pelo SSE `GET /corrida/{id}/stream` (eventos `foto` e `fim`).
-3. **Comparação**: gráficos SVG próprios (`src/graficos/`), uma cor por arquitetura (`--arq-1…6`).
-4. **Placar**: o melhor de cada critério destacado, integridade e histórico. Selo "medido nesta máquina; as 6 rodaram juntas e disputaram CPU e banco".
+3. **Comparação**: gráficos SVG próprios (`src/graficos/`), uma cor por arquitetura (`--arq-1…4`).
+4. **Placar**: o melhor de cada critério destacado, integridade e histórico. Selo "medido nesta máquina; as 4 rodaram juntas e disputaram CPU e banco".
 5. **Por onde passa um lance?**: um lance real no sistema (8081 → Kafka → 8082 → SSE), num leilão aberto escolhido ou criado na hora.
 6. **Dá para voltar no tempo?**: linha do tempo dos eventos e o estado em qualquer versão, no mesmo leilão.
 

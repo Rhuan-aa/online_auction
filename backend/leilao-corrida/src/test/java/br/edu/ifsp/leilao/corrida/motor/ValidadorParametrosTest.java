@@ -64,14 +64,14 @@ class ValidadorParametrosTest {
 
     @Test
     void orcamentoDeThreadsRecusaComMensagemClara() {
-        String corpo = "{" + OK.replace("\"simultaneos\":6", "\"simultaneos\":166600")
-                .replace("\"leitores\":4", "\"leitores\":67") + "}";
+        String corpo = "{" + OK.replace("\"simultaneos\":6", "\"simultaneos\":249950")
+                .replace("\"leitores\":4", "\"leitores\":51") + "}";
         ParametroInvalidoException e = assertThrows(ParametroInvalidoException.class, () -> validar(corpo));
         assertTrue(e.getMessage().contains("Threads demais"), e.getMessage());
-        assertTrue(e.getMessage().contains("1000002"), e.getMessage());
+        assertTrue(e.getMessage().contains("1000004"), e.getMessage());
 
-        validar("{" + OK.replace("\"simultaneos\":6", "\"simultaneos\":166600")
-                .replace("\"leitores\":4", "\"leitores\":66") + "}");
+        validar("{" + OK.replace("\"simultaneos\":6", "\"simultaneos\":249950")
+                .replace("\"leitores\":4", "\"leitores\":50") + "}");
     }
 
     @Test

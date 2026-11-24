@@ -5,7 +5,7 @@ import { CRITERIOS, detalheIntegridade, excluidas, vencedores } from './melhores
 import { inteiro } from './medidas.ts'
 import { corDe, NOTA_CRUD, RESSALVAS, type ArqFoto, type Foto } from './tipos.ts'
 
-/** A tabela final: as 5 arquiteturas × critérios, com o melhor de cada coluna destacado. */
+/** A tabela final: as 4 arquiteturas × critérios, com o melhor de cada coluna destacado. */
 export default function Placar({ foto }: { foto: Foto | null }) {
   const final = foto !== null && !foto.rodando && foto.arquiteturas.some((a) => a.integridade)
   if (!final) {

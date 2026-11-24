@@ -16,7 +16,6 @@ import br.edu.ifsp.leilao.corrida.arquiteturas.ArquiteturaEsCache;
 // Removed import of ArquiteturaEsCqrs as CQRS architecture is no longer used
 
 
-import br.edu.ifsp.leilao.corrida.arquiteturas.ArquiteturaEsSnapshot;
 import java.util.List;
 
 @Configuration
@@ -29,7 +28,6 @@ public class ConfiguracaoCorrida implements WebMvcConfigurer {
                 new ArquiteturaCrud(conexoes.para(ArquiteturaCrud.ID)),
                 new ArquiteturaCrudCache(conexoes.para(ArquiteturaCrudCache.ID), redis),
                 new ArquiteturaEs(conexoes.para(ArquiteturaEs.ID)),
-                new ArquiteturaEsSnapshot(conexoes.para(ArquiteturaEsSnapshot.ID)),
                 new ArquiteturaEsCache(conexoes.para(ArquiteturaEsCache.ID), redis)
         );
     }

@@ -8,7 +8,7 @@ interface Props { foto: Foto | null; fase: Fase }
 
 const COLUNAS = ['Arquitetura', 'Lances enviados', 'Tempo para registrar um lance', 'Lances por segundo', 'Conflitos', 'Leituras desatualizadas', 'Status']
 
-/** As 6 raias da corrida, na ordem do contrato. Antes da primeira foto, as raias aparecem vazias. */
+/** As 4 raias da corrida, na ordem do contrato. Antes da primeira foto, as raias aparecem vazias. */
 export default function Raias({ foto, fase }: Props) {
   const arqs = foto?.arquiteturas ?? null
   return (
