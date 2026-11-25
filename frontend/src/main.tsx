@@ -9,6 +9,7 @@ import './estilo/corrida.css'
 import './estilo/leilao.css'
 import './estilo/graficos.css'
 import './estilo/mini.css'
+import './estilo/apresentacao.css'
 import App from './App.tsx'
 import { aplicarTema, lerTema } from './tema.ts'
 
