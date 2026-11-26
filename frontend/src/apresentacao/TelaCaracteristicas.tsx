@@ -47,7 +47,7 @@ const CARACTERISTICAS: readonly Caracteristica[] = [
     demo: { id: 'comparacao', rotulo: 'Comparação' } },
   { n: 3, cor: 'aviso', icone: ICONES.historico, nome: 'Auditabilidade', frase: 'Todo lance fica registrado, completo e imutável.',
     porque: 'contestação exige prova', visual: <VisualAuditoria />, medida: 'qualquer versão refeita pelos eventos bate com o cache',
-    demo: { id: 'tempo', rotulo: 'Auditoria' } },
+    demo: { id: 'placar', rotulo: 'Placar: auditoria' } },
 ]
 
 interface Props { oculta: boolean; aoIrPara: (id: string) => void }
