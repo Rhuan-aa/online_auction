@@ -16,12 +16,8 @@ import Placar from './corrida/Placar.tsx'
 import Raias, { ResumoCorrida } from './corrida/Raias.tsx'
 import { RESSALVAS, SELO } from './corrida/tipos.ts'
 import { useCorrida } from './corrida/useCorrida.ts'
-import SeletorLeilao from './leilao/SeletorLeilao.tsx'
 import SecaoMini from './mini/SecaoMini.tsx'
-import { useLeilao } from './leilao/useLeilao.ts'
-import { useLeilaoDaRota } from './rota.ts'
 import Secao from './Secao.tsx'
-import SecaoTempo from './tempo/SecaoTempo.tsx'
 import Topo from './Topo.tsx'
 
 /** As telas do modo apresentação: capa, contexto, características, desafios e ADRs (só existem nele) e depois as seções na ordem da página. */
@@ -49,16 +45,13 @@ const TELAS = [
   { id: 'corrida', kicker: '2 · Corrida ao vivo' },
   { id: 'comparacao', kicker: '3 · Comparação' },
   { id: 'placar', kicker: '4 · Placar' },
-  { id: 'tempo', kicker: '5 · Auditoria' },
-  { id: 'mini', kicker: '6 · Mini leilão' },
+  { id: 'mini', kicker: '5 · Mini leilão' },
   { id: 'obrigado', kicker: 'Obrigado' },
 ] as const
 
 export default function App() {
   const corrida = useCorrida()
   const rodando = corrida.fase === 'rodando' || corrida.fase === 'parando'
-  const leilaoId = useLeilaoDaRota()
-  const leilao = useLeilao(leilaoId) // a única assinatura SSE do leilão real, usada pela seção de auditoria
 
   const apresentacao = useApresentacao(TELAS.length)
   /** id, kicker e se a seção fica escondida (só no modo apresentação, quando não é a tela atual). */
@@ -124,15 +117,7 @@ export default function App() {
           <Placar foto={corrida.foto} />
         </Secao>
 
-        <Secao {...tela(23)} titulo="Dá para voltar no tempo?"
-          explicacao="Os eventos do mesmo leilão nunca são alterados; o estado de qualquer versão é refeito aplicando-os em ordem.">
-          <SeletorLeilao leilaoId={leilaoId} leilao={leilao} />
-          {leilaoId
-            ? <SecaoTempo key={leilaoId} leilaoId={leilaoId} atual={leilao.estado?.versao ?? 0} />
-            : <p className="painel suave">Escolha ou crie um leilão acima.</p>}
-        </Secao>
-
-        <Secao {...tela(24)} titulo="Quem foi superado fica sabendo?"
+        <Secao {...tela(23)} titulo="Quem foi superado fica sabendo?"
           explicacao="Ana e Bruno disputam um leilão real de 30 segundos: cada tela recebe o aviso quando é superada (e ele some quando ela volta a liderar), e no fim o vencedor é anunciado.">
           <SecaoMini />
         </Secao>
